@@ -18,7 +18,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "baseUrl": "src", // Basisverzeichnis auf "src" setzen
+    "paths": {
+      "@/*": ["*"] // Alias, der alle Pfade innerhalb von "src" abdeckt
+    }
   },
   "include": [
     "src"

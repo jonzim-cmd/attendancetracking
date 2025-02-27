@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, ChevronLeft, ChevronRight } from 'lucide-react';
 import FileUploadHandler from '@/components/attendance/FileUploadHandler';
 
 interface SidebarProps {
@@ -46,126 +46,151 @@ const Sidebar: React.FC<SidebarProps> = ({
     { value: '8', label: '8 Wochen' },
   ];
 
-  // Messen der Export-Buttons, um die Sidebar-Breite dynamisch zu bestimmen
+  // false = Sidebar aufgeklappt, true = komplett eingeklappt (nicht im Layout enthalten)
+  const [collapsed, setCollapsed] = useState(false);
+  // Breite des Toggle-Buttons, die wir als minimalen Abstand nutzen, wenn die Sidebar verschwindet
+  const toggleButtonWidth = 60; // px
+
+  // Zum Messen der vollen Sidebar-Breite (nur wenn aufgeklappt)
   const exportRef = useRef<HTMLDivElement>(null);
-  const [sidebarWidth, setSidebarWidth] = useState<number | null>(null);
+  const [fullSidebarWidth, setFullSidebarWidth] = useState<number | null>(null);
 
   useEffect(() => {
     const measureWidth = () => {
-      if (exportRef.current) {
-        const exportWidth = exportRef.current.offsetWidth;
-        // Sidebar-Padding: p-4 entspricht ca. 16px pro Seite
-        const totalWidth = exportWidth + 32;
-        setSidebarWidth(totalWidth);
-        // CSS-Variable für Header und MainContent
-        document.documentElement.style.setProperty('--sidebar-width', `${totalWidth}px`);
+      if (!collapsed) {
+        if (exportRef.current) {
+          const exportWidth = exportRef.current.offsetWidth;
+          // p-4 entspricht ca. 16px pro Seite (insgesamt 32px)
+          const totalWidth = exportWidth + 32;
+          setFullSidebarWidth(totalWidth);
+          document.documentElement.style.setProperty('--sidebar-width', `${totalWidth}px`);
+          document.documentElement.style.setProperty('--header-padding-left', '0px');
+        }
+      } else {
+        // Sidebar-Inhalt verschwindet – wir setzen die Breite auf 0
+        setFullSidebarWidth(0);
+        document.documentElement.style.setProperty('--sidebar-width', '0px');
+        // Damit der Header-Inhalt nicht unter den Toggle-Button rutscht,
+        // setzen wir ein padding-left in Höhe des Buttons.
+        document.documentElement.style.setProperty('--header-padding-left', `${toggleButtonWidth}px`);
       }
     };
 
     measureWidth();
     window.addEventListener('resize', measureWidth);
     return () => window.removeEventListener('resize', measureWidth);
-  }, []);
+  }, [collapsed]);
 
   return (
-    <aside
-      className="fixed top-0 left-0 min-h-screen bg-chatGray-sidebarLight dark:bg-chatGray-sidebarDark p-4 overflow-y-auto"
-      style={sidebarWidth ? { width: `${sidebarWidth}px` } : {}}
-    >
-      {/* Datei hochladen */}
-      <div className="mb-6">
-        <label
-          htmlFor="file-upload"
-          className="flex items-center gap-2 cursor-pointer bg-chatGray-button text-chatGray-textDark px-2 py-1 rounded-md hover:bg-chatGray-hover transition-colors justify-center text-xs"
-          title="Excel-Datei hochladen"
-        >
-          <Upload className="w-4 h-4" />
-          <span>Datei hochladen</span>
-        </label>
-        <FileUploadHandler
-          onFileProcessed={onFileUpload}
-          startDate={startDate}
-          endDate={endDate}
-          setError={console.error}
-        />
-      </div>
+    <>
+      {/* Toggle-Button – immer sichtbar, fixed links, mit korrektem Icon-Farbschema */}
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className="fixed top-4 left-4 z-20 p-2 rounded-full bg-sidebar-btn dark:bg-sidebar-btn-dark hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors"
+        title="Sidebar ein-/ausklappen"
+      >
+        {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+      </button>
 
-      {/* Zeitraum */}
-      <div className="mb-6">
-        <h3 className="text-sm font-medium text-chatGray-textLight dark:text-chatGray-textDark mb-2">Zeitraum</h3>
-        <label className="block text-xs text-gray-600 dark:text-gray-400">Startdatum</label>
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => onStartDateChange(e.target.value)}
-          className="mt-1 w-full dark:system-ui rounded px-2 py-1 bg-chatGray-light dark:bg-chatGray-button text-chatGray-textLight dark:text-chatGray-textDark text-sm"
-        />
-        <label className="block text-xs text-gray-600 dark:text-gray-400 mt-2">Enddatum</label>
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => onEndDateChange(e.target.value)}
-          className="mt-1 w-full rounded px-2 py-1 bg-chatGray-light dark:bg-chatGray-button text-chatGray-textLight dark:text-chatGray-textDark text-sm"
-        />
-        <label className="block text-xs text-gray-600 dark:text-gray-400 mt-2">Schnellauswahl</label>
-        <select
-          onChange={(e) => onQuickSelect(e.target.value)}
-          className="mt-1 w-full rounded px-2 py-1 bg-chatGray-light dark:bg-chatGray-button text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+      {/* Sidebar-Inhalt nur rendern, wenn NICHT collapsed */}
+      {!collapsed && (
+        <aside
+          className="fixed top-0 left-0 min-h-screen bg-chatGray-sidebarLight dark:bg-chatGray-sidebarDark p-4 overflow-y-auto transition-all duration-300"
+          style={fullSidebarWidth ? { width: `${fullSidebarWidth}px` } : {}}
         >
-          <option value="">-- Auswählen --</option>
-          {quickSelectOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
+          {/* Datei hochladen */}
+          <div className="mb-6 mt-10">
+            <label
+              htmlFor="file-upload"
+              className="flex items-center gap-2 cursor-pointer bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors justify-center text-xs"
+              title="Excel-Datei hochladen"
+            >
+              <Upload className="w-4 h-4" />
+              <span>Datei hochladen</span>
+            </label>
+            <FileUploadHandler
+              onFileProcessed={onFileUpload}
+              startDate={startDate}
+              endDate={endDate}
+              setError={console.error}
+            />
+          </div>
 
-      {/* Statistik */}
-      <div className="mb-6">
-        <h3 className="text-sm font-medium text-chatGray-textLight dark:text-chatGray-textDark mb-2">Statistik</h3>
-        <label className="block text-xs text-gray-600 dark:text-gray-400">Wochen zurück</label>
-        <select
-          value={selectedWeeks}
-          onChange={(e) => onSelectedWeeksChange(e.target.value)}
-          className="mt-1 w-full rounded px-2 py-1 bg-chatGray-light dark:bg-chatGray-button text-chatGray-textLight dark:text-chatGray-textDark text-sm"
-        >
-          {weekOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
+          {/* Zeitraum */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-chatGray-textLight dark:text-chatGray-textDark mb-2">Zeitraum</h3>
+            <label className="block text-xs text-gray-600 dark:text-gray-400">Startdatum</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => onStartDateChange(e.target.value)}
+              className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+            />
+            <label className="block text-xs text-gray-600 dark:text-gray-400 mt-2">Enddatum</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => onEndDateChange(e.target.value)}
+              className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+            />
+            <label className="block text-xs text-gray-600 dark:text-gray-400 mt-2">Schnellauswahl</label>
+            <select
+              onChange={(e) => onQuickSelect(e.target.value)}
+              className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+            >
+              <option value="">-- Auswählen --</option>
+              {quickSelectOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            
+            {/* Wochen zurück - Jetzt in den Zeitraum-Bereich integriert */}
+            <label className="block text-xs text-gray-600 dark:text-gray-400 mt-2">Wochen zurück</label>
+            <select
+              value={selectedWeeks}
+              onChange={(e) => onSelectedWeeksChange(e.target.value)}
+              className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+            >
+              {weekOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
-      {/* Export – hier messen wir die Breite */}
-      <div className="mb-6" ref={exportRef}>
-        <h3 className="text-sm font-medium text-chatGray-textLight dark:text-chatGray-textDark mb-2">Export</h3>
-        <div className="flex gap-2">
-          <button
-            onClick={onExportExcel}
-            className="bg-chatGray-button text-chatGray-textDark px-2 py-1 rounded-md hover:bg-chatGray-hover transition-colors text-xs"
-            title="Als Excel exportieren"
-          >
-            XLS
-          </button>
-          <button
-            onClick={onExportCSV}
-            className="bg-chatGray-button text-chatGray-textDark px-2 py-1 rounded-md hover:bg-chatGray-hover transition-colors text-xs"
-            title="Als CSV exportieren"
-          >
-            CSV
-          </button>
-          <button
-            onClick={onExportPDF}
-            className="bg-chatGray-button text-chatGray-textDark px-2 py-1 rounded-md hover:bg-chatGray-hover transition-colors text-xs"
-            title="Als PDF exportieren"
-          >
-            PDF
-          </button>
-        </div>
-      </div>
-    </aside>
+          {/* Export – hier messen wir die Breite - mit mehr Abstand zum vorigen Bereich */}
+          <div className="mb-6 mt-8" ref={exportRef}>
+            <h3 className="text-sm font-medium text-chatGray-textLight dark:text-chatGray-textDark mb-2">Export</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={onExportExcel}
+                className="bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors text-xs"
+                title="Als Excel exportieren"
+              >
+                XLS
+              </button>
+              <button
+                onClick={onExportCSV}
+                className="bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors text-xs"
+                title="Als CSV exportieren"
+              >
+                CSV
+              </button>
+              <button
+                onClick={onExportPDF}
+                className="bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors text-xs"
+                title="Als PDF exportieren"
+              >
+                PDF
+              </button>
+            </div>
+          </div>
+        </aside>
+      )}
+    </>
   );
 };
 

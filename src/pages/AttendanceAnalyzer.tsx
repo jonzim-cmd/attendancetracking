@@ -28,7 +28,7 @@ const AttendanceAnalyzer: React.FC = () => {
   const [weeklyDetailedData, setWeeklyDetailedData] = useState<Record<string, any>>({});
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [activeFilters, setActiveFilters] = useState<Map<string, string>>(new Map());
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(['basic', 'attendance']);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(['basic', 'attendance', 'stats']);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   const resetAll = () => {
@@ -114,8 +114,10 @@ const AttendanceAnalyzer: React.FC = () => {
   }, [rawData, selectedWeeks]);
 
   useEffect(() => {
-    if (results) setResults({ ...results });
-  }, [selectedClasses, results]);
+    if (results) {
+      setResults({ ...results });
+    }
+  }, [selectedClasses]);
 
   const getFilteredStudents = (): [string, StudentStats][] => {
     if (!results) return [];

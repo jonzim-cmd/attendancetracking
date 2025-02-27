@@ -351,28 +351,9 @@ const NormalView: React.FC<NormalViewProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4 flex-1">
-          <h3 className="text-xl font-semibold text-chatGray-textLight dark:text-chatGray-textDark bg-chatGray-light dark:bg-chatGray-dark px-4 py-2 rounded-md shadow-sm">
-            Anwesenheitsübersicht: {new Date(startDate).toLocaleDateString('de-DE')} –{' '}
-            {new Date(endDate).toLocaleDateString('de-DE')}
-          </h3>
-        </div>
-        <Disclosure as="div">
-          {({ open }) => (
-            <>
-              <Disclosure.Button
-                onClick={toggleAllDetails}
-                className="border border-gray-400 dark:border-gray-600 px-3 py-1.5 rounded-md text-chatGray-textLight dark:text-chatGray-textDark bg-chatGray-light dark:bg-chatGray-button hover:bg-chatGray-hover transition-colors text-sm font-medium"
-              >
-                {isAllExpanded ? 'Alle einklappen' : 'Alle ausklappen'}
-              </Disclosure.Button>
-              <Disclosure.Panel className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                Zeige unentschuldigte V./F.
-              </Disclosure.Panel>
-            </>
-          )}
-        </Disclosure>
+      {/* Entfernte Überschrift und Button */}
+      <div className="flex justify-end items-center">
+        {/* hier war der alle Details ausklappen Button */}
       </div>
 
       <div className="relative h-[500px]">

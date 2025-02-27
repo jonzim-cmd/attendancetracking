@@ -36,3 +36,9 @@
     transform: rotate(360deg);
   }
 }
+
+/* CSS-Variablen für Sidebar/Header Positionierung */
+:root {
+  --sidebar-width: 240px;
+  --header-padding-left: 0px;
+}

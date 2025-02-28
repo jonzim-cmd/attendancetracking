@@ -1,16 +1,18 @@
 {
   "files": {
-    "main.css": "/attendancetracking/static/css/main.f855e6bc.css",
-    "main.js": "/attendancetracking/static/js/main.2a982268.js",
-    "static/js/453.a4945ddf.chunk.js": "/attendancetracking/static/js/453.a4945ddf.chunk.js",
-    "static/media/logo.svg": "/attendancetracking/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
+    "main.css": "/attendancetracking/static/css/main.2c467876.css",
+    "main.js": "/attendancetracking/static/js/main.6e7b4bd1.js",
+    "static/js/239.7419903b.chunk.js": "/attendancetracking/static/js/239.7419903b.chunk.js",
+    "static/js/977.bb2ec235.chunk.js": "/attendancetracking/static/js/977.bb2ec235.chunk.js",
+    "static/js/732.e0d36d60.chunk.js": "/attendancetracking/static/js/732.e0d36d60.chunk.js",
     "index.html": "/attendancetracking/index.html",
-    "main.f855e6bc.css.map": "/attendancetracking/static/css/main.f855e6bc.css.map",
-    "main.2a982268.js.map": "/attendancetracking/static/js/main.2a982268.js.map",
-    "453.a4945ddf.chunk.js.map": "/attendancetracking/static/js/453.a4945ddf.chunk.js.map"
+    "main.2c467876.css.map": "/attendancetracking/static/css/main.2c467876.css.map",
+    "main.6e7b4bd1.js.map": "/attendancetracking/static/js/main.6e7b4bd1.js.map",
+    "239.7419903b.chunk.js.map": "/attendancetracking/static/js/239.7419903b.chunk.js.map",
+    "732.e0d36d60.chunk.js.map": "/attendancetracking/static/js/732.e0d36d60.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.f855e6bc.css",
-    "static/js/main.2a982268.js"
+    "static/css/main.2c467876.css",
+    "static/js/main.6e7b4bd1.js"
   ]
 }

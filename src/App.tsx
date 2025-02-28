@@ -6,8 +6,8 @@ import './index.css'; // Tailwind CSS wird hier importiert
 // Basispfad für GitHub Pages
 const basePath = process.env.REACT_APP_BASE_PATH || '';
 
-// Wouter Basis-Hook für GitHub Pages
-const useHashLocation = () => {
+// Wouter Basis-Hook für GitHub Pages mit mutable Tuple-Rückgabe
+const useHashLocation = (): [string, (to: string) => void] => {
   const [loc, setLoc] = React.useState(
     window.location.hash ? window.location.hash.replace('#', '') : '/'
   );
@@ -26,7 +26,7 @@ const useHashLocation = () => {
     window.location.hash = to;
   };
 
-  return [loc, navigate] as const;
+  return [loc, navigate];
 };
 
 const App: React.FC = () => {

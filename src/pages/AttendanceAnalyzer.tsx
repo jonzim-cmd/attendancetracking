@@ -113,10 +113,11 @@ const AttendanceAnalyzer: React.FC = () => {
   }, [rawData, selectedWeeks]);
 
   useEffect(() => {
-    if (results) {
-      setResults({ ...results });
-    }
-  }, [selectedClasses, results]);
+    // Es ist nicht nötig, den gesamten results-Zustand neu zu setzen
+    // Das Filtern passiert bereits in getFilteredStudents()
+    // Dieser Effect könnte für andere Aktionen genutzt werden, die
+    // spezifisch bei Klassenänderungen notwendig sind
+  }, [selectedClasses]);
 
   const getFilteredStudents = (): [string, StudentStats][] => {
     if (!results) return [];

@@ -2,8 +2,11 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]  # oder master, je nachdem, wie Ihr Hauptbranch heißt
+    branches: [ main ]  # oder master, je nachdem, wie dein Hauptbranch heißt
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build-and-deploy:
@@ -15,7 +18,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16  # oder die von Ihnen verwendete Version
+          node-version: 16  # oder die von dir verwendete Version
 
       - name: Install dependencies
         run: npm ci

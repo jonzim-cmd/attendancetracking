@@ -41,37 +41,15 @@ const MainContent: React.FC<MainContentProps> = ({
   setActiveFilters,
   visibleColumns,
 }) => {
-  // Funktion zum Formatieren des Datums in dd.mm.yyyy
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  };
 
   return (
     <main
       className="pt-20 p-6 bg-chatGray-light dark:bg-chatGray-dark min-h-screen transition-all duration-300"
       style={{
         marginLeft: 'var(--sidebar-width)',
-        paddingLeft: 'calc(var(--header-padding-left) + 8px)' // Add a small buffer
+        paddingLeft: 'calc(var(--header-padding-left) + 8px)' // kleiner Puffer
       }}
     >
-      {/* Überschrift mit angepasstem Datumsbereich ohne Trennlinie */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-chatGray-textLight dark:text-chatGray-textDark">
-            Anwesenheitsübersicht
-          </h1>
-          <div className="text-sm text-chatGray-textLight dark:text-chatGray-textDark">
-            {formatDate(startDate)} - {formatDate(endDate)}
-          </div>
-        </div>
-      </div>
-      
       <NormalView
         getFilteredStudents={getFilteredStudents}
         detailedData={detailedData}
@@ -92,7 +70,7 @@ const MainContent: React.FC<MainContentProps> = ({
         visibleColumns={visibleColumns}
       />
     </main>
-  );
+  );  
 };
 
 export default MainContent;

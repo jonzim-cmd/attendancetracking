@@ -18,10 +18,10 @@ const Button: React.FC<ButtonProps> = ({
 
   // Wir orientieren uns an den Klassen, die du in HeaderBar benutzt:
   const variantClasses =
-    variant === 'outline'
-      ? 'bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark border border-chatGray-textLight'
-      : 'bg-header-btn-selected dark:bg-header-btn-selected-dark text-chatGray-textLight dark:text-chatGray-textDark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark';
-
+  variant === 'outline'
+    ? 'bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark border border-solid border-chatGray-textLight dark:border-chatGray-textDark'
+    : 'bg-header-btn-selected dark:bg-header-btn-selected-dark text-chatGray-textLight dark:text-chatGray-textDark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark';
+  
   // Größenanpassung:
   const sizeClasses =
     size === 'sm'

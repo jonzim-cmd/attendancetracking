@@ -336,12 +336,23 @@ const NormalView: React.FC<NormalViewProps> = ({
     setCheckedStudents(new Set());
   };
 
+  // Funktion zum Formatieren des Datums in dd.mm.yyyy
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Überschrift und "Alle Details" Button */}
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">
-          Ergebnisse für den Zeitraum {new Date(startDate).toLocaleDateString('de-DE')} - {new Date(endDate).toLocaleDateString('de-DE')}
+        <h3 className="text-lg font-semibold text-chatGray-textLight dark:text-chatGray-textDark">
+          Ergebnisse für den Zeitraum {formatDate(startDate)} - {formatDate(endDate)}
         </h3>
         <div className="flex justify-end items-center">
           <Button

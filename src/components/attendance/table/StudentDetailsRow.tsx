@@ -1,9 +1,10 @@
 import React from 'react';
 import { getLastNWeeks } from '@/lib/attendance-utils';
+import { AbsenceEntry } from '@/types';
 
 interface StudentDetailsRowProps {
   student: string;
-  detailedData: any[];
+  detailedData: AbsenceEntry[];
   rowColor: string;
   isVisible: boolean;
   filterType?: string;
@@ -81,7 +82,7 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
     return 'text-yellow-600 dark:text-yellow-400';
   };
 
-  const renderDetailSection = (entries: any[], title: string) => {
+  const renderDetailSection = (entries: AbsenceEntry[], title: string) => {
     if (!entries || entries.length === 0) return null;
 
     return (
@@ -119,7 +120,7 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
     );
   };
 
-  const isUnexcused = (entry: any) => {
+  const isUnexcused = (entry: AbsenceEntry) => {
     const status = entry.status || '';
     const isUnentschuldigt = status === 'nicht entsch.' || status === 'nicht akzep.';
     if (!status.trim()) {
@@ -140,8 +141,8 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
     return datum;
   };
 
-  const groupEntriesByWeek = (entries: any[], weeks: { startDate: Date; endDate: Date }[]) => {
-    const grouped: any[][] = weeks.map(() => []);
+  const groupEntriesByWeek = (entries: AbsenceEntry[], weeks: { startDate: Date; endDate: Date }[]) => {
+    const grouped: AbsenceEntry[][] = weeks.map(() => []);
     entries.forEach(entry => {
       const entryDate = parseDateString(entry.datum);
       const weekIndex = weeks.findIndex(week => entryDate >= week.startDate && entryDate <= week.endDate);
@@ -211,7 +212,7 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
   };
 
   const renderDetailsContent = () => {
-    if (!detailedData) return (
+    if (!detailedData || detailedData.length === 0) return (
       <div className="text-gray-500 dark:text-gray-400 italic">Keine Daten verfügbar</div>
     );
 

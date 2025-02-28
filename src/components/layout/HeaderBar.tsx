@@ -1,5 +1,7 @@
+// src/components/layout/HeaderBar.tsx
 import React from 'react';
 import { Sun, Moon } from 'lucide-react';
+import ResetButton from '@/components/attendance/ResetButton';
 
 interface HeaderBarProps {
   filterUnexcusedLate: boolean;
@@ -17,6 +19,7 @@ interface HeaderBarProps {
   onClassesChange: (classes: string[]) => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
+  onReset: () => void; // Neue Prop für die Reset-Funktion
 }
 
 const HeaderBar: React.FC<HeaderBarProps> = ({
@@ -35,6 +38,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   onClassesChange,
   isDarkMode,
   toggleDarkMode,
+  onReset,
 }) => {
   const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -128,13 +132,16 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
           className="w-40 rounded px-2 py-1 bg-header-btn-input dark:bg-header-btn-input-dark hover:bg-header-btn-input-hover dark:hover:bg-header-btn-input-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
         />
       </div>
-      <button
-        onClick={toggleDarkMode}
-        className="p-1.5 rounded-full bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors"
-        title={isDarkMode ? 'Zum Light Mode wechseln' : 'Zum Dark Mode wechseln'}
-      >
-        {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-      </button>
+      <div className="flex items-center gap-2 mr-2">
+        <ResetButton onReset={onReset} />
+        <button
+          onClick={toggleDarkMode}
+          className="p-1.5 rounded-full bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors"
+          title={isDarkMode ? 'Zum Light Mode wechseln' : 'Zum Dark Mode wechseln'}
+        >
+          {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
+      </div>
     </header>
   );
 };

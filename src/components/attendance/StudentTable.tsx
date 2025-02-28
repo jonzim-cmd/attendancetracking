@@ -2,7 +2,7 @@ import React from 'react';
 import StudentTableHeader from './table/StudentTableHeader';
 import StudentTableRow from './table/StudentTableRow';
 import StudentDetailsRow from './table/StudentDetailsRow';
-import { StudentStats } from '@/types';
+import { AbsenceEntry, StudentStats } from '@/types';
 
 type SortField =
   | 'name'
@@ -43,6 +43,7 @@ interface StudentTableProps {
   onShowFilteredDetails: (student: string, type: string) => void;
   onToggleChecked: (student: string) => void;
   onResetSelection: () => void;
+  getFilteredDetailData: (student: string) => AbsenceEntry[];
 }
 
 const StudentTable: React.FC<StudentTableProps> = ({
@@ -61,6 +62,7 @@ const StudentTable: React.FC<StudentTableProps> = ({
   onShowFilteredDetails,
   onToggleChecked,
   onResetSelection,
+  getFilteredDetailData,
 }) => {
   return (
     <table className="min-w-full border-collapse bg-white dark:bg-gray-800">
@@ -101,7 +103,7 @@ const StudentTable: React.FC<StudentTableProps> = ({
               {expandedStudents.has(student) && (
                 <StudentDetailsRow
                   student={student}
-                  detailedData={detailedData[student]}
+                  detailedData={getFilteredDetailData(student)}
                   rowColor={finalRowClass}
                   isVisible={true}
                   filterType={activeFilters.get(student)}

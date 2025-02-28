@@ -19,7 +19,6 @@ const AttendanceAnalyzer: React.FC = () => {
   const [filterUnexcusedAbsent, setFilterUnexcusedAbsent] = useState(false);
   const [minUnexcusedLates, setMinUnexcusedLates] = useState('');
   const [minUnexcusedAbsences, setMinUnexcusedAbsences] = useState('');
-  const [availableStudents, setAvailableStudents] = useState<string[]>([]);
   const [availableClasses, setAvailableClasses] = useState<string[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedWeeks, setSelectedWeeks] = useState('4');
@@ -44,7 +43,6 @@ const AttendanceAnalyzer: React.FC = () => {
     setFilterUnexcusedAbsent(false);
     setMinUnexcusedLates('');
     setMinUnexcusedAbsences('');
-    setAvailableStudents([]);
     setAvailableClasses([]);
     setSelectedClasses([]);
     setSelectedWeeks('4');
@@ -77,7 +75,8 @@ const AttendanceAnalyzer: React.FC = () => {
       setDetailedData(processed.detailedStats);
       setSchoolYearDetailedData(processed.schoolYearDetails);
       setWeeklyDetailedData(processed.weeklyDetails);
-      setAvailableStudents(Object.keys(processed.studentStats).sort());
+      // Entfernen der überflüssigen Zeile:
+      // setAvailableStudents(Object.keys(processed.studentStats).sort());
       const classes = new Set<string>();
       rawData.forEach((row: any) => {
         if (row.Klasse) classes.add(row.Klasse);
@@ -104,7 +103,7 @@ const AttendanceAnalyzer: React.FC = () => {
       setStartDate(start.toLocaleDateString('sv').split('T')[0]);
       setEndDate(end.toLocaleDateString('sv').split('T')[0]);
     }
-  }, []);
+  }, [startDate, endDate]);
 
   useEffect(() => {
     if (rawData) {
@@ -117,7 +116,7 @@ const AttendanceAnalyzer: React.FC = () => {
     if (results) {
       setResults({ ...results });
     }
-  }, [selectedClasses]);
+  }, [selectedClasses, results]);
 
   const getFilteredStudents = (): [string, StudentStats][] => {
     if (!results) return [];
@@ -332,6 +331,7 @@ const AttendanceAnalyzer: React.FC = () => {
         onClassesChange={setSelectedClasses}
         isDarkMode={isDarkMode}
         toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+        onReset={resetAll}
       />
       <Sidebar
         startDate={startDate}

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Disclosure } from '@headlessui/react';
 import StudentTable from '@/components/attendance/StudentTable';
 import { getLastNWeeks } from '@/lib/attendance-utils';
 import { AbsenceEntry, DetailedStats, StudentStats } from '@/types';
+import Button from '@/components/ui/Button';
 
 interface NormalViewProps {
   getFilteredStudents: () => [string, StudentStats][];
@@ -113,7 +113,8 @@ const NormalView: React.FC<NormalViewProps> = ({
         ];
 
         return [...unexcusedEntries, ...overdueEntries].sort(
-          (a, b) => parseDate(b.datum).getTime() - parseDate(a.datum).getTime()
+          (a: AbsenceEntry, b: AbsenceEntry) =>
+            parseDate(b.datum).getTime() - parseDate(a.datum).getTime()
         );
       }
 
@@ -124,13 +125,15 @@ const NormalView: React.FC<NormalViewProps> = ({
             ? studentSchoolYearData.verspaetungen_unentsch
             : studentSchoolYearData.fehlzeiten_unentsch;
         return entries.sort(
-          (a: AbsenceEntry, b: AbsenceEntry) => parseDate(b.datum).getTime() - parseDate(a.datum).getTime()
+          (a: AbsenceEntry, b: AbsenceEntry) =>
+            parseDate(b.datum).getTime() - parseDate(a.datum).getTime()
         );
       }
 
       case 'sj_fehlzeiten_ges': {
         return studentSchoolYearData.fehlzeiten_gesamt.sort(
-          (a: AbsenceEntry, b: AbsenceEntry) => parseDate(b.datum).getTime() - parseDate(a.datum).getTime()
+          (a: AbsenceEntry, b: AbsenceEntry) =>
+            parseDate(b.datum).getTime() - parseDate(a.datum).getTime()
         );
       }
 
@@ -142,7 +145,8 @@ const NormalView: React.FC<NormalViewProps> = ({
         });
 
         return entries.sort(
-          (a: AbsenceEntry, b: AbsenceEntry) => parseDate(b.datum).getTime() - parseDate(a.datum).getTime()
+          (a: AbsenceEntry, b: AbsenceEntry) =>
+            parseDate(b.datum).getTime() - parseDate(a.datum).getTime()
         );
       }
 
@@ -154,7 +158,8 @@ const NormalView: React.FC<NormalViewProps> = ({
         });
 
         return entries.sort(
-          (a: AbsenceEntry, b: AbsenceEntry) => parseDate(b.datum).getTime() - parseDate(a.datum).getTime()
+          (a: AbsenceEntry, b: AbsenceEntry) =>
+            parseDate(b.datum).getTime() - parseDate(a.datum).getTime()
         );
       }
 
@@ -282,33 +287,15 @@ const NormalView: React.FC<NormalViewProps> = ({
       case 'fehlzeiten_offen':
         return multiplier * (statsA.fehlzeiten_offen - statsB.fehlzeiten_offen);
       case 'sj_verspaetungen':
-        return (
-          multiplier *
-          ((schoolYearStats[studentA]?.verspaetungen_unentsch || 0) -
-            (schoolYearStats[studentB]?.verspaetungen_unentsch || 0))
-        );
+        return multiplier * ((schoolYearStats[studentA]?.verspaetungen_unentsch || 0) - (schoolYearStats[studentB]?.verspaetungen_unentsch || 0));
       case 'sj_fehlzeiten':
-        return (
-          multiplier *
-          ((schoolYearStats[studentA]?.fehlzeiten_unentsch || 0) -
-            (schoolYearStats[studentB]?.fehlzeiten_unentsch || 0))
-        );
+        return multiplier * ((schoolYearStats[studentA]?.fehlzeiten_unentsch || 0) - (schoolYearStats[studentB]?.fehlzeiten_unentsch || 0));
       case 'sj_fehlzeiten_ges':
-        return (
-          multiplier *
-          ((schoolYearStats[studentA]?.fehlzeiten_gesamt || 0) -
-            (schoolYearStats[studentB]?.fehlzeiten_gesamt || 0))
-        );
+        return multiplier * ((schoolYearStats[studentA]?.fehlzeiten_gesamt || 0) - (schoolYearStats[studentB]?.fehlzeiten_gesamt || 0));
       case 'sum_verspaetungen':
-        return (
-          multiplier *
-          ((weeklyStats[studentA]?.verspaetungen.total || 0) - (weeklyStats[studentB]?.verspaetungen.total || 0))
-        );
+        return multiplier * ((weeklyStats[studentA]?.verspaetungen.total || 0) - (weeklyStats[studentB]?.verspaetungen.total || 0));
       case 'sum_fehlzeiten':
-        return (
-          multiplier *
-          ((weeklyStats[studentA]?.fehlzeiten.total || 0) - (weeklyStats[studentB]?.fehlzeiten.total || 0))
-        );
+        return multiplier * ((weeklyStats[studentA]?.fehlzeiten.total || 0) - (weeklyStats[studentB]?.fehlzeiten.total || 0));
       default:
         return 0;
     }
@@ -351,9 +338,22 @@ const NormalView: React.FC<NormalViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Entfernte Überschrift und Button */}
-      <div className="flex justify-end items-center">
-        {/* hier war der alle Details ausklappen Button */}
+      {/* Überschrift und "Alle Details" Button */}
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">
+          Ergebnisse für den Zeitraum {new Date(startDate).toLocaleDateString('de-DE')} - {new Date(endDate).toLocaleDateString('de-DE')}
+        </h3>
+        <div className="flex justify-end items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleAllDetails}
+            title="zeige unent. V./F. Zeitr."
+            className="px-3 py-1"
+          >
+            {isAllExpanded ? 'Alle Details einklappen' : 'Alle Details ausklappen'}
+          </Button>
+        </div>
       </div>
 
       <div className="relative h-[500px]">
@@ -374,6 +374,7 @@ const NormalView: React.FC<NormalViewProps> = ({
             onShowFilteredDetails={showFilteredDetails}
             onToggleChecked={toggleCheckedStudent}
             onResetSelection={resetCheckedStudents}
+            getFilteredDetailData={getFilteredDetailData}
           />
         </div>
       </div>

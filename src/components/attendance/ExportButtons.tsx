@@ -251,7 +251,9 @@ const formatData = (props: ExportProps): ExportRow[] => {
 };
 
 export const exportToExcel = (props: ExportProps) => {
-  const { getFilteredStudents, startDate, endDate, schoolYearStats, weeklyStats, selectedWeeks, detailedData, schoolYearDetailedData, weeklyDetailedData, expandedStudents, activeFilters } = props;
+  // Destrukturiere nur die Parameter, die direkt in dieser Funktion verwendet werden
+  const { startDate, endDate, expandedStudents, activeFilters, selectedWeeks, detailedData, schoolYearDetailedData, weeklyDetailedData } = props;
+  
   const formattedData = formatData(props);
   const enrichedData: ExportRow[] = formattedData.map(row => {
     const studentName = `${row.Nachname}, ${row.Vorname}`;
@@ -299,7 +301,9 @@ export const exportToExcel = (props: ExportProps) => {
 };
 
 export const exportToCSV = (props: ExportProps) => {
-  const { getFilteredStudents, startDate, endDate, schoolYearStats, weeklyStats, selectedWeeks, detailedData, schoolYearDetailedData, weeklyDetailedData, expandedStudents, activeFilters } = props;
+  // Destrukturiere nur die Parameter, die direkt in dieser Funktion verwendet werden
+  const { startDate, endDate, expandedStudents, activeFilters, selectedWeeks, detailedData, schoolYearDetailedData, weeklyDetailedData } = props;
+  
   const formattedData = formatData(props);
   const enrichedData: ExportRow[] = formattedData.map(row => {
     const studentName = `${row.Nachname}, ${row.Vorname}`;
@@ -333,7 +337,9 @@ export const exportToCSV = (props: ExportProps) => {
 };
 
 export const exportToPDF = (props: ExportProps) => {
-  const { getFilteredStudents, startDate, endDate, schoolYearStats, weeklyStats, selectedWeeks, detailedData, schoolYearDetailedData, weeklyDetailedData, expandedStudents, activeFilters } = props;
+  // Destrukturiere nur die Parameter, die direkt in dieser Funktion verwendet werden
+  const { startDate, endDate, expandedStudents, activeFilters, selectedWeeks, detailedData, schoolYearDetailedData, weeklyDetailedData } = props;
+  
   const formattedData = formatData(props);
   const doc = new jsPDF({
     orientation: 'landscape',
@@ -505,4 +511,6 @@ export const exportToPDF = (props: ExportProps) => {
   doc.save(`Anwesenheitsstatistik_${startDate}_${endDate}.pdf`);
 };
 
-export default { exportToExcel, exportToCSV, exportToPDF };
+// Exportiere die Funktionen als benanntes Objekt anstatt eines anonymen Default-Exports
+const exportFunctions = { exportToExcel, exportToCSV, exportToPDF };
+export default exportFunctions;

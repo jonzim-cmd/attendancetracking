@@ -104,7 +104,7 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
           </td>
         </>
       )}
-      <td className="px-4 py-3 text-sm text-center border-r border-gray-200 dark:border-gray-700">
+      <td className="px-4 py-3 text-sm text-center border-gray-200 dark:border-gray-700">
         <input
           type="checkbox"
           checked={isChecked}

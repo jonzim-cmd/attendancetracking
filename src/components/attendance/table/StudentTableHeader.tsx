@@ -49,43 +49,46 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
   return (
     <thead className="sticky top-0 z-10 bg-table-light-header dark:bg-table-dark-header shadow-sm">
       <tr>
-        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700 w-12">Nr.</th>
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700 w-12">Nr.</th>
         <th 
           onClick={() => onSort('name')}
-          className={`px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700 w-48 ${getSortableHeaderClass('name')}`}
+          className={`px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700 w-48 ${getSortableHeaderClass('name')}`}
         >
           Name {renderSortIndicator('name')}
         </th>
         <th 
           onClick={() => onSort('klasse')}
-          className={`px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700 w-24 ${getSortableHeaderClass('klasse')}`}
+          className={`px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700 w-24 ${getSortableHeaderClass('klasse')}`}
         >
           Klasse {renderSortIndicator('klasse')}
         </th>
-        <th colSpan={3} className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700">
+        <th colSpan={3} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700">
           Verspätungen
-          <span className="text-xs block">Ausgewählter Zeitraum</span>
+          <div className="text-xs font-normal normal-case">Zeitraum</div>
         </th>
-        <th colSpan={3} className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700">
+        <th colSpan={3} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700">
           Fehlzeiten
-          <span className="text-xs block">Ausgewählter Zeitraum</span>
+          <div className="text-xs font-normal normal-case">Zeitraum</div>
         </th>
         {visibleColumns.includes('stats') && (
-          <th colSpan={5} className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
+          <th colSpan={5} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700">
             Statistik
-            <span className="text-xs block">Schuljahr & Wochen</span>
+            <div className="text-xs font-normal normal-case">Schuljahr & Wochen</div>
           </th>
         )}
-      </tr>
-      <tr className="bg-table-light-header dark:bg-table-dark-header">
-        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700"></th>
-        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700">
+        <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 w-16">
           <button
             onClick={onResetSelection}
             className="text-xs h-6 px-2 bg-gray-200 dark:bg-gray-600 rounded"
           >
             Reset
           </button>
+        </th>
+      </tr>
+      <tr className="bg-table-light-header dark:bg-table-dark-header">
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700"></th>
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700">
+          
         </th>
         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700"></th>
         <th 
@@ -158,6 +161,9 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
             </th>
           </>
         )}
+        <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
+          Auswahl
+        </th>
       </tr>
     </thead>
   );

@@ -27,9 +27,9 @@ module.exports = {
           },
           dark: {
             base: '#282828',      // Matches chatGray.dark (MainContent dark mode)
-            alternate: '#333333', // Slightly lighter for alternating rows
-            hover: '#3a3a3a',     // Even lighter for hover effect
-            header: '#282828',    // Header background in dark mode
+            alternate: '#222222', // Slightly darker for alternating rows (more contrast)
+            hover: '#363636',     // Even lighter for hover effect
+            header: '#1e1e1e',    // Header background in dark mode (darker)
           }
         },
         // Kontext-spezifische Button-Farben für Header
@@ -132,5 +132,16 @@ module.exports = {
       borderColor: ['dark', 'hover', 'active'],
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addBase, theme }) {
+      addBase({
+        '.calendar-icon-light::-webkit-calendar-picker-indicator': {
+          filter: 'invert(0)'
+        },
+        '.calendar-icon-dark::-webkit-calendar-picker-indicator': {
+          filter: 'invert(1)'
+        },
+      })
+    },
+  ],
 };

@@ -66,6 +66,27 @@ const StudentTable: React.FC<StudentTableProps> = ({
 }) => {
   return (
     <table className="min-w-full border-collapse bg-table-light-base dark:bg-table-dark-base">
+      <colgroup>
+        <col className="w-12" /> {/* Nr.-Spalte */}
+        <col className="w-48" /> {/* Name-Spalte */}
+        <col className="w-20" /> {/* Klasse-Spalte - kompaktere Breite */}
+        <col /> {/* Verspätungen E */}
+        <col /> {/* Verspätungen U */}
+        <col /> {/* Verspätungen O */}
+        <col /> {/* Fehlzeiten E */}
+        <col /> {/* Fehlzeiten U */}
+        <col /> {/* Fehlzeiten O */}
+        {visibleColumns.includes('stats') && (
+          <>
+            <col /> {/* SJ V */}
+            <col /> {/* SJ F */}
+            <col /> {/* SJ F(ges) */}
+            <col /> {/* Sum V */}
+            <col /> {/* Sum F */}
+          </>
+        )}
+        <col className="w-16" /> {/* Auswahl-Spalte */}
+      </colgroup>
       <StudentTableHeader
         onSort={onSort}
         sortStates={sortStates}

@@ -368,7 +368,7 @@ const NormalView: React.FC<NormalViewProps> = ({
       </div>
 
       
-      <div className="h-[500px] overflow-auto bg-chatGray-light dark:bg-chatGray-dark">
+      <div className="h-[500px] overflow-auto bg-table-light-base dark:bg-table-dark-base">
         <StudentTable
           students={getSortedStudents()}
           detailedData={detailedData}

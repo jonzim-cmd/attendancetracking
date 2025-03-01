@@ -43,11 +43,11 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
 
   const getSortableHeaderClass = (field: SortField) => {
     const state = sortStates.get(field);
-    return `cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 ${state ? 'bg-gray-50 dark:bg-gray-600' : ''}`;
+    return `cursor-pointer hover:bg-table-light-hover dark:hover:bg-table-dark-hover ${state ? 'bg-table-light-hover dark:bg-table-dark-hover' : ''}`;
   };
 
   return (
-    <thead className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-sm">
+    <thead className="sticky top-0 z-10 bg-table-light-header dark:bg-table-dark-header shadow-sm">
       <tr>
         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700 w-12">Nr.</th>
         <th 
@@ -77,7 +77,7 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
           </th>
         )}
       </tr>
-      <tr className="bg-white dark:bg-gray-800">
+      <tr className="bg-table-light-header dark:bg-table-dark-header">
         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700"></th>
         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700">
           <button

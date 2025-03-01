@@ -17,6 +17,21 @@ module.exports = {
           textDark: '#D1D5DB',
           hover: '#4A5568',
         },
+        // Table specific colors to match the application theme
+        table: {
+          light: {
+            base: '#F7F7F8',      // Matches chatGray.light (MainContent light mode)
+            alternate: '#eaeaea', // Slightly darker for alternating rows
+            hover: '#e2e2e2',     // Even darker for hover effect
+            header: '#F7F7F8',    // Header background in light mode
+          },
+          dark: {
+            base: '#282828',      // Matches chatGray.dark (MainContent dark mode)
+            alternate: '#333333', // Slightly lighter for alternating rows
+            hover: '#3a3a3a',     // Even lighter for hover effect
+            header: '#282828',    // Header background in dark mode
+          }
+        },
         // Kontext-spezifische Button-Farben für Header
         'header-btn': {
           DEFAULT: '#F7F7F8', // Light Mode Default

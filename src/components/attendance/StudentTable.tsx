@@ -65,7 +65,7 @@ const StudentTable: React.FC<StudentTableProps> = ({
   getFilteredDetailData,
 }) => {
   return (
-    <table className="min-w-full border-collapse bg-white dark:bg-gray-800">
+    <table className="min-w-full border-collapse bg-table-light-base dark:bg-table-dark-base">
       <StudentTableHeader
         onSort={onSort}
         sortStates={sortStates}
@@ -74,8 +74,8 @@ const StudentTable: React.FC<StudentTableProps> = ({
       />
       <tbody>
         {students.map(([student, stats], index) => {
-          const baseRowColor = index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-700';
-          const finalRowClass = `${baseRowColor} transition-opacity duration-300 ${
+          const baseRowColor = index % 2 === 0 ? 'bg-table-light-base dark:bg-table-dark-base' : 'bg-table-light-alternate dark:bg-table-dark-alternate';
+          const finalRowClass = `${baseRowColor} transition-opacity duration-300 hover:bg-table-light-hover dark:hover:bg-table-dark-hover ${
             checkedStudents.has(student) ? 'opacity-50' : 'opacity-100'
           }`;
           const schoolYearData = schoolYearStats[student] || { verspaetungen_unentsch: 0, fehlzeiten_unentsch: 0, fehlzeiten_gesamt: 0 };

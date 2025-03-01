@@ -52,7 +52,7 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
   );
 
   return (
-    <tr className={rowColor}>
+    <tr className={`${rowColor} transition-all duration-200`}>
       <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-gray-200 dark:border-gray-700 text-center">
         {index + 1}
       </td>

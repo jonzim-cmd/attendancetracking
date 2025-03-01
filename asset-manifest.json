@@ -1,18 +1,18 @@
 {
   "files": {
-    "main.css": "/attendancetracking/static/css/main.5b7439d9.css",
-    "main.js": "/attendancetracking/static/js/main.368292d2.js",
+    "main.css": "/attendancetracking/static/css/main.00db2737.css",
+    "main.js": "/attendancetracking/static/js/main.b96e86e1.js",
     "static/js/239.7419903b.chunk.js": "/attendancetracking/static/js/239.7419903b.chunk.js",
     "static/js/977.bb2ec235.chunk.js": "/attendancetracking/static/js/977.bb2ec235.chunk.js",
     "static/js/732.e0d36d60.chunk.js": "/attendancetracking/static/js/732.e0d36d60.chunk.js",
     "index.html": "/attendancetracking/index.html",
-    "main.5b7439d9.css.map": "/attendancetracking/static/css/main.5b7439d9.css.map",
-    "main.368292d2.js.map": "/attendancetracking/static/js/main.368292d2.js.map",
+    "main.00db2737.css.map": "/attendancetracking/static/css/main.00db2737.css.map",
+    "main.b96e86e1.js.map": "/attendancetracking/static/js/main.b96e86e1.js.map",
     "239.7419903b.chunk.js.map": "/attendancetracking/static/js/239.7419903b.chunk.js.map",
     "732.e0d36d60.chunk.js.map": "/attendancetracking/static/js/732.e0d36d60.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.5b7439d9.css",
-    "static/js/main.368292d2.js"
+    "static/css/main.00db2737.css",
+    "static/js/main.b96e86e1.js"
   ]
 }

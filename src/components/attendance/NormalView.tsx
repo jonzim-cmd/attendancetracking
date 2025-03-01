@@ -367,27 +367,26 @@ const NormalView: React.FC<NormalViewProps> = ({
         </div>
       </div>
 
-      <div className="relative h-[500px]">
-        <div className="absolute inset-0 overflow-x-auto overflow-y-auto bg-chatGray-light dark:bg-chatGray-dark">
-          <StudentTable
-            students={getSortedStudents()}
-            detailedData={detailedData}
-            schoolYearStats={schoolYearStats}
-            weeklyStats={weeklyStats}
-            selectedWeeks={selectedWeeks}
-            expandedStudents={expandedStudents}
-            activeFilters={activeFilters}
-            checkedStudents={checkedStudents}
-            visibleColumns={visibleColumns}
-            sortStates={sortStates}
-            onSort={handleSort}
-            onToggleDetails={toggleDetails}
-            onShowFilteredDetails={showFilteredDetails}
-            onToggleChecked={toggleCheckedStudent}
-            onResetSelection={resetCheckedStudents}
-            getFilteredDetailData={getFilteredDetailData}
-          />
-        </div>
+      
+      <div className="h-[500px] overflow-auto bg-chatGray-light dark:bg-chatGray-dark">
+        <StudentTable
+          students={getSortedStudents()}
+          detailedData={detailedData}
+          schoolYearStats={schoolYearStats}
+          weeklyStats={weeklyStats}
+          selectedWeeks={selectedWeeks}
+          expandedStudents={expandedStudents}
+          activeFilters={activeFilters}
+          checkedStudents={checkedStudents}
+          visibleColumns={visibleColumns}
+          sortStates={sortStates}
+          onSort={handleSort}
+          onToggleDetails={toggleDetails}
+          onShowFilteredDetails={showFilteredDetails}
+          onToggleChecked={toggleCheckedStudent}
+          onResetSelection={resetCheckedStudents}
+          getFilteredDetailData={getFilteredDetailData}
+        />
       </div>
     </div>
   );

@@ -51,7 +51,7 @@ const AttendanceAnalyzer: React.FC = () => {
     setWeeklyDetailedData({});
     setExpandedStudents(new Set());
     setActiveFilters(new Map());
-    setVisibleColumns(['basic', 'attendance']);
+    setVisibleColumns(['basic', 'attendance', 'stats']);
   };
 
   const handleFileProcessed = (data: any) => {

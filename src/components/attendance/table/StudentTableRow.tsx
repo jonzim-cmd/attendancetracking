@@ -53,10 +53,10 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
 
   return (
     <tr className={`${rowColor} transition-all duration-200`}>
-      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-gray-200 dark:border-gray-700 text-center">
+      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark text-center">
         {index + 1}
       </td>
-      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-gray-200 dark:border-gray-700 truncate">
+      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark truncate">
         <span className="cursor-pointer hover:underline" onClick={onToggleDetails}>
           {student}
           <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
@@ -64,47 +64,47 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
           </span>
         </span>
       </td>
-      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-gray-200 dark:border-gray-700">
+      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark">
         {stats.klasse}
       </td>
-      <td className="px-4 py-3 text-sm text-center text-green-600 dark:text-green-400 border-r border-gray-200 dark:border-gray-700">
+      <td className="px-4 py-3 text-sm text-center text-green-600 dark:text-green-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
         {createClickableCell(stats.verspaetungen_entsch, 'verspaetungen_entsch', 'text-green-600 dark:text-green-400')}
       </td>
-      <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-gray-200 dark:border-gray-700">
+      <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
         {createClickableCell(stats.verspaetungen_unentsch, 'verspaetungen_unentsch', 'text-red-600 dark:text-red-400')}
       </td>
-      <td className="px-4 py-3 text-sm text-center text-yellow-600 dark:text-yellow-400 border-r border-gray-200 dark:border-gray-700">
+      <td className="px-4 py-3 text-sm text-center text-yellow-600 dark:text-yellow-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
         {createClickableCell(stats.verspaetungen_offen, 'verspaetungen_offen', 'text-yellow-600 dark:text-yellow-400')}
       </td>
-      <td className="px-4 py-3 text-sm text-center text-green-600 dark:text-green-400 border-r border-gray-200 dark:border-gray-700">
+      <td className="px-4 py-3 text-sm text-center text-green-600 dark:text-green-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
         {createClickableCell(stats.fehlzeiten_entsch, 'fehlzeiten_entsch', 'text-green-600 dark:text-green-400')}
       </td>
-      <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-gray-200 dark:border-gray-700">
+      <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
         {createClickableCell(stats.fehlzeiten_unentsch, 'fehlzeiten_unentsch', 'text-red-600 dark:text-red-400')}
       </td>
-      <td className="px-4 py-3 text-sm text-center text-yellow-600 dark:text-yellow-400 border-r border-gray-200 dark:border-gray-700">
+      <td className="px-4 py-3 text-sm text-center text-yellow-600 dark:text-yellow-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
         {createClickableCell(stats.fehlzeiten_offen, 'fehlzeiten_offen', 'text-yellow-600 dark:text-yellow-400')}
       </td>
       {visibleColumns.includes('stats') && (
         <>
-          <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-gray-200 dark:border-gray-700">
+          <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
             {createClickableCell(schoolYearData.verspaetungen_unentsch, 'sj_verspaetungen', 'text-red-600 dark:text-red-400')}
           </td>
-          <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-gray-200 dark:border-gray-700">
+          <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
             {createClickableCell(schoolYearData.fehlzeiten_unentsch, 'sj_fehlzeiten', 'text-red-600 dark:text-red-400')}
           </td>
-          <td className="px-4 py-3 text-sm text-center text-black dark:text-white border-r border-gray-200 dark:border-gray-700">
+          <td className="px-4 py-3 text-sm text-center text-black dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark">
             {createClickableCell(schoolYearData.fehlzeiten_gesamt, 'sj_fehlzeiten_ges', 'text-black dark:text-white')}
           </td>
-          <td className="px-4 py-3 text-sm text-center text-gray-900 dark:text-white border-r border-gray-200 dark:border-gray-700">
+          <td className="px-4 py-3 text-sm text-center text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark">
             {createClickableWeeklyCell(verspaetungenSum, weeklyData.verspaetungen.weekly, 'sum_verspaetungen')}
           </td>
-          <td className="px-4 py-3 text-sm text-center text-gray-900 dark:text-white border-r border-gray-200 dark:border-gray-700">
+          <td className="px-4 py-3 text-sm text-center text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark">
             {createClickableWeeklyCell(fehlzeitenSum, weeklyData.fehlzeiten.weekly, 'sum_fehlzeiten')}
           </td>
         </>
       )}
-      <td className="px-4 py-3 text-sm text-center border-gray-200 dark:border-gray-700">
+      <td className="px-4 py-3 text-sm text-center border-tableBorder-light dark:border-tableBorder-dark">
         <input
           type="checkbox"
           checked={isChecked}

@@ -49,81 +49,81 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
   return (
     <thead className="sticky top-0 z-10 bg-table-light-header dark:bg-table-dark-header shadow-sm">
       <tr>
-        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700 w-12">Nr.</th>
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark w-12">Nr.</th>
         <th 
           onClick={() => onSort('name')}
-          className={`px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700 w-48 ${getSortableHeaderClass('name')}`}
+          className={`px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark w-48 ${getSortableHeaderClass('name')}`}
         >
           Name {renderSortIndicator('name')}
         </th>
         <th 
           onClick={() => onSort('klasse')}
-          className={`px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700 w-24 ${getSortableHeaderClass('klasse')}`}
+          className={`px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark w-24 ${getSortableHeaderClass('klasse')}`}
         >
           Klasse {renderSortIndicator('klasse')}
         </th>
-        <th colSpan={3} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700">
+        <th colSpan={3} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark">
           Verspätungen
           <div className="text-xs font-normal normal-case">Zeitraum</div>
         </th>
-        <th colSpan={3} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700">
+        <th colSpan={3} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark">
           Fehlzeiten
           <div className="text-xs font-normal normal-case">Zeitraum</div>
         </th>
         {visibleColumns.includes('stats') && (
-          <th colSpan={5} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-gray-200 dark:border-gray-700">
+          <th colSpan={5} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark">
             Statistik
             <div className="text-xs font-normal normal-case">Schuljahr & Wochen</div>
           </th>
         )}
-        <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 w-16">
+        <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-tableBorder-light dark:border-tableBorder-dark w-16">
           <button
             onClick={onResetSelection}
-            className="text-xs h-6 px-2 bg-gray-200 dark:bg-gray-600 rounded"
+            className="text-xs h-6 px-2 bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark rounded text-gray-700 dark:text-gray-300 transition-colors duration-200"
           >
             Reset
           </button>
         </th>
       </tr>
       <tr className="bg-table-light-header dark:bg-table-dark-header">
-        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700"></th>
-        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700">
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark"></th>
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark">
           
         </th>
-        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700"></th>
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark"></th>
         <th 
           onClick={() => onSort('verspaetungen_entsch')}
-          className={`px-4 py-2 text-center text-xs font-medium text-green-600 dark:text-green-400 border-b border-r border-gray-200 dark:border-gray-700 ${getSortableHeaderClass('verspaetungen_entsch')}`}
+          className={`px-4 py-2 text-center text-xs font-medium text-green-600 dark:text-green-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('verspaetungen_entsch')}`}
         >
           E {renderSortIndicator('verspaetungen_entsch')}
         </th>
         <th 
           onClick={() => onSort('verspaetungen_unentsch')}
-          className={`px-4 py-2 text-center text-xs font-medium text-red-600 dark:text-red-400 border-b border-r border-gray-200 dark:border-gray-700 ${getSortableHeaderClass('verspaetungen_unentsch')}`}
+          className={`px-4 py-2 text-center text-xs font-medium text-red-600 dark:text-red-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('verspaetungen_unentsch')}`}
         >
           U {renderSortIndicator('verspaetungen_unentsch')}
         </th>
         <th 
           onClick={() => onSort('verspaetungen_offen')}
-          className={`px-4 py-2 text-center text-xs font-medium text-yellow-600 dark:text-yellow-400 border-b border-r border-gray-200 dark:border-gray-700 ${getSortableHeaderClass('verspaetungen_offen')}`}
+          className={`px-4 py-2 text-center text-xs font-medium text-yellow-600 dark:text-yellow-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('verspaetungen_offen')}`}
         >
           O {renderSortIndicator('verspaetungen_offen')}
         </th>
         <th 
           onClick={() => onSort('fehlzeiten_entsch')}
-          className={`px-4 py-2 text-center text-xs font-medium text-green-600 dark:text-green-400 border-b border-r border-gray-200 dark:border-gray-700 ${getSortableHeaderClass('fehlzeiten_entsch')}`}
+          className={`px-4 py-2 text-center text-xs font-medium text-green-600 dark:text-green-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('fehlzeiten_entsch')}`}
         >
           E {renderSortIndicator('fehlzeiten_entsch')}
         </th>
         <th 
           onClick={() => onSort('fehlzeiten_unentsch')}
-          className={`px-4 py-2 text-center text-xs font-medium text-red-600 dark:text-red-400 border-b border-r border-gray-200 dark:border-gray-700 ${getSortableHeaderClass('fehlzeiten_unentsch')}`}
+          className={`px-4 py-2 text-center text-xs font-medium text-red-600 dark:text-red-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('fehlzeiten_unentsch')}`}
         >
           U {renderSortIndicator('fehlzeiten_unentsch')}
         </th>
         <th 
           onClick={() => onSort('fehlzeiten_offen')}
-          className={`px-4 py-2 text-center text-xs font-medium text-yellow-600 dark:text-yellow-400 border-b border-r border-gray-200 dark:border-gray-700 ${getSortableHeaderClass('fehlzeiten_offen')}`}
+          className={`px-4 py-2 text-center text-xs font-medium text-yellow-600 dark:text-yellow-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('fehlzeiten_offen')}`}
         >
           O {renderSortIndicator('fehlzeiten_offen')}
         </th>
@@ -131,37 +131,37 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
           <>
             <th 
               onClick={() => onSort('sj_verspaetungen')}
-              className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700 ${getSortableHeaderClass('sj_verspaetungen')}`}
+              className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sj_verspaetungen')}`}
             >
               ∑SJ V {renderSortIndicator('sj_verspaetungen')}
             </th>
             <th 
               onClick={() => onSort('sj_fehlzeiten')}
-              className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700 ${getSortableHeaderClass('sj_fehlzeiten')}`}
+              className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sj_fehlzeiten')}`}
             >
               ∑SJ F {renderSortIndicator('sj_fehlzeiten')}
             </th>
             <th 
               onClick={() => onSort('sj_fehlzeiten_ges')}
-              className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700 ${getSortableHeaderClass('sj_fehlzeiten_ges')}`}
+              className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sj_fehlzeiten_ges')}`}
             >
               ∑SJ F₍ges₎ {renderSortIndicator('sj_fehlzeiten_ges')}
             </th>
             <th 
               onClick={() => onSort('sum_verspaetungen')}
-              className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700 ${getSortableHeaderClass('sum_verspaetungen')}`}
+              className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sum_verspaetungen')}`}
             >
               ∑x() V {renderSortIndicator('sum_verspaetungen')}
             </th>
             <th 
               onClick={() => onSort('sum_fehlzeiten')}
-              className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700 ${getSortableHeaderClass('sum_fehlzeiten')}`}
+              className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sum_fehlzeiten')}`}
             >
               ∑x() F {renderSortIndicator('sum_fehlzeiten')}
             </th>
           </>
         )}
-        <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
+        <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-tableBorder-light dark:border-tableBorder-dark">
           Auswahl
         </th>
       </tr>

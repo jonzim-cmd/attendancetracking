@@ -288,7 +288,7 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
       id={`details-${student}`}
       className={`${rowColor} transition-all duration-300 ${isVisible ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0 overflow-hidden'}`}
     >
-      <td colSpan={colSpan} className="px-4 py-2 text-sm border-b border-gray-200 dark:border-gray-700 hover:bg-table-light-hover dark:hover:bg-table-dark-hover">
+      <td colSpan={colSpan} className="px-4 py-2 text-sm border-b border-tableBorder-light dark:border-tableBorder-dark hover:bg-table-light-hover dark:hover:bg-table-dark-hover">
         <div className="space-y-2">
           <h4 className="font-medium text-gray-900 dark:text-white">{getFilterTitle()}</h4>
           <div className="pl-4">{renderDetailsContent()}</div>

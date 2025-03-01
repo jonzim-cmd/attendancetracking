@@ -41,8 +41,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   const weekOptions = [
     { value: '1', label: '1 Woche' },
     { value: '2', label: '2 Wochen' },
+    { value: '3', label: '3 Wochen' },
     { value: '4', label: '4 Wochen' },
+    { value: '5', label: '5 Wochen' },
     { value: '6', label: '6 Wochen' },
+    { value: '7', label: '7 Wochen' },
     { value: '8', label: '8 Wochen' },
   ];
 
@@ -138,7 +141,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               onChange={(e) => onQuickSelect(e.target.value)}
               className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
             >
-              <option value="">-- Auswählen --</option>
+              <option value="">Auswählen</option>
               {quickSelectOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}

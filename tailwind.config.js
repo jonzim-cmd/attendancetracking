@@ -29,8 +29,13 @@ module.exports = {
             base: '#282828',      // Matches chatGray.dark (MainContent dark mode)
             alternate: '#222222', // Slightly darker for alternating rows (more contrast)
             hover: '#363636',     // Even lighter for hover effect
-            header: '#1e1e1e',    // Header background in dark mode (darker)
+            header: '#282828',    // Header background in dark mode (UPDATED: now matches MainContent)
           }
+        },
+        // Custom border colors for tables
+        tableBorder: {
+          light: '#e2e2e2',      // Light gray for light mode
+          dark: '#3a3a3a',       // Neutral dark gray for dark mode (not bluish)
         },
         // Kontext-spezifische Button-Farben für Header
         'header-btn': {
@@ -38,7 +43,7 @@ module.exports = {
           dark: '#282828',    // Dark Mode Default
           hover: {
             DEFAULT: '#eaeaea', // Light Mode Hover
-            dark: '#333333',    // Dark Mode Hover
+            dark: '#444444',    // Dark Mode Hover - Changed to create more contrast
           },
           selected: {
             DEFAULT: '#eaeaea', // Light Mode Selected

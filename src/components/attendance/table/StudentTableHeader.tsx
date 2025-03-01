@@ -58,7 +58,7 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
         </th>
         <th 
           onClick={() => onSort('klasse')}
-          className={`px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark w-24 ${getSortableHeaderClass('klasse')}`}
+          className={`px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark min-w-[4rem] whitespace-nowrap ${getSortableHeaderClass('klasse')}`}
         >
           Klasse {renderSortIndicator('klasse')}
         </th>

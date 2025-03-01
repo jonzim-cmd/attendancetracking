@@ -64,7 +64,7 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
           </span>
         </span>
       </td>
-      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark">
+      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark whitespace-nowrap">
         {stats.klasse}
       </td>
       <td className="px-4 py-3 text-sm text-center text-green-600 dark:text-green-400 border-r border-tableBorder-light dark:border-tableBorder-dark">

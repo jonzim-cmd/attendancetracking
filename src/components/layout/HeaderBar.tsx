@@ -61,7 +61,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
 
   return (
     <header
-      className="fixed top-0 z-10 bg-chatGray-light dark:bg-chatGray-dark p-2 flex items-center justify-between h-14 transition-all duration-300"
+      className="fixed top-0 z-30 bg-chatGray-light dark:bg-chatGray-dark p-2 flex items-center justify-between h-14 transition-all duration-300"
       style={{
         left: 'var(--sidebar-width)',
         right: '0',

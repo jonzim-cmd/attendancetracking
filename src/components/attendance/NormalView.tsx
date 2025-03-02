@@ -334,8 +334,8 @@ const NormalView: React.FC<NormalViewProps> = ({
         {/* Der "Alle Details" Button wurde entfernt */}
       </div>
 
-      {/* Die Tabelle ist jetzt in einem Container mit overflow-x: auto */}
-      <div className="h-[500px] overflow-auto bg-table-light-base dark:bg-table-dark-base">
+      {/* Die Tabelle ist jetzt in einem Container mit overflow-x: auto und position: relative */}
+      <div className="h-[500px] overflow-auto bg-table-light-base dark:bg-table-dark-base relative">
         <StudentTable
           students={getSortedStudents()}
           detailedData={detailedData}

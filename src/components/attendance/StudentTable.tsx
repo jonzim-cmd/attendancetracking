@@ -65,7 +65,7 @@ const StudentTable: React.FC<StudentTableProps> = ({
   getFilteredDetailData,
 }) => {
   return (
-    <div className="relative overflow-x-auto">
+    <div className="relative w-full">
       <table className="min-w-full border-collapse bg-table-light-base dark:bg-table-dark-base">
         <colgroup>
           {/* Grundinformationen - immer sichtbar und fixiert */}

@@ -65,95 +65,105 @@ const StudentTable: React.FC<StudentTableProps> = ({
   getFilteredDetailData,
 }) => {
   return (
-    <table className="min-w-full border-collapse bg-table-light-base dark:bg-table-dark-base">
-      <colgroup>
-        {/* Grundinformationen */}
-        <col className="w-12" /> {/* Nr.-Spalte */}
-        <col className="w-48" /> {/* Name-Spalte */}
-        <col className="w-20" /> {/* Klasse-Spalte - kompaktere Breite */}
+    <div className="relative overflow-x-auto">
+      <table className="min-w-full border-collapse bg-table-light-base dark:bg-table-dark-base">
+        <colgroup>
+          {/* Grundinformationen - immer sichtbar und fixiert */}
+          <col className="w-12" /> {/* Nr.-Spalte */}
+          <col className="w-48" /> {/* Name-Spalte */}
+          <col className="w-20" /> {/* Klasse-Spalte - kompaktere Breite */}
+          
+          {/* Verspätungen - alle Daten */}
+          {visibleColumns.includes('verspaetungen') && (
+            <>
+              <col /> {/* Verspätungen E */}
+              <col /> {/* Verspätungen U */}
+              <col /> {/* Verspätungen O */}
+            </>
+          )}
+          
+          {/* Verspätungen - Statistiken */}
+          {visibleColumns.includes('stats') && (
+            <>
+              <col /> {/* SJ V */}
+              <col /> {/* Sum V */}
+            </>
+          )}
+          
+          {/* Fehlzeiten - alle Daten */}
+          {visibleColumns.includes('fehlzeiten') && (
+            <>
+              <col /> {/* Fehlzeiten E */}
+              <col /> {/* Fehlzeiten U */}
+              <col /> {/* Fehlzeiten O */}
+            </>
+          )}
+          
+          {/* Fehlzeiten - Statistiken */}
+          {visibleColumns.includes('stats') && (
+            <>
+              <col /> {/* SJ F */}
+              <col /> {/* SJ F(ges) */}
+              <col /> {/* Sum F */}
+            </>
+          )}
+          
+          {/* Auswahl-Spalte */}
+          <col className="w-16" /> {/* Auswahl-Spalte */}
+        </colgroup>
         
-        {/* Verspätungen - alle Daten */}
-        <col /> {/* Verspätungen E */}
-        <col /> {/* Verspätungen U */}
-        <col /> {/* Verspätungen O */}
+        <StudentTableHeader
+          onSort={onSort}
+          sortStates={sortStates}
+          onResetSelection={onResetSelection}
+          visibleColumns={visibleColumns}
+        />
         
-        {/* Verspätungen - Statistiken */}
-        {visibleColumns.includes('stats') && (
-          <>
-            <col /> {/* SJ V */}
-            <col /> {/* Sum V */}
-          </>
-        )}
-        
-        {/* Fehlzeiten - alle Daten */}
-        <col /> {/* Fehlzeiten E */}
-        <col /> {/* Fehlzeiten U */}
-        <col /> {/* Fehlzeiten O */}
-        
-        {/* Fehlzeiten - Statistiken */}
-        {visibleColumns.includes('stats') && (
-          <>
-            <col /> {/* SJ F */}
-            <col /> {/* SJ F(ges) */}
-            <col /> {/* Sum F */}
-          </>
-        )}
-        
-        {/* Auswahl-Spalte */}
-        <col className="w-16" /> {/* Auswahl-Spalte */}
-      </colgroup>
-      
-      <StudentTableHeader
-        onSort={onSort}
-        sortStates={sortStates}
-        onResetSelection={onResetSelection}
-        visibleColumns={visibleColumns}
-      />
-      
-      <tbody>
-        {students.map(([student, stats], index) => {
-          const baseRowColor = index % 2 === 0 ? 'bg-table-light-base dark:bg-table-dark-base' : 'bg-table-light-alternate dark:bg-table-dark-alternate';
-          const finalRowClass = `${baseRowColor} transition-opacity duration-300 hover:bg-table-light-hover dark:hover:bg-table-dark-hover ${
-            checkedStudents.has(student) ? 'opacity-50' : 'opacity-100'
-          }`;
-          const schoolYearData = schoolYearStats[student] || { verspaetungen_unentsch: 0, fehlzeiten_unentsch: 0, fehlzeiten_gesamt: 0 };
-          const weeklyData = weeklyStats[student] || {
-            verspaetungen: { total: 0, weekly: Array(parseInt(selectedWeeks)).fill(0) },
-            fehlzeiten: { total: 0, weekly: Array(parseInt(selectedWeeks)).fill(0) },
-          };
+        <tbody>
+          {students.map(([student, stats], index) => {
+            const baseRowColor = index % 2 === 0 ? 'bg-table-light-base dark:bg-table-dark-base' : 'bg-table-light-alternate dark:bg-table-dark-alternate';
+            const finalRowClass = `${baseRowColor} transition-opacity duration-300 hover:bg-table-light-hover dark:hover:bg-table-dark-hover ${
+              checkedStudents.has(student) ? 'opacity-50' : 'opacity-100'
+            }`;
+            const schoolYearData = schoolYearStats[student] || { verspaetungen_unentsch: 0, fehlzeiten_unentsch: 0, fehlzeiten_gesamt: 0 };
+            const weeklyData = weeklyStats[student] || {
+              verspaetungen: { total: 0, weekly: Array(parseInt(selectedWeeks)).fill(0) },
+              fehlzeiten: { total: 0, weekly: Array(parseInt(selectedWeeks)).fill(0) },
+            };
 
-          return (
-            <React.Fragment key={student}>
-              <StudentTableRow
-                student={student}
-                index={index}
-                stats={stats}
-                schoolYearData={schoolYearData}
-                weeklyData={weeklyData}
-                selectedWeeks={selectedWeeks}
-                rowColor={finalRowClass}
-                onToggleDetails={() => onToggleDetails(student)}
-                onShowFilteredDetails={onShowFilteredDetails}
-                isChecked={checkedStudents.has(student)}
-                onToggleChecked={() => onToggleChecked(student)}
-                visibleColumns={visibleColumns}
-              />
-              {expandedStudents.has(student) && (
-                <StudentDetailsRow
+            return (
+              <React.Fragment key={student}>
+                <StudentTableRow
                   student={student}
-                  detailedData={getFilteredDetailData(student)}
-                  rowColor={finalRowClass}
-                  isVisible={true}
-                  filterType={activeFilters.get(student)}
+                  index={index}
+                  stats={stats}
+                  schoolYearData={schoolYearData}
+                  weeklyData={weeklyData}
                   selectedWeeks={selectedWeeks}
+                  rowColor={finalRowClass}
+                  onToggleDetails={() => onToggleDetails(student)}
+                  onShowFilteredDetails={onShowFilteredDetails}
+                  isChecked={checkedStudents.has(student)}
+                  onToggleChecked={() => onToggleChecked(student)}
                   visibleColumns={visibleColumns}
                 />
-              )}
-            </React.Fragment>
-          );
-        })}
-      </tbody>
-    </table>
+                {expandedStudents.has(student) && (
+                  <StudentDetailsRow
+                    student={student}
+                    detailedData={getFilteredDetailData(student)}
+                    rowColor={finalRowClass}
+                    isVisible={true}
+                    filterType={activeFilters.get(student)}
+                    selectedWeeks={selectedWeeks}
+                    visibleColumns={visibleColumns}
+                  />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 };
 

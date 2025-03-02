@@ -367,7 +367,7 @@ const NormalView: React.FC<NormalViewProps> = ({
         </div>
       </div>
 
-      
+      {/* Die Tabelle ist jetzt in einem Container mit overflow-x: auto */}
       <div className="h-[500px] overflow-auto bg-table-light-base dark:bg-table-dark-base">
         <StudentTable
           students={getSortedStudents()}

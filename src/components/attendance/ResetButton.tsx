@@ -15,7 +15,7 @@ const ResetButton: React.FC<ResetButtonProps> = ({
     <button
       onClick={onReset}
       className={`p-1.5 rounded-full bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors ${className}`}
-      title="Alle Einstellungen zurücksetzen"
+      title="Alle Filter und Einstellungen zurücksetzen (Zeitraum, Klassenfilter, Suchfilter, etc.)"
     >
       <RotateCcw className="w-4 h-4" />
     </button>

@@ -90,7 +90,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <button
         onClick={() => setCollapsed(!collapsed)}
         className="fixed top-4 left-4 z-20 p-2 rounded-full bg-sidebar-btn dark:bg-sidebar-btn-dark hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors"
-        title="Sidebar ein-/ausklappen"
+        title={collapsed ? "Sidebar einblenden" : "Sidebar ausblenden"}
       >
         {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
@@ -106,7 +106,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <label
               htmlFor="file-upload"
               className="flex items-center gap-2 cursor-pointer bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors justify-center text-xs"
-              title="Excel-Datei hochladen"
+              title="Anwesenheitsdaten importieren - CSV oder Excel-Datei mit Schülerdaten hochladen"
             >
               <Upload className="w-4 h-4" />
               <span>Datei hochladen</span>
@@ -128,6 +128,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               value={startDate}
               onChange={(e) => onStartDateChange(e.target.value)}
               className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+              title="Startdatum des Analysezeitraums auswählen"
             />
             <label className="block text-xs text-gray-600 dark:text-gray-400 mt-2">Enddatum</label>
             <input
@@ -135,11 +136,13 @@ const Sidebar: React.FC<SidebarProps> = ({
               value={endDate}
               onChange={(e) => onEndDateChange(e.target.value)}
               className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+              title="Enddatum des Analysezeitraums auswählen"
             />
             <label className="block text-xs text-gray-600 dark:text-gray-400 mt-2">Schnellauswahl</label>
             <select
               onChange={(e) => onQuickSelect(e.target.value)}
               className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+              title="Vordefinierte Zeiträume für schnelle Auswahl"
             >
               <option value="">Auswählen</option>
               {quickSelectOptions.map((option) => (
@@ -155,6 +158,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               value={selectedWeeks}
               onChange={(e) => onSelectedWeeksChange(e.target.value)}
               className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+              title="Anzahl der Wochen für die wöchentliche Statistikberechnung auswählen"
             >
               {weekOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -171,21 +175,21 @@ const Sidebar: React.FC<SidebarProps> = ({
               <button
                 onClick={onExportExcel}
                 className="bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors text-xs"
-                title="Als Excel exportieren"
+                title="Daten als Excel-Datei exportieren - Mit Details für ausgewählte Schüler"
               >
                 XLS
               </button>
               <button
                 onClick={onExportCSV}
                 className="bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors text-xs"
-                title="Als CSV exportieren"
+                title="Daten als CSV-Datei exportieren - Mit Details für ausgewählte Schüler"
               >
                 CSV
               </button>
               <button
                 onClick={onExportPDF}
                 className="bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors text-xs"
-                title="Als PDF exportieren"
+                title="Daten als PDF-Datei exportieren - Mit Details für ausgewählte Schüler"
               >
                 PDF
               </button>

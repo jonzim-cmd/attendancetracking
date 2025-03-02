@@ -280,17 +280,30 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
 
   // Berechne die korrekte Anzahl von Spalten für den colspan basierend auf der neuen Struktur
   const calculateColSpan = (): number => {
-    // Basisanzahl: 3 (Nr, Name, Klasse) + 3 (Verspätungen E,U,O) + 3 (Fehlzeiten E,U,O) + 1 (Auswahl) = 10
-    let baseColumns = 10;
+    // Basisanzahl: 3 (Nr, Name, Klasse) + 1 (Auswahl) = 4
+    let colCount = 4;
     
-    // Wenn Statistiken sichtbar sind:
-    if (visibleColumns.includes('stats')) {
-      // Verspätungen: +2 (SJ, Summe Wochen)
-      // Fehlzeiten: +3 (SJ, SJ Gesamt, Summe Wochen)
-      baseColumns += 5;
+    // Verspätungsspalten (wenn sichtbar)
+    if (visibleColumns.includes('verspaetungen')) {
+      colCount += 3; // E, U, O
     }
     
-    return baseColumns;
+    // Fehlzeitenspalten (wenn sichtbar)
+    if (visibleColumns.includes('fehlzeiten')) {
+      colCount += 3; // E, U, O
+    }
+    
+    // Statistikspalten (wenn sichtbar)
+    if (visibleColumns.includes('stats')) {
+      if (visibleColumns.includes('verspaetungen')) {
+        colCount += 2; // SJ, ∑W für Verspätungen
+      }
+      if (visibleColumns.includes('fehlzeiten')) {
+        colCount += 3; // SJ, SJ-Gesamt, ∑W für Fehlzeiten
+      }
+    }
+    
+    return colCount;
   };
 
   // Entscheide, ob dieser Filter zur Statistik gehört und versteckt werden soll, wenn stats nicht aktiviert sind

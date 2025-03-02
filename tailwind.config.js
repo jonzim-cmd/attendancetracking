@@ -51,10 +51,10 @@ module.exports = {
           },
           input: {
             DEFAULT: '#F7F7F8', // Light Mode Input
-            dark: '#333333',    // Dark Mode Input
+            dark: '#282828',    // Dark Mode Input
             hover: {
               DEFAULT: '#eaeaea', // Light Mode Input Hover
-              dark: '#383838',    // Dark Mode Input Hover
+              dark: '#444444',    // Dark Mode Input Hover
             },
           },
           dropdown: {
@@ -127,7 +127,7 @@ module.exports = {
       },
       // Beispielhafte Utility-Erweiterung, um global Buttons einen Rahmen zu geben
       borderWidth: {
-        btn: '2px',
+        btn: '1px',
       },
     },
   },

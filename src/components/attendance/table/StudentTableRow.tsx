@@ -53,11 +53,11 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
 
   return (
     <tr className={`${rowColor} transition-all duration-200`}>
-      {/* Grundinformationen */}
-      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark text-center">
+      {/* Grundinformationen - fixiert */}
+      <td className="sticky left-0 z-20 px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark text-center bg-inherit">
         {index + 1}
       </td>
-      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark truncate">
+      <td className="sticky left-12 z-20 px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark truncate bg-inherit">
         <span className="cursor-pointer hover:underline" onClick={onToggleDetails}>
           {student}
           <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
@@ -65,23 +65,27 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
           </span>
         </span>
       </td>
-      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark whitespace-nowrap max-w-[6rem] overflow-hidden text-ellipsis text-center">
+      <td className="sticky left-60 z-20 px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark whitespace-nowrap max-w-[6rem] overflow-hidden text-ellipsis text-center bg-inherit">
         {stats.klasse}
       </td>
       
       {/* Verspätungen - alle Daten */}
-      <td className="px-4 py-3 text-sm text-center text-green-600 dark:text-green-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
-        {createClickableCell(stats.verspaetungen_entsch, 'verspaetungen_entsch', 'text-green-600 dark:text-green-400')}
-      </td>
-      <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
-        {createClickableCell(stats.verspaetungen_unentsch, 'verspaetungen_unentsch', 'text-red-600 dark:text-red-400')}
-      </td>
-      <td className="px-4 py-3 text-sm text-center text-yellow-600 dark:text-yellow-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
-        {createClickableCell(stats.verspaetungen_offen, 'verspaetungen_offen', 'text-yellow-600 dark:text-yellow-400')}
-      </td>
+      {visibleColumns.includes('verspaetungen') && (
+        <>
+          <td className="px-4 py-3 text-sm text-center text-green-600 dark:text-green-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
+            {createClickableCell(stats.verspaetungen_entsch, 'verspaetungen_entsch', 'text-green-600 dark:text-green-400')}
+          </td>
+          <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
+            {createClickableCell(stats.verspaetungen_unentsch, 'verspaetungen_unentsch', 'text-red-600 dark:text-red-400')}
+          </td>
+          <td className="px-4 py-3 text-sm text-center text-yellow-600 dark:text-yellow-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
+            {createClickableCell(stats.verspaetungen_offen, 'verspaetungen_offen', 'text-yellow-600 dark:text-yellow-400')}
+          </td>
+        </>
+      )}
       
       {/* Statistiken für Verspätungen */}
-      {visibleColumns.includes('stats') && (
+      {visibleColumns.includes('verspaetungen') && visibleColumns.includes('stats') && (
         <>
           <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
             {createClickableCell(schoolYearData.verspaetungen_unentsch, 'sj_verspaetungen', 'text-red-600 dark:text-red-400')}
@@ -93,18 +97,22 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
       )}
       
       {/* Fehlzeiten - alle Daten */}
-      <td className="px-4 py-3 text-sm text-center text-green-600 dark:text-green-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
-        {createClickableCell(stats.fehlzeiten_entsch, 'fehlzeiten_entsch', 'text-green-600 dark:text-green-400')}
-      </td>
-      <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
-        {createClickableCell(stats.fehlzeiten_unentsch, 'fehlzeiten_unentsch', 'text-red-600 dark:text-red-400')}
-      </td>
-      <td className="px-4 py-3 text-sm text-center text-yellow-600 dark:text-yellow-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
-        {createClickableCell(stats.fehlzeiten_offen, 'fehlzeiten_offen', 'text-yellow-600 dark:text-yellow-400')}
-      </td>
+      {visibleColumns.includes('fehlzeiten') && (
+        <>
+          <td className="px-4 py-3 text-sm text-center text-green-600 dark:text-green-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
+            {createClickableCell(stats.fehlzeiten_entsch, 'fehlzeiten_entsch', 'text-green-600 dark:text-green-400')}
+          </td>
+          <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
+            {createClickableCell(stats.fehlzeiten_unentsch, 'fehlzeiten_unentsch', 'text-red-600 dark:text-red-400')}
+          </td>
+          <td className="px-4 py-3 text-sm text-center text-yellow-600 dark:text-yellow-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
+            {createClickableCell(stats.fehlzeiten_offen, 'fehlzeiten_offen', 'text-yellow-600 dark:text-yellow-400')}
+          </td>
+        </>
+      )}
       
       {/* Statistiken für Fehlzeiten */}
-      {visibleColumns.includes('stats') && (
+      {visibleColumns.includes('fehlzeiten') && visibleColumns.includes('stats') && (
         <>
           <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
             {createClickableCell(schoolYearData.fehlzeiten_unentsch, 'sj_fehlzeiten', 'text-red-600 dark:text-red-400')}

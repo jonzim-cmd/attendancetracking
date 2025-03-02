@@ -19,7 +19,10 @@ interface HeaderBarProps {
   onClassesChange: (classes: string[]) => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
-  onReset: () => void; // Neue Prop für die Reset-Funktion
+  onReset: () => void;
+  // Neue Props für die Spaltenanzeige
+  visibleColumns: string[];
+  onToggleColumnGroup: (group: string) => void;
 }
 
 const HeaderBar: React.FC<HeaderBarProps> = ({
@@ -39,6 +42,8 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   isDarkMode,
   toggleDarkMode,
   onReset,
+  visibleColumns,
+  onToggleColumnGroup,
 }) => {
   const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -75,7 +80,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
           ))}
         </select>
         
-        {/* Verspätungen und Fehltage Buttons */}
+        {/* Verspätungen und Fehltage Filter-Buttons */}
         <div className="flex gap-1">
           <button
             onClick={() => onFilterUnexcusedLateChange(!filterUnexcusedLate)}
@@ -86,7 +91,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
             }`}
             title="Nur Schüler mit unentschuldigten Verspätungen"
           >
-            Verspätungen
+            Nur Verspät.
           </button>
           <button
             onClick={() => onFilterUnexcusedAbsentChange(!filterUnexcusedAbsent)}
@@ -97,7 +102,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
             }`}
             title="Nur Schüler mit unentschuldigten Fehlzeiten"
           >
-            Fehltage
+            Nur Fehltage
           </button>
         </div>
         
@@ -117,7 +122,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
             min="0"
             max="99"
             value={minUnexcusedAbsences}
-            placeholder="Min. Fehlt."
+            placeholder="Min. Fehltage"
             onChange={(e) => onMinUnexcusedAbsencesChange(e.target.value)}
             className="w-32 rounded px-2 py-1 bg-header-btn-input dark:bg-header-btn-input-dark hover:bg-header-btn-input-hover dark:hover:bg-header-btn-input-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
           />
@@ -131,6 +136,43 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
           placeholder="Nach Name suchen"
           className="w-40 rounded px-2 py-1 bg-header-btn-input dark:bg-header-btn-input-dark hover:bg-header-btn-input-hover dark:hover:bg-header-btn-input-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
         />
+
+        {/* NEUE SPALTENTOGGLE-BUTTONS */}
+        <div className="ml-3 flex gap-1">
+          <button
+            onClick={() => onToggleColumnGroup('verspaetungen')}
+            className={`px-2 py-1 text-sm ${
+              visibleColumns.includes('verspaetungen')
+                ? 'bg-header-btn-selected dark:bg-header-btn-selected-dark text-chatGray-textLight dark:text-chatGray-textDark'
+                : 'bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark'
+            }`}
+            title="Verspätungsspalten ein-/ausblenden"
+          >
+            Verspät.
+          </button>
+          <button
+            onClick={() => onToggleColumnGroup('fehlzeiten')}
+            className={`px-2 py-1 text-sm ${
+              visibleColumns.includes('fehlzeiten')
+                ? 'bg-header-btn-selected dark:bg-header-btn-selected-dark text-chatGray-textLight dark:text-chatGray-textDark'
+                : 'bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark'
+            }`}
+            title="Fehltagesspalten ein-/ausblenden"
+          >
+            Fehltage
+          </button>
+          <button
+            onClick={() => onToggleColumnGroup('stats')}
+            className={`px-2 py-1 text-sm ${
+              visibleColumns.includes('stats')
+                ? 'bg-header-btn-selected dark:bg-header-btn-selected-dark text-chatGray-textLight dark:text-chatGray-textDark'
+                : 'bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark'
+            }`}
+            title="Wochenspalten ein-/ausblenden"
+          >
+            Wochen
+          </button>
+        </div>
       </div>
       <div className="flex items-center gap-2 mr-2">
         <ResetButton onReset={onReset} />

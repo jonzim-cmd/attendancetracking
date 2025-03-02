@@ -27,8 +27,22 @@ const AttendanceAnalyzer: React.FC = () => {
   const [weeklyDetailedData, setWeeklyDetailedData] = useState<Record<string, any>>({});
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [activeFilters, setActiveFilters] = useState<Map<string, string>>(new Map());
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(['basic', 'attendance', 'stats']);
+  
+  // Aktualisierte visibleColumns-Struktur für feingranularere Kontrolle
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(['basic', 'verspaetungen', 'fehlzeiten', 'stats']);
+  
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Neue Funktion zum Umschalten der Spaltengruppen
+  const toggleColumnGroup = (columnGroup: string) => {
+    setVisibleColumns(prev => {
+      if (prev.includes(columnGroup)) {
+        return prev.filter(col => col !== columnGroup);
+      } else {
+        return [...prev, columnGroup];
+      }
+    });
+  };
 
   const resetAll = () => {
     setRawData(null);
@@ -51,7 +65,7 @@ const AttendanceAnalyzer: React.FC = () => {
     setWeeklyDetailedData({});
     setExpandedStudents(new Set());
     setActiveFilters(new Map());
-    setVisibleColumns(['basic', 'attendance', 'stats']);
+    setVisibleColumns(['basic', 'verspaetungen', 'fehlzeiten', 'stats']);
   };
 
   const handleFileProcessed = (data: any) => {
@@ -333,6 +347,9 @@ const AttendanceAnalyzer: React.FC = () => {
         isDarkMode={isDarkMode}
         toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
         onReset={resetAll}
+        // Neue Props für die Spaltensteuerung
+        visibleColumns={visibleColumns}
+        onToggleColumnGroup={toggleColumnGroup}
       />
       <Sidebar
         startDate={startDate}

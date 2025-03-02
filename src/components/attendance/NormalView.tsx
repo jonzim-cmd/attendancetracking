@@ -331,8 +331,11 @@ const NormalView: React.FC<NormalViewProps> = ({
         Ergebnisse für den Zeitraum {formatDate(startDate)} - {formatDate(endDate)}
       </h3>
 
-      {/* Direkte Anwendung von overflow-auto auf dem Container mit fester Höhe */}
-      <div className="h-[calc(100vh-140px)] overflow-auto bg-table-light-base dark:bg-table-dark-base">
+      {/* Optimierter Container für die Tabelle mit Sticky Header */}
+      <div 
+        className="relative border border-tableBorder-light dark:border-tableBorder-dark rounded-md overflow-auto bg-table-light-base dark:bg-table-dark-base"
+        style={{ height: 'calc(100vh - 140px)' }}
+      >
         <StudentTable
           students={getSortedStudents()}
           detailedData={detailedData}

@@ -51,19 +51,19 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
   const fehlzColspan = visibleColumns.includes('fehlzeiten') ? (visibleColumns.includes('stats') ? 6 : 3) : 0;
 
   return (
-    <thead className="sticky top-0 z-40 bg-table-light-header dark:bg-table-dark-header shadow-sm">
-      <tr className="sticky top-0 z-40 bg-table-light-header dark:bg-table-dark-header">
-        {/* Grundinformationen - immer sichtbar und fixiert */}
-        <th className="sticky left-0 z-30 px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark w-12 bg-table-light-header dark:bg-table-dark-header">Nr.</th>
+    <thead className="sticky top-0 z-50 bg-table-light-header dark:bg-table-dark-header shadow-sm">
+      <tr>
+        {/* Grundinformationen - immer sichtbar */}
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark w-12">Nr.</th>
         <th 
           onClick={() => onSort('name')}
-          className={`sticky left-12 z-30 px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark w-48 bg-table-light-header dark:bg-table-dark-header ${getSortableHeaderClass('name')}`}
+          className={`px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark w-48 ${getSortableHeaderClass('name')}`}
         >
           Name {renderSortIndicator('name')}
         </th>
         <th 
           onClick={() => onSort('klasse')}
-          className={`sticky left-60 z-30 px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark min-w-[3rem] max-w-[6rem] whitespace-nowrap bg-table-light-header dark:bg-table-dark-header ${getSortableHeaderClass('klasse')}`}
+          className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark min-w-[3rem] max-w-[6rem] whitespace-nowrap ${getSortableHeaderClass('klasse')}`}
         >
           Klasse {renderSortIndicator('klasse')}
         </th>
@@ -94,11 +94,11 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
           </button>
         </th>
       </tr>
-      <tr className="sticky top-[45px] z-40 bg-table-light-header dark:bg-table-dark-header">
+      <tr>
         {/* Grundinformationen - Unterkategorien */}
-        <th className="sticky left-0 z-30 px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark bg-table-light-header dark:bg-table-dark-header"></th>
-        <th className="sticky left-12 z-30 px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark bg-table-light-header dark:bg-table-dark-header"></th>
-        <th className="sticky left-60 z-30 px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark bg-table-light-header dark:bg-table-dark-header"></th>
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark"></th>
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark"></th>
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark"></th>
         
         {/* Verspätungen - Unterkategorien */}
         {visibleColumns.includes('verspaetungen') && (

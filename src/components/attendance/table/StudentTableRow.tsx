@@ -53,11 +53,11 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
 
   return (
     <tr className={`${rowColor} transition-all duration-200`}>
-      {/* Grundinformationen - fixiert */}
-      <td className="sticky left-0 z-20 px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark text-center bg-inherit">
+      {/* Grundinformationen */}
+      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark text-center">
         {index + 1}
       </td>
-      <td className="sticky left-12 z-20 px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark truncate bg-inherit">
+      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark truncate">
         <span className="cursor-pointer hover:underline" onClick={onToggleDetails}>
           {student}
           <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
@@ -65,7 +65,7 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
           </span>
         </span>
       </td>
-      <td className="sticky left-60 z-20 px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark whitespace-nowrap max-w-[6rem] overflow-hidden text-ellipsis text-center bg-inherit">
+      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark whitespace-nowrap max-w-[6rem] overflow-hidden text-ellipsis text-center">
         {stats.klasse}
       </td>
       

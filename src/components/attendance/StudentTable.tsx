@@ -67,10 +67,10 @@ const StudentTable: React.FC<StudentTableProps> = ({
   return (
     <table className="min-w-full border-collapse bg-table-light-base dark:bg-table-dark-base">
       <colgroup>
-        {/* Grundinformationen - immer sichtbar und fixiert */}
+        {/* Grundinformationen - immer sichtbar */}
         <col className="w-12" /> {/* Nr.-Spalte */}
-        <col className="w-48" /> {/* Name-Spalte */}
-        <col className="w-20" /> {/* Klasse-Spalte - kompaktere Breite */}
+        <col className="w-56" /> {/* Name-Spalte - etwas breiter für bessere Lesbarkeit */}
+        <col className="w-20" /> {/* Klasse-Spalte */}
         
         {/* Verspätungen - alle Daten */}
         {visibleColumns.includes('verspaetungen') && (
@@ -82,10 +82,10 @@ const StudentTable: React.FC<StudentTableProps> = ({
         )}
         
         {/* Verspätungen - Statistiken */}
-        {visibleColumns.includes('stats') && (
+        {visibleColumns.includes('stats') && visibleColumns.includes('verspaetungen') && (
           <>
             <col /> {/* SJ V */}
-            <col /> {/* Sum V */}
+            <col className="min-w-[80px]" /> {/* Sum V - breiter für "∑W"-Daten */}
           </>
         )}
         
@@ -99,16 +99,16 @@ const StudentTable: React.FC<StudentTableProps> = ({
         )}
         
         {/* Fehlzeiten - Statistiken */}
-        {visibleColumns.includes('stats') && (
+        {visibleColumns.includes('stats') && visibleColumns.includes('fehlzeiten') && (
           <>
             <col /> {/* SJ F */}
             <col /> {/* SJ F(ges) */}
-            <col /> {/* Sum F */}
+            <col className="min-w-[80px]" /> {/* Sum F - breiter für "∑W"-Daten */}
           </>
         )}
         
         {/* Auswahl-Spalte */}
-        <col className="w-16" /> {/* Auswahl-Spalte */}
+        <col className="w-20" /> {/* Auswahl-Spalte - breit genug für Checkbox */}
       </colgroup>
       
       <StudentTableHeader

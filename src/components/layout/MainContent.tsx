@@ -44,31 +44,34 @@ const MainContent: React.FC<MainContentProps> = ({
 
   return (
     <main
-      className="pt-20 p-6 bg-chatGray-light dark:bg-chatGray-dark min-h-screen transition-all duration-300"
+      className="overflow-hidden bg-chatGray-light dark:bg-chatGray-dark min-h-screen transition-all duration-300"
       style={{
         marginLeft: 'var(--sidebar-width)',
-        paddingLeft: 'calc(var(--header-padding-left) + 8px)' // kleiner Puffer
+        paddingTop: '56px', // Feste Höhe statt pt-20 für konsistente Berechnung
+        paddingLeft: 'calc(var(--header-padding-left) + 0px)' // erhöhter Puffer von 8px auf 16px
       }}
     >
-      <NormalView
-        getFilteredStudents={getFilteredStudents}
-        detailedData={detailedData}
-        schoolYearDetailedData={schoolYearDetailedData}
-        weeklyDetailedData={weeklyDetailedData}
-        startDate={startDate}
-        endDate={endDate}
-        schoolYearStats={schoolYearStats}
-        weeklyStats={weeklyStats}
-        selectedWeeks={selectedWeeks}
-        availableClasses={availableClasses}
-        selectedClasses={selectedClasses}
-        onClassesChange={onClassesChange}
-        expandedStudents={expandedStudents}
-        setExpandedStudents={setExpandedStudents}
-        activeFilters={activeFilters}
-        setActiveFilters={setActiveFilters}
-        visibleColumns={visibleColumns}
-      />
+      <div className="p-6">
+        <NormalView
+          getFilteredStudents={getFilteredStudents}
+          detailedData={detailedData}
+          schoolYearDetailedData={schoolYearDetailedData}
+          weeklyDetailedData={weeklyDetailedData}
+          startDate={startDate}
+          endDate={endDate}
+          schoolYearStats={schoolYearStats}
+          weeklyStats={weeklyStats}
+          selectedWeeks={selectedWeeks}
+          availableClasses={availableClasses}
+          selectedClasses={selectedClasses}
+          onClassesChange={onClassesChange}
+          expandedStudents={expandedStudents}
+          setExpandedStudents={setExpandedStudents}
+          activeFilters={activeFilters}
+          setActiveFilters={setActiveFilters}
+          visibleColumns={visibleColumns}
+        />
+      </div>
     </main>
   );  
 };

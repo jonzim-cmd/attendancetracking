@@ -51,8 +51,8 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
   const fehlzColspan = visibleColumns.includes('fehlzeiten') ? (visibleColumns.includes('stats') ? 6 : 3) : 0;
 
   return (
-    <thead className="sticky top-0 z-20 bg-table-light-header dark:bg-table-dark-header shadow-sm">
-      <tr className="sticky top-0 z-20 bg-table-light-header dark:bg-table-dark-header">
+    <thead className="sticky top-0 z-40 bg-table-light-header dark:bg-table-dark-header shadow-sm">
+      <tr className="sticky top-0 z-40 bg-table-light-header dark:bg-table-dark-header">
         {/* Grundinformationen - immer sichtbar und fixiert */}
         <th className="sticky left-0 z-30 px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark w-12 bg-table-light-header dark:bg-table-dark-header">Nr.</th>
         <th 
@@ -94,7 +94,7 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
           </button>
         </th>
       </tr>
-      <tr className="sticky top-[45px] z-20 bg-table-light-header dark:bg-table-dark-header">
+      <tr className="sticky top-[45px] z-40 bg-table-light-header dark:bg-table-dark-header">
         {/* Grundinformationen - Unterkategorien */}
         <th className="sticky left-0 z-30 px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark bg-table-light-header dark:bg-table-dark-header"></th>
         <th className="sticky left-12 z-30 px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark bg-table-light-header dark:bg-table-dark-header"></th>

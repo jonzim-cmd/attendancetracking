@@ -53,6 +53,7 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
 
   return (
     <tr className={`${rowColor} transition-all duration-200`}>
+      {/* Grundinformationen */}
       <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark text-center">
         {index + 1}
       </td>
@@ -67,6 +68,8 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
       <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark whitespace-nowrap max-w-[6rem] overflow-hidden text-ellipsis text-center">
         {stats.klasse}
       </td>
+      
+      {/* Verspätungen - alle Daten */}
       <td className="px-4 py-3 text-sm text-center text-green-600 dark:text-green-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
         {createClickableCell(stats.verspaetungen_entsch, 'verspaetungen_entsch', 'text-green-600 dark:text-green-400')}
       </td>
@@ -76,6 +79,20 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
       <td className="px-4 py-3 text-sm text-center text-yellow-600 dark:text-yellow-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
         {createClickableCell(stats.verspaetungen_offen, 'verspaetungen_offen', 'text-yellow-600 dark:text-yellow-400')}
       </td>
+      
+      {/* Statistiken für Verspätungen */}
+      {visibleColumns.includes('stats') && (
+        <>
+          <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
+            {createClickableCell(schoolYearData.verspaetungen_unentsch, 'sj_verspaetungen', 'text-red-600 dark:text-red-400')}
+          </td>
+          <td className="px-4 py-3 text-sm text-center text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark">
+            {createClickableWeeklyCell(verspaetungenSum, weeklyData.verspaetungen.weekly, 'sum_verspaetungen')}
+          </td>
+        </>
+      )}
+      
+      {/* Fehlzeiten - alle Daten */}
       <td className="px-4 py-3 text-sm text-center text-green-600 dark:text-green-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
         {createClickableCell(stats.fehlzeiten_entsch, 'fehlzeiten_entsch', 'text-green-600 dark:text-green-400')}
       </td>
@@ -85,11 +102,10 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
       <td className="px-4 py-3 text-sm text-center text-yellow-600 dark:text-yellow-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
         {createClickableCell(stats.fehlzeiten_offen, 'fehlzeiten_offen', 'text-yellow-600 dark:text-yellow-400')}
       </td>
+      
+      {/* Statistiken für Fehlzeiten */}
       {visibleColumns.includes('stats') && (
         <>
-          <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
-            {createClickableCell(schoolYearData.verspaetungen_unentsch, 'sj_verspaetungen', 'text-red-600 dark:text-red-400')}
-          </td>
           <td className="px-4 py-3 text-sm text-center text-red-600 dark:text-red-400 border-r border-tableBorder-light dark:border-tableBorder-dark">
             {createClickableCell(schoolYearData.fehlzeiten_unentsch, 'sj_fehlzeiten', 'text-red-600 dark:text-red-400')}
           </td>
@@ -97,13 +113,12 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
             {createClickableCell(schoolYearData.fehlzeiten_gesamt, 'sj_fehlzeiten_ges', 'text-black dark:text-white')}
           </td>
           <td className="px-4 py-3 text-sm text-center text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark">
-            {createClickableWeeklyCell(verspaetungenSum, weeklyData.verspaetungen.weekly, 'sum_verspaetungen')}
-          </td>
-          <td className="px-4 py-3 text-sm text-center text-gray-900 dark:text-white border-r border-tableBorder-light dark:border-tableBorder-dark">
             {createClickableWeeklyCell(fehlzeitenSum, weeklyData.fehlzeiten.weekly, 'sum_fehlzeiten')}
           </td>
         </>
       )}
+      
+      {/* Auswahl-Spalte */}
       <td className="px-4 py-3 text-sm text-center border-tableBorder-light dark:border-tableBorder-dark">
         <input
           type="checkbox"

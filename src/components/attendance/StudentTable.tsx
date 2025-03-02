@@ -65,34 +65,51 @@ const StudentTable: React.FC<StudentTableProps> = ({
   getFilteredDetailData,
 }) => {
   return (
-    <table className="min-w-full border-separate border-spacing-0 bg-table-light-base dark:bg-table-dark-base">
+    <table className="min-w-full border-collapse bg-table-light-base dark:bg-table-dark-base">
       <colgroup>
+        {/* Grundinformationen */}
         <col className="w-12" /> {/* Nr.-Spalte */}
         <col className="w-48" /> {/* Name-Spalte */}
         <col className="w-20" /> {/* Klasse-Spalte - kompaktere Breite */}
+        
+        {/* Verspätungen - alle Daten */}
         <col /> {/* Verspätungen E */}
         <col /> {/* Verspätungen U */}
         <col /> {/* Verspätungen O */}
-        <col /> {/* Fehlzeiten E */}
-        <col /> {/* Fehlzeiten U */}
-        <col /> {/* Fehlzeiten O */}
+        
+        {/* Verspätungen - Statistiken */}
         {visibleColumns.includes('stats') && (
           <>
             <col /> {/* SJ V */}
+            <col /> {/* Sum V */}
+          </>
+        )}
+        
+        {/* Fehlzeiten - alle Daten */}
+        <col /> {/* Fehlzeiten E */}
+        <col /> {/* Fehlzeiten U */}
+        <col /> {/* Fehlzeiten O */}
+        
+        {/* Fehlzeiten - Statistiken */}
+        {visibleColumns.includes('stats') && (
+          <>
             <col /> {/* SJ F */}
             <col /> {/* SJ F(ges) */}
-            <col /> {/* Sum V */}
             <col /> {/* Sum F */}
           </>
         )}
+        
+        {/* Auswahl-Spalte */}
         <col className="w-16" /> {/* Auswahl-Spalte */}
       </colgroup>
+      
       <StudentTableHeader
         onSort={onSort}
         sortStates={sortStates}
         onResetSelection={onResetSelection}
         visibleColumns={visibleColumns}
       />
+      
       <tbody>
         {students.map(([student, stats], index) => {
           const baseRowColor = index % 2 === 0 ? 'bg-table-light-base dark:bg-table-dark-base' : 'bg-table-light-alternate dark:bg-table-dark-alternate';

@@ -49,6 +49,7 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
   return (
     <thead className="sticky top-0 z-10 bg-table-light-header dark:bg-table-dark-header shadow-sm">
       <tr>
+        {/* Grundinformationen */}
         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark w-12">Nr.</th>
         <th 
           onClick={() => onSort('name')}
@@ -62,20 +63,20 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
         >
           Klasse {renderSortIndicator('klasse')}
         </th>
-        <th colSpan={3} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark">
+        
+        {/* Verspätungen - alles in einer Gruppe */}
+        <th colSpan={visibleColumns.includes('stats') ? 5 : 3} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark">
           Verspätungen
-          <div className="text-xs font-normal normal-case">Zeitraum</div>
+          <div className="text-xs font-normal normal-case text-gray-400 dark:text-gray-400">E, U und O betreffen gewählten Zeitraum</div>
         </th>
-        <th colSpan={3} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark">
+        
+        {/* Fehlzeiten - alles in einer Gruppe */}
+        <th colSpan={visibleColumns.includes('stats') ? 6 : 3} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark">
           Fehlzeiten
-          <div className="text-xs font-normal normal-case">Zeitraum</div>
+          <div className="text-xs font-normal normal-case text-gray-400 dark:text-gray-400">E, U und O betreffen gewählten Zeitraum</div>
         </th>
-        {visibleColumns.includes('stats') && (
-          <th colSpan={5} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark">
-            Statistik
-            <div className="text-xs font-normal normal-case">Schuljahr & Wochen</div>
-          </th>
-        )}
+        
+        {/* Auswahl-Spalte */}
         <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-tableBorder-light dark:border-tableBorder-dark w-16">
           <button
             onClick={onResetSelection}
@@ -86,11 +87,12 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
         </th>
       </tr>
       <tr className="bg-table-light-header dark:bg-table-dark-header">
+        {/* Grundinformationen - Unterkategorien */}
         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark"></th>
-        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark">
-          
-        </th>
         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark"></th>
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark"></th>
+        
+        {/* Verspätungen - Unterkategorien */}
         <th 
           onClick={() => onSort('verspaetungen_entsch')}
           className={`px-4 py-2 text-center text-xs font-medium text-green-600 dark:text-green-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('verspaetungen_entsch')}`}
@@ -109,6 +111,26 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
         >
           O {renderSortIndicator('verspaetungen_offen')}
         </th>
+        
+        {/* Statistiken für Verspätungen - wenn stats aktiviert ist */}
+        {visibleColumns.includes('stats') && (
+          <>
+            <th 
+              onClick={() => onSort('sj_verspaetungen')}
+              className={`px-4 py-2 text-center text-xs font-medium text-red-600 dark:text-red-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sj_verspaetungen')}`}
+            >
+              SJ<sub className="text-xs">u.</sub> {renderSortIndicator('sj_verspaetungen')}
+            </th>
+            <th 
+              onClick={() => onSort('sum_verspaetungen')}
+              className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sum_verspaetungen')}`}
+            >
+              ∑W {renderSortIndicator('sum_verspaetungen')}
+            </th>
+          </>
+        )}
+        
+        {/* Fehlzeiten - Unterkategorien */}
         <th 
           onClick={() => onSort('fehlzeiten_entsch')}
           className={`px-4 py-2 text-center text-xs font-medium text-green-600 dark:text-green-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('fehlzeiten_entsch')}`}
@@ -127,40 +149,32 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
         >
           O {renderSortIndicator('fehlzeiten_offen')}
         </th>
+        
+        {/* Statistiken für Fehlzeiten - wenn stats aktiviert ist */}
         {visibleColumns.includes('stats') && (
           <>
             <th 
-              onClick={() => onSort('sj_verspaetungen')}
-              className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sj_verspaetungen')}`}
-            >
-              ∑SJ V {renderSortIndicator('sj_verspaetungen')}
-            </th>
-            <th 
               onClick={() => onSort('sj_fehlzeiten')}
-              className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sj_fehlzeiten')}`}
+              className={`px-4 py-2 text-center text-xs font-medium text-red-600 dark:text-red-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sj_fehlzeiten')}`}
             >
-              ∑SJ F {renderSortIndicator('sj_fehlzeiten')}
+              SJ<sub className="text-xs">u.</sub> {renderSortIndicator('sj_fehlzeiten')}
             </th>
             <th 
               onClick={() => onSort('sj_fehlzeiten_ges')}
               className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sj_fehlzeiten_ges')}`}
             >
-              ∑SJ F₍ges₎ {renderSortIndicator('sj_fehlzeiten_ges')}
-            </th>
-            <th 
-              onClick={() => onSort('sum_verspaetungen')}
-              className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sum_verspaetungen')}`}
-            >
-              ∑x() V {renderSortIndicator('sum_verspaetungen')}
+              SJ<sub className="text-xs">ges.</sub> {renderSortIndicator('sj_fehlzeiten_ges')}
             </th>
             <th 
               onClick={() => onSort('sum_fehlzeiten')}
               className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sum_fehlzeiten')}`}
             >
-              ∑x() F {renderSortIndicator('sum_fehlzeiten')}
+              ∑W {renderSortIndicator('sum_fehlzeiten')}
             </th>
           </>
         )}
+        
+        {/* Auswahl-Spalte */}
         <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-tableBorder-light dark:border-tableBorder-dark">
           Auswahl
         </th>

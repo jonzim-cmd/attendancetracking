@@ -278,17 +278,31 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
     );
   };
 
+  // Berechne die korrekte Anzahl von Spalten für den colspan basierend auf der neuen Struktur
+  const calculateColSpan = (): number => {
+    // Basisanzahl: 3 (Nr, Name, Klasse) + 3 (Verspätungen E,U,O) + 3 (Fehlzeiten E,U,O) + 1 (Auswahl) = 10
+    let baseColumns = 10;
+    
+    // Wenn Statistiken sichtbar sind:
+    if (visibleColumns.includes('stats')) {
+      // Verspätungen: +2 (SJ, Summe Wochen)
+      // Fehlzeiten: +3 (SJ, SJ Gesamt, Summe Wochen)
+      baseColumns += 5;
+    }
+    
+    return baseColumns;
+  };
+
+  // Entscheide, ob dieser Filter zur Statistik gehört und versteckt werden soll, wenn stats nicht aktiviert sind
   const isStatsFilter = filterType && ['sj_verspaetungen', 'sj_fehlzeiten', 'sj_fehlzeiten_ges', 'sum_verspaetungen', 'sum_fehlzeiten'].includes(filterType);
   if (isStatsFilter && !visibleColumns.includes('stats')) return null;
-
-  const colSpan = visibleColumns.includes('stats') ? 14 : 9;
 
   return (
     <tr 
       id={`details-${student}`}
       className={`${rowColor} transition-all duration-300 ${isVisible ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0 overflow-hidden'}`}
     >
-      <td colSpan={colSpan} className="px-4 py-2 text-sm border-b border-tableBorder-light dark:border-tableBorder-dark hover:bg-table-light-hover dark:hover:bg-table-dark-hover">
+      <td colSpan={calculateColSpan()} className="px-4 py-2 text-sm border-b border-tableBorder-light dark:border-tableBorder-dark hover:bg-table-light-hover dark:hover:bg-table-dark-hover">
         <div className="space-y-2">
           <h4 className="font-medium text-gray-900 dark:text-white">{getFilterTitle()}</h4>
           <div className="pl-4">{renderDetailsContent()}</div>

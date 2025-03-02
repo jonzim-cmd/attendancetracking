@@ -72,7 +72,7 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
         
         {/* Fehlzeiten - alles in einer Gruppe */}
         <th colSpan={visibleColumns.includes('stats') ? 6 : 3} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark">
-          Fehlzeiten
+          Fehltage
           <div className="text-xs font-normal normal-case text-gray-400 dark:text-gray-400">E, U und O betreffen gewählten Zeitraum</div>
         </th>
         
@@ -96,18 +96,21 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
         <th 
           onClick={() => onSort('verspaetungen_entsch')}
           className={`px-4 py-2 text-center text-xs font-medium text-green-600 dark:text-green-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('verspaetungen_entsch')}`}
+          title="Entschuldigte Verspätungen im gewählten Zeitraum"
         >
           E {renderSortIndicator('verspaetungen_entsch')}
         </th>
         <th 
           onClick={() => onSort('verspaetungen_unentsch')}
           className={`px-4 py-2 text-center text-xs font-medium text-red-600 dark:text-red-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('verspaetungen_unentsch')}`}
+          title="Unentschuldigte Verspätungen im gewählten Zeitraum"
         >
           U {renderSortIndicator('verspaetungen_unentsch')}
         </th>
         <th 
           onClick={() => onSort('verspaetungen_offen')}
           className={`px-4 py-2 text-center text-xs font-medium text-yellow-600 dark:text-yellow-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('verspaetungen_offen')}`}
+          title="Offene Verspätungen, für die die Entschuldigungsfrist noch nicht abgelaufen ist"
         >
           O {renderSortIndicator('verspaetungen_offen')}
         </th>
@@ -118,12 +121,14 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
             <th 
               onClick={() => onSort('sj_verspaetungen')}
               className={`px-4 py-2 text-center text-xs font-medium text-red-600 dark:text-red-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sj_verspaetungen')}`}
+              title="Unentschuldigte Verspätungen im gesamten Schuljahr"
             >
               SJ<sub className="text-xs">u.</sub> {renderSortIndicator('sj_verspaetungen')}
             </th>
             <th 
               onClick={() => onSort('sum_verspaetungen')}
               className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sum_verspaetungen')}`}
+              title="Summe der unentschuldigten Verspätungen in den letzten Wochen (Anzahl der Wochen kann eingestellt werden)"
             >
               ∑W {renderSortIndicator('sum_verspaetungen')}
             </th>
@@ -134,18 +139,21 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
         <th 
           onClick={() => onSort('fehlzeiten_entsch')}
           className={`px-4 py-2 text-center text-xs font-medium text-green-600 dark:text-green-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('fehlzeiten_entsch')}`}
+          title="Entschuldigte Fehlzeiten im gewählten Zeitraum"
         >
           E {renderSortIndicator('fehlzeiten_entsch')}
         </th>
         <th 
           onClick={() => onSort('fehlzeiten_unentsch')}
           className={`px-4 py-2 text-center text-xs font-medium text-red-600 dark:text-red-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('fehlzeiten_unentsch')}`}
+          title="Unentschuldigte Fehlzeiten im gewählten Zeitraum"
         >
           U {renderSortIndicator('fehlzeiten_unentsch')}
         </th>
         <th 
           onClick={() => onSort('fehlzeiten_offen')}
           className={`px-4 py-2 text-center text-xs font-medium text-yellow-600 dark:text-yellow-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('fehlzeiten_offen')}`}
+          title="Offene Fehlzeiten, für die die Entschuldigungsfrist noch nicht abgelaufen ist"
         >
           O {renderSortIndicator('fehlzeiten_offen')}
         </th>
@@ -156,18 +164,21 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
             <th 
               onClick={() => onSort('sj_fehlzeiten')}
               className={`px-4 py-2 text-center text-xs font-medium text-red-600 dark:text-red-400 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sj_fehlzeiten')}`}
+              title="Unentschuldigte Fehlzeiten im gesamten Schuljahr"
             >
               SJ<sub className="text-xs">u.</sub> {renderSortIndicator('sj_fehlzeiten')}
             </th>
             <th 
               onClick={() => onSort('sj_fehlzeiten_ges')}
               className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sj_fehlzeiten_ges')}`}
+              title="Gesamte Fehlzeiten im Schuljahr (entschuldigte + unentschuldigte)"
             >
               SJ<sub className="text-xs">ges.</sub> {renderSortIndicator('sj_fehlzeiten_ges')}
             </th>
             <th 
               onClick={() => onSort('sum_fehlzeiten')}
               className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark ${getSortableHeaderClass('sum_fehlzeiten')}`}
+              title="Summe der unentschuldigten Fehlzeiten in den letzten Wochen (Anzahl der Wochen kann eingestellt werden)"
             >
               ∑W {renderSortIndicator('sum_fehlzeiten')}
             </th>

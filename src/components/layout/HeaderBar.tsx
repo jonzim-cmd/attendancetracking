@@ -71,6 +71,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
           value={selectedClasses.length === 0 ? '' : selectedClasses[selectedClasses.length - 1]}
           onChange={handleClassChange}
           className="ml-2 min-w-[120px] w-auto rounded px-2 py-1 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+          title="Klassen filtern - mehrere Klassen können ausgewählt werden"
         >
           <option value="">Alle Klassen</option>
           {availableClasses.map((className) => (
@@ -89,7 +90,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                 ? 'bg-header-btn-selected dark:bg-header-btn-selected-dark text-chatGray-textLight dark:text-chatGray-textDark'
                 : 'bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark'
             }`}
-            title="Nur Schüler mit unentschuldigten Verspätungen"
+            title="Nur Schüler mit unentschuldigten Verspätungen anzeigen - betrifft gewählten Zeitraum"
           >
             Nur Verspät.
           </button>
@@ -100,7 +101,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                 ? 'bg-header-btn-selected dark:bg-header-btn-selected-dark text-chatGray-textLight dark:text-chatGray-textDark'
                 : 'bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark'
             }`}
-            title="Nur Schüler mit unentschuldigten Fehlzeiten"
+            title="Nur Schüler mit unentschuldigten Fehlzeiten anzeigen - betrifft gewählten Zeitraum"
           >
             Nur Fehltage
           </button>
@@ -116,6 +117,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
             placeholder="Min. Verspät."
             onChange={(e) => onMinUnexcusedLatesChange(e.target.value)}
             className="w-32 rounded px-2 py-1 bg-header-btn-input dark:bg-header-btn-input-dark hover:bg-header-btn-input-hover dark:hover:bg-header-btn-input-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+            title="Mindestanzahl an unentschuldigten Verspätungen für die Anzeige eingeben"
           />
           <input
             type="number"
@@ -125,6 +127,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
             placeholder="Min. Fehltage"
             onChange={(e) => onMinUnexcusedAbsencesChange(e.target.value)}
             className="w-32 rounded px-2 py-1 bg-header-btn-input dark:bg-header-btn-input-dark hover:bg-header-btn-input-hover dark:hover:bg-header-btn-input-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+            title="Mindestanzahl an unentschuldigten Fehltagen für die Anzeige eingeben"
           />
         </div>
         
@@ -135,6 +138,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Nach Name suchen"
           className="w-40 rounded px-2 py-1 bg-header-btn-input dark:bg-header-btn-input-dark hover:bg-header-btn-input-hover dark:hover:bg-header-btn-input-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+          title="Suche nach Schülernamen - Eingabe filtert die Ergebnisse"
         />
 
         {/* NEUE SPALTENTOGGLE-BUTTONS */}

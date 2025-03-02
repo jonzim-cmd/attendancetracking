@@ -211,21 +211,9 @@ const NormalView: React.FC<NormalViewProps> = ({
   };
 
   const toggleAllDetails = () => {
-    setIsAllExpanded((prev) => !prev);
-    if (!isAllExpanded) {
-      const newExpandedStudents = new Set<string>();
-      const newActiveFilters = new Map<string, string>();
-
-      getFilteredStudents().forEach(([student, stats]) => {
-        if (stats.verspaetungen_unentsch > 0 || stats.fehlzeiten_unentsch > 0) {
-          newExpandedStudents.add(student);
-          newActiveFilters.set(student, 'details');
-        }
-      });
-
-      setExpandedStudents(newExpandedStudents);
-      setActiveFilters(newActiveFilters);
-    } else {
+    // Nur einklappen, wenn Details geöffnet sind
+    if (expandedStudents.size > 0) {
+      setIsAllExpanded(false);
       setExpandedStudents(new Set());
       setActiveFilters(new Map());
     }
@@ -349,7 +337,7 @@ const NormalView: React.FC<NormalViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Überschrift und "Alle Details" Button */}
+      {/* Überschrift und "Alle Details einklappen" Button */}
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-chatGray-textLight dark:text-chatGray-textDark">
           Ergebnisse für den Zeitraum {formatDate(startDate)} - {formatDate(endDate)}
@@ -359,10 +347,11 @@ const NormalView: React.FC<NormalViewProps> = ({
             variant="outline"
             size="sm"
             onClick={toggleAllDetails}
-            title="zeige unent. V./F. Zeitr."
+            title="Alle geöffneten Details einklappen"
             className="px-3 py-1"
+            disabled={expandedStudents.size === 0}
           >
-            {isAllExpanded ? 'Alle Details einklappen' : 'Alle Details ausklappen'}
+            Alle Details einklappen
           </Button>
         </div>
       </div>

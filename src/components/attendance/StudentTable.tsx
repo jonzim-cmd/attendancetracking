@@ -65,7 +65,7 @@ const StudentTable: React.FC<StudentTableProps> = ({
   getFilteredDetailData,
 }) => {
   return (
-    <table className="min-w-full border-collapse bg-table-light-base dark:bg-table-dark-base">
+    <table className="min-w-full border-separate border-spacing-0 bg-table-light-base dark:bg-table-dark-base">
       <colgroup>
         <col className="w-12" /> {/* Nr.-Spalte */}
         <col className="w-48" /> {/* Name-Spalte */}

@@ -325,16 +325,16 @@ const NormalView: React.FC<NormalViewProps> = ({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Kompakte Überschrift */}
-      <h3 className="text-lg font-semibold text-chatGray-textLight dark:text-chatGray-textDark mb-1">
+      <h3 className="text-base font-semibold text-chatGray-textLight dark:text-chatGray-textDark mb-1">
         Ergebnisse für den Zeitraum {formatDate(startDate)} - {formatDate(endDate)}
       </h3>
 
       {/* Optimierter Container für die Tabelle mit Sticky Header */}
       <div 
         className="relative border border-tableBorder-light dark:border-tableBorder-dark rounded-md overflow-auto bg-table-light-base dark:bg-table-dark-base"
-        style={{ height: 'calc(100vh - 140px)' }}
+        style={{ height: 'calc(100vh - 115px)' }}
       >
         <StudentTable
           students={getSortedStudents()}

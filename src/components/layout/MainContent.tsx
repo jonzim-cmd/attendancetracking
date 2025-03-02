@@ -47,7 +47,7 @@ const MainContent: React.FC<MainContentProps> = ({
       className="overflow-hidden bg-chatGray-light dark:bg-chatGray-dark min-h-screen transition-all duration-300"
       style={{
         marginLeft: 'var(--sidebar-width)',
-        paddingTop: '56px', // Feste Höhe statt pt-20 für konsistente Berechnung
+        paddingTop: '48px', // Feste Höhe statt pt-20 für konsistente Berechnung
         paddingLeft: 'calc(var(--header-padding-left) + 0px)' // erhöhter Puffer von 8px auf 16px
       }}
     >

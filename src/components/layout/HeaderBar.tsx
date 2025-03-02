@@ -20,9 +20,10 @@ interface HeaderBarProps {
   isDarkMode: boolean;
   toggleDarkMode: () => void;
   onReset: () => void;
-  // Neue Props für die Spaltenanzeige
   visibleColumns: string[];
   onToggleColumnGroup: (group: string) => void;
+  expandedStudents: Set<string>;
+  onCloseAllDetails: () => void;
 }
 
 const HeaderBar: React.FC<HeaderBarProps> = ({
@@ -44,6 +45,8 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   onReset,
   visibleColumns,
   onToggleColumnGroup,
+  expandedStudents,
+  onCloseAllDetails,
 }) => {
   const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -137,11 +140,11 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Nach Name suchen"
-          className="w-40 rounded px-2 py-1 bg-header-btn-input dark:bg-header-btn-input-dark hover:bg-header-btn-input-hover dark:hover:bg-header-btn-input-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+          className="w-36 rounded px-2 py-1 bg-header-btn-input dark:bg-header-btn-input-dark hover:bg-header-btn-input-hover dark:hover:bg-header-btn-input-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
           title="Suche nach Schülernamen - Eingabe filtert die Ergebnisse"
         />
 
-        {/* NEUE SPALTENTOGGLE-BUTTONS */}
+        {/* SPALTENTOGGLE-BUTTONS */}
         <div className="ml-3 flex gap-1">
           <button
             onClick={() => onToggleColumnGroup('verspaetungen')}
@@ -176,6 +179,17 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
           >
             Wochen
           </button>
+          
+          {/* "Details einklappen" Button - nur angezeigt, wenn expandedStudents nicht leer ist */}
+          {expandedStudents.size > 0 && (
+            <button
+              onClick={onCloseAllDetails}
+              className="px-2 py-1 text-sm bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark"
+              title="Alle geöffneten Details einklappen"
+            >
+              Details einklappen
+            </button>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2 mr-2">

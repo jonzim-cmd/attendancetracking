@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import StudentTable from '@/components/attendance/StudentTable';
 import { getLastNWeeks } from '@/lib/attendance-utils';
 import { AbsenceEntry, DetailedStats, StudentStats } from '@/types';
-import Button from '@/components/ui/Button';
 
 interface NormalViewProps {
   getFilteredStudents: () => [string, StudentStats][];
@@ -66,7 +65,6 @@ const NormalView: React.FC<NormalViewProps> = ({
   setActiveFilters,
   visibleColumns,
 }) => {
-  const [isAllExpanded, setIsAllExpanded] = useState(false);
   const [sortStates, setSortStates] = useState<Map<SortField, SortState>>(new Map());
   const [checkedStudents, setCheckedStudents] = useState<Set<string>>(new Set());
 
@@ -210,15 +208,6 @@ const NormalView: React.FC<NormalViewProps> = ({
     setExpandedStudents(newSet);
   };
 
-  const toggleAllDetails = () => {
-    // Nur einklappen, wenn Details geöffnet sind
-    if (expandedStudents.size > 0) {
-      setIsAllExpanded(false);
-      setExpandedStudents(new Set());
-      setActiveFilters(new Map());
-    }
-  };
-
   const handleSort = (field: SortField) => {
     setSortStates((prevStates) => {
       const newStates = new Map(prevStates);
@@ -337,23 +326,12 @@ const NormalView: React.FC<NormalViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Überschrift und "Alle Details einklappen" Button */}
+      {/* Überschrift */}
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-chatGray-textLight dark:text-chatGray-textDark">
           Ergebnisse für den Zeitraum {formatDate(startDate)} - {formatDate(endDate)}
         </h3>
-        <div className="flex justify-end items-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleAllDetails}
-            title="Alle geöffneten Details einklappen"
-            className="px-3 py-1"
-            disabled={expandedStudents.size === 0}
-          >
-            Alle Details einklappen
-          </Button>
-        </div>
+        {/* Der "Alle Details" Button wurde entfernt */}
       </div>
 
       {/* Die Tabelle ist jetzt in einem Container mit overflow-x: auto */}

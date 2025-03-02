@@ -43,6 +43,12 @@ const AttendanceAnalyzer: React.FC = () => {
       }
     });
   };
+  
+  // Funktion zum Schließen aller Details
+  const closeAllDetails = () => {
+    setExpandedStudents(new Set());
+    setActiveFilters(new Map());
+  };
 
   const resetAll = () => {
     setRawData(null);
@@ -89,8 +95,6 @@ const AttendanceAnalyzer: React.FC = () => {
       setDetailedData(processed.detailedStats);
       setSchoolYearDetailedData(processed.schoolYearDetails);
       setWeeklyDetailedData(processed.weeklyDetails);
-      // Entfernen der überflüssigen Zeile:
-      // setAvailableStudents(Object.keys(processed.studentStats).sort());
       const classes = new Set<string>();
       rawData.forEach((row: any) => {
         if (row.Klasse) classes.add(row.Klasse);
@@ -347,9 +351,10 @@ const AttendanceAnalyzer: React.FC = () => {
         isDarkMode={isDarkMode}
         toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
         onReset={resetAll}
-        // Neue Props für die Spaltensteuerung
         visibleColumns={visibleColumns}
         onToggleColumnGroup={toggleColumnGroup}
+        expandedStudents={expandedStudents}
+        onCloseAllDetails={closeAllDetails}
       />
       <Sidebar
         startDate={startDate}

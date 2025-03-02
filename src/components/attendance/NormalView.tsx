@@ -325,17 +325,14 @@ const NormalView: React.FC<NormalViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Überschrift */}
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-chatGray-textLight dark:text-chatGray-textDark">
-          Ergebnisse für den Zeitraum {formatDate(startDate)} - {formatDate(endDate)}
-        </h3>
-        {/* Der "Alle Details" Button wurde entfernt */}
-      </div>
+    <div className="space-y-3">
+      {/* Kompakte Überschrift */}
+      <h3 className="text-lg font-semibold text-chatGray-textLight dark:text-chatGray-textDark mb-1">
+        Ergebnisse für den Zeitraum {formatDate(startDate)} - {formatDate(endDate)}
+      </h3>
 
-      {/* Die Tabelle ist jetzt in einem Container mit overflow-x: auto und position: relative */}
-      <div className="h-[500px] overflow-auto bg-table-light-base dark:bg-table-dark-base relative">
+      {/* Direkte Anwendung von overflow-auto auf dem Container mit fester Höhe */}
+      <div className="h-[calc(100vh-140px)] overflow-auto bg-table-light-base dark:bg-table-dark-base">
         <StudentTable
           students={getSortedStudents()}
           detailedData={detailedData}

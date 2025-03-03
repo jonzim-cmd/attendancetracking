@@ -29,6 +29,8 @@ const AttendanceAnalyzer: React.FC = () => {
   const [activeFilters, setActiveFilters] = useState<Map<string, string>>(new Map());
   // State zum Verfolgen von Datei-Uploads
   const [uploadTrigger, setUploadTrigger] = useState<number>(0);
+  // Neue State-Variable für Datei-Upload-Status
+  const [hasFileUploaded, setHasFileUploaded] = useState(false);
   
   // Aktualisierte visibleColumns-Struktur für feingranularere Kontrolle
   const [visibleColumns, setVisibleColumns] = useState<string[]>(['basic', 'verspaetungen', 'fehlzeiten', 'stats']);
@@ -55,6 +57,7 @@ const AttendanceAnalyzer: React.FC = () => {
   const resetAll = () => {
     setRawData(null);
     setResults(null);
+    setHasFileUploaded(false); // Reset file upload status
     
     // Statt leerer Strings setzen wir sinnvolle Default-Werte
     const now = new Date();
@@ -89,6 +92,7 @@ const AttendanceAnalyzer: React.FC = () => {
 
   const handleFileProcessed = (data: any) => {
     setRawData(data);
+    setHasFileUploaded(true); // Set file upload status
     // Trigger erhöhen, um sicherzustellen, dass die Effekte neu ausgeführt werden
     setUploadTrigger(prev => prev + 1);
   };
@@ -384,6 +388,7 @@ const AttendanceAnalyzer: React.FC = () => {
         onExportCSV={handleExportCSV}
         onExportPDF={handleExportPDF}
         uploadTrigger={uploadTrigger}
+        hasFileUploaded={hasFileUploaded} // Pass file upload status to sidebar
       />
       <MainContent
         getFilteredStudents={getFilteredStudents}

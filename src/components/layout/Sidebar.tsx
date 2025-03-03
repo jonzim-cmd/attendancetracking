@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Upload, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Upload, ChevronLeft, ChevronRight, Pin, ArrowLeft, ArrowRight } from 'lucide-react';
 import FileUploadHandler from '@/components/attendance/FileUploadHandler';
 
 interface SidebarProps {
@@ -15,6 +15,7 @@ interface SidebarProps {
   onExportCSV: () => void;
   onExportPDF: () => void;
   uploadTrigger: number;
+  hasFileUploaded: boolean; // New prop to determine initial sidebar state
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -30,6 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onExportCSV,
   onExportPDF,
   uploadTrigger,
+  hasFileUploaded,
 }) => {
   const quickSelectOptions = [
     { value: 'thisWeek', label: 'Diese Woche' },
@@ -52,14 +54,21 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   // false = Sidebar aufgeklappt, true = komplett eingeklappt (nicht im Layout enthalten)
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(hasFileUploaded);
+  // Pinned state: true = sidebar is fixed open, false = auto-hide behavior
+  const [isPinned, setIsPinned] = useState(!hasFileUploaded);
   // Breite des Toggle-Buttons, die wir als minimalen Abstand nutzen, wenn die Sidebar verschwindet
   const toggleButtonWidth = 45; // px
+
+  // Refs for hover detection
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const edgeDetectionRef = useRef<HTMLDivElement>(null);
 
   // Zum Messen der vollen Sidebar-Breite (nur wenn aufgeklappt)
   const exportRef = useRef<HTMLDivElement>(null);
   const [fullSidebarWidth, setFullSidebarWidth] = useState<number | null>(null);
 
+  // Effect for measuring sidebar width and setting CSS variables
   useEffect(() => {
     const measureWidth = () => {
       if (!collapsed) {
@@ -86,13 +95,80 @@ const Sidebar: React.FC<SidebarProps> = ({
     return () => window.removeEventListener('resize', measureWidth);
   }, [collapsed]);
 
+  // Handle hover behavior when not pinned
+  useEffect(() => {
+    if (isPinned) return; // Skip hover logic when sidebar is pinned
+
+    const handleEdgeMouseEnter = () => {
+      if (collapsed) {
+        setCollapsed(false);
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isPinned && !collapsed) {
+        const sidebarRect = sidebarRef.current?.getBoundingClientRect();
+        if (sidebarRect && e.clientX > sidebarRect.right) {
+          setCollapsed(true);
+        }
+      }
+    };
+
+    // Add event listeners
+    const edgeElement = edgeDetectionRef.current;
+    if (edgeElement) {
+      edgeElement.addEventListener('mouseenter', handleEdgeMouseEnter);
+    }
+
+    document.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      if (edgeElement) {
+        edgeElement.removeEventListener('mouseenter', handleEdgeMouseEnter);
+      }
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [isPinned, collapsed]);
+
+  // Toggle pin function
+  const togglePin = () => {
+    setIsPinned(!isPinned);
+  };
+
+  // Custom Pin Icon Component
+  const PinIcon = ({ isPinned }: { isPinned: boolean }) => (
+    <div className="relative">
+      {isPinned ? (
+        // Pfeil nach links mit vertikalem Strich
+        <div className="relative">
+          <ArrowLeft className="w-3 h-3" strokeWidth={1.0} />
+          <div className="absolute right-0 top-0 h-full w-px bg-current opacity-100"></div>
+        </div>
+      ) : (
+        // Pfeil nach rechts mit vertikalem Strich
+        <div className="relative">
+           <ArrowRight className="w-3 h-3" strokeWidth={1.0} />
+           <div className="absolute left-0 top-0 h-full w-px bg-current opacity-100"></div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <>
+      {/* Invisible edge detection area - always present */}
+      <div
+        ref={edgeDetectionRef}
+        className="fixed top-0 left-0 w-3 h-full z-20"
+        style={{ opacity: 0 }}
+      />
+
       {/* Toggle-Button – immer sichtbar, fixed links, mit korrektem Icon-Farbschema */}
       <button
         onClick={() => setCollapsed(!collapsed)}
         className="fixed top-4 left-4 z-30 p-2 rounded-full bg-sidebar-btn dark:bg-sidebar-btn-dark hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors"
         title={collapsed ? "Sidebar einblenden" : "Sidebar ausblenden"}
+        style={{ height: "0px", width: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}
       >
         {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
@@ -100,9 +176,20 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar-Inhalt nur rendern, wenn NICHT collapsed */}
       {!collapsed && (
         <aside
+          ref={sidebarRef}
           className="fixed top-0 left-0 min-h-screen bg-chatGray-sidebarLight dark:bg-chatGray-sidebarDark p-4 overflow-y-auto transition-all duration-300"
           style={fullSidebarWidth ? { width: `${fullSidebarWidth}px` } : {}}
         >
+          {/* Pin Button - Neu positioniert am rechten Rand der Sidebar */}
+          <button
+            onClick={togglePin}
+            className="absolute right-4 z-30 p-1 rounded-sm bg-sidebar-btn dark:bg-sidebar-btn-dark hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors opacity-60 hover:opacity-100"
+            title={isPinned ? "Sidebar nicht mehr fixieren" : "Sidebar fixieren"}
+            style={{ top: "15px", height: "18px", width: "20px", display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            <PinIcon isPinned={isPinned} />
+          </button>
+
           {/* Datei hochladen */}
           <div className="mb-6 mt-10">
             <label

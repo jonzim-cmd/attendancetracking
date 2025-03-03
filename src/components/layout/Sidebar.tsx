@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Upload, ChevronLeft, ChevronRight, Pin, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Upload, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight } from 'lucide-react';
 import FileUploadHandler from '@/components/attendance/FileUploadHandler';
 
 interface SidebarProps {

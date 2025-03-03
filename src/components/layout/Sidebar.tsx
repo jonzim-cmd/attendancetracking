@@ -15,7 +15,7 @@ interface SidebarProps {
   onExportCSV: () => void;
   onExportPDF: () => void;
   uploadTrigger: number;
-  hasFileUploaded: boolean; // New prop to determine initial sidebar state
+  hasFileUploaded: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -53,51 +53,70 @@ const Sidebar: React.FC<SidebarProps> = ({
     { value: '8', label: '8 Wochen' },
   ];
 
-  // false = Sidebar aufgeklappt, true = komplett eingeklappt (nicht im Layout enthalten)
+  // Zustandsverwaltung für die Sidebar
   const [collapsed, setCollapsed] = useState(hasFileUploaded);
-  // Pinned state: true = sidebar is fixed open, false = auto-hide behavior
   const [isPinned, setIsPinned] = useState(!hasFileUploaded);
-  // Breite des Toggle-Buttons, die wir als minimalen Abstand nutzen, wenn die Sidebar verschwindet
+  const [userPinned, setUserPinned] = useState(false);
   const toggleButtonWidth = 45; // px
 
-  // Refs for hover detection
+  // Refs für DOM-Elemente
   const sidebarRef = useRef<HTMLDivElement>(null);
   const edgeDetectionRef = useRef<HTMLDivElement>(null);
-
-  // Zum Messen der vollen Sidebar-Breite (nur wenn aufgeklappt)
   const exportRef = useRef<HTMLDivElement>(null);
   const [fullSidebarWidth, setFullSidebarWidth] = useState<number | null>(null);
+  
+  // Verarbeite den eigentlichen Datei-Upload mit direkter Reaktion
+  const handleFileUpload = (data: any) => {
+    // Rufe die übergebene onFileUpload-Funktion auf
+    onFileUpload(data);
+    
+    // Reagiere sofort auf den Datei-Upload, wenn der Benutzer nicht manuell gepinnt hat
+    if (!userPinned) {
+      setIsPinned(false);
+    }
+  };
 
-  // Effect for measuring sidebar width and setting CSS variables
+  // Ein einzelner kombinierter useEffect für die hasFileUploaded-Änderungen
+  useEffect(() => {
+    // Wenn der Benutzer nicht manuell gepinnt hat, aktualisiere den Pin-Status
+    if (!userPinned) {
+      setIsPinned(!hasFileUploaded);
+    }
+    
+    // Wenn die Datei zurückgesetzt wurde, stellen wir sicher, dass die Sidebar sichtbar ist
+    if (!hasFileUploaded) {
+      setUserPinned(false);
+      setCollapsed(false);
+    }
+  }, [hasFileUploaded, userPinned]);
+
+  // Sidebar-Breite messen und CSS-Variablen setzen
   useEffect(() => {
     const measureWidth = () => {
       if (!collapsed) {
         if (exportRef.current) {
           const exportWidth = exportRef.current.offsetWidth;
-          // p-4 entspricht ca. 16px pro Seite (insgesamt 32px)
           const totalWidth = exportWidth + 32;
           setFullSidebarWidth(totalWidth);
           document.documentElement.style.setProperty('--sidebar-width', `${totalWidth}px`);
           document.documentElement.style.setProperty('--header-padding-left', '0px');
         }
       } else {
-        // Sidebar-Inhalt verschwindet – wir setzen die Breite auf 0
         setFullSidebarWidth(0);
         document.documentElement.style.setProperty('--sidebar-width', '0px');
-        // Damit der Header-Inhalt nicht unter den Toggle-Button rutscht,
-        // setzen wir ein padding-left in Höhe des Buttons.
         document.documentElement.style.setProperty('--header-padding-left', `${toggleButtonWidth}px`);
       }
     };
 
+    // Sofortige Ausführung ohne setTimeout
     measureWidth();
     window.addEventListener('resize', measureWidth);
     return () => window.removeEventListener('resize', measureWidth);
-  }, [collapsed]);
+  }, [collapsed, toggleButtonWidth]);
 
-  // Handle hover behavior when not pinned
+  // Hover-Verhalten nur verwalten, wenn die Sidebar nicht gepinnt ist
   useEffect(() => {
-    if (isPinned) return; // Skip hover logic when sidebar is pinned
+    if (isPinned) return;
 
     const handleEdgeMouseEnter = () => {
       if (collapsed) {
@@ -114,7 +133,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       }
     };
 
-    // Add event listeners
     const edgeElement = edgeDetectionRef.current;
     if (edgeElement) {
       edgeElement.addEventListener('mouseenter', handleEdgeMouseEnter);
@@ -130,22 +148,21 @@ const Sidebar: React.FC<SidebarProps> = ({
     };
   }, [isPinned, collapsed]);
 
-  // Toggle pin function
+  // Toggle-Funktionen
   const togglePin = () => {
     setIsPinned(!isPinned);
+    setUserPinned(true);
   };
 
   // Custom Pin Icon Component
   const PinIcon = ({ isPinned }: { isPinned: boolean }) => (
     <div className="relative">
       {isPinned ? (
-        // Pfeil nach links mit vertikalem Strich
         <div className="relative">
           <ArrowLeft className="w-3 h-3" strokeWidth={1.0} />
           <div className="absolute right-0 top-0 h-full w-px bg-current opacity-100"></div>
         </div>
       ) : (
-        // Pfeil nach rechts mit vertikalem Strich
         <div className="relative">
            <ArrowRight className="w-3 h-3" strokeWidth={1.0} />
            <div className="absolute left-0 top-0 h-full w-px bg-current opacity-100"></div>
@@ -156,14 +173,14 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Invisible edge detection area - always present */}
+      {/* Unsichtbarer Randbereich für Hover-Erkennung */}
       <div
         ref={edgeDetectionRef}
         className="fixed top-0 left-0 w-3 h-full z-20"
         style={{ opacity: 0 }}
       />
 
-      {/* Toggle-Button – immer sichtbar, fixed links, mit korrektem Icon-Farbschema */}
+      {/* Toggle-Button */}
       <button
         onClick={() => setCollapsed(!collapsed)}
         className="fixed top-4 left-4 z-30 p-2 rounded-full bg-sidebar-btn dark:bg-sidebar-btn-dark hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors"
@@ -173,14 +190,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
 
-      {/* Sidebar-Inhalt nur rendern, wenn NICHT collapsed */}
+      {/* Sidebar-Inhalt */}
       {!collapsed && (
         <aside
           ref={sidebarRef}
-          className="fixed top-0 left-0 min-h-screen bg-chatGray-sidebarLight dark:bg-chatGray-sidebarDark p-4 overflow-y-auto transition-all duration-300"
+          className="fixed top-0 left-0 min-h-screen bg-chatGray-sidebarLight dark:bg-chatGray-sidebarDark p-4 overflow-y-auto transition-all duration-50" // Schnellere Transition
           style={fullSidebarWidth ? { width: `${fullSidebarWidth}px` } : {}}
         >
-          {/* Pin Button - Neu positioniert am rechten Rand der Sidebar */}
+          {/* Pin-Button */}
           <button
             onClick={togglePin}
             className="absolute right-4 z-30 p-1 rounded-sm bg-sidebar-btn dark:bg-sidebar-btn-dark hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors opacity-60 hover:opacity-100"
@@ -190,7 +207,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <PinIcon isPinned={isPinned} />
           </button>
 
-          {/* Datei hochladen */}
+          {/* Upload-Bereich */}
           <div className="mb-6 mt-10">
             <label
               htmlFor="file-upload"
@@ -202,14 +219,14 @@ const Sidebar: React.FC<SidebarProps> = ({
             </label>
             <FileUploadHandler
               key={uploadTrigger}
-              onFileProcessed={onFileUpload}
+              onFileProcessed={handleFileUpload} // Verwende die eigene Wrapper-Funktion
               startDate={startDate}
               endDate={endDate}
               setError={console.error}
             />
           </div>
 
-          {/* Zeitraum */}
+          {/* Zeitraum-Bereich */}
           <div className="mb-6">
             <h3 className="text-sm font-medium text-chatGray-textLight dark:text-chatGray-textDark mb-2">Zeitraum</h3>
             <label className="block text-xs text-gray-600 dark:text-gray-400">Startdatum</label>
@@ -242,7 +259,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               ))}
             </select>
             
-            {/* Wochen zurück - Jetzt in den Zeitraum-Bereich integriert */}
+            {/* Wochen-Zurück-Bereich */}
             <label className="block text-xs text-gray-600 dark:text-gray-400 mt-2">Wochen zurück</label>
             <select
               value={selectedWeeks}
@@ -258,7 +275,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </select>
           </div>
 
-          {/* Export – hier messen wir die Breite - mit mehr Abstand zum vorigen Bereich */}
+          {/* Export-Bereich */}
           <div className="mb-6 mt-8" ref={exportRef}>
             <h3 className="text-sm font-medium text-chatGray-textLight dark:text-chatGray-textDark mb-2">Export</h3>
             <div className="flex gap-2">

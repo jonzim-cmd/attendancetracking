@@ -35,7 +35,7 @@ const AttendanceAnalyzer: React.FC = () => {
   // Aktualisierte visibleColumns-Struktur für feingranularere Kontrolle
   const [visibleColumns, setVisibleColumns] = useState<string[]>(['basic', 'verspaetungen', 'fehlzeiten', 'stats']);
   
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
   // Neue Funktion zum Umschalten der Spaltengruppen
   const toggleColumnGroup = (columnGroup: string) => {

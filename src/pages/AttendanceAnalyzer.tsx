@@ -27,6 +27,8 @@ const AttendanceAnalyzer: React.FC = () => {
   const [weeklyDetailedData, setWeeklyDetailedData] = useState<Record<string, any>>({});
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [activeFilters, setActiveFilters] = useState<Map<string, string>>(new Map());
+  // State zum Verfolgen von Datei-Uploads
+  const [uploadTrigger, setUploadTrigger] = useState<number>(0);
   
   // Aktualisierte visibleColumns-Struktur für feingranularere Kontrolle
   const [visibleColumns, setVisibleColumns] = useState<string[]>(['basic', 'verspaetungen', 'fehlzeiten', 'stats']);
@@ -53,8 +55,17 @@ const AttendanceAnalyzer: React.FC = () => {
   const resetAll = () => {
     setRawData(null);
     setResults(null);
-    setStartDate('');
-    setEndDate('');
+    
+    // Statt leerer Strings setzen wir sinnvolle Default-Werte
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const start = new Date(currentYear, currentMonth, 1);
+    const end = new Date(currentYear, currentMonth + 1, 0);
+    
+    setStartDate(start.toISOString().split('T')[0]);
+    setEndDate(end.toISOString().split('T')[0]);
+    
     setSearchQuery('');
     setError('');
     setDetailedData({});
@@ -72,10 +83,14 @@ const AttendanceAnalyzer: React.FC = () => {
     setExpandedStudents(new Set());
     setActiveFilters(new Map());
     setVisibleColumns(['basic', 'verspaetungen', 'fehlzeiten', 'stats']);
+    // Trigger hochzählen um einen neuen Upload-Zyklus zu starten
+    setUploadTrigger(prev => prev + 1);
   };
 
   const handleFileProcessed = (data: any) => {
     setRawData(data);
+    // Trigger erhöhen, um sicherzustellen, dass die Effekte neu ausgeführt werden
+    setUploadTrigger(prev => prev + 1);
   };
 
   useEffect(() => {
@@ -102,7 +117,7 @@ const AttendanceAnalyzer: React.FC = () => {
       setAvailableClasses(Array.from(classes).sort());
       setError('');
     }
-  }, [rawData, startDate, endDate]);
+  }, [rawData, startDate, endDate, uploadTrigger]); // uploadTrigger als Abhängigkeit hinzugefügt
 
   useEffect(() => {
     if (!startDate && !endDate) {
@@ -128,7 +143,7 @@ const AttendanceAnalyzer: React.FC = () => {
       setSchoolYearStats(calculateSchoolYearStats(rawData));
       setWeeklyStats(calculateWeeklyStats(rawData, selectedWeeks));
     }
-  }, [rawData, selectedWeeks]);
+  }, [rawData, selectedWeeks, uploadTrigger]); // uploadTrigger als Abhängigkeit hinzugefügt
 
   useEffect(() => {
     // Es ist nicht nötig, den gesamten results-Zustand neu zu setzen

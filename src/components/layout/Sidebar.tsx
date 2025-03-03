@@ -89,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Toggle-Button – immer sichtbar, fixed links, mit korrektem Icon-Farbschema */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="fixed top-4 left-4 z-20 p-2 rounded-full bg-sidebar-btn dark:bg-sidebar-btn-dark hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors"
+        className="fixed top-4 left-4 z-30 p-2 rounded-full bg-sidebar-btn dark:bg-sidebar-btn-dark hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors"
         title={collapsed ? "Sidebar einblenden" : "Sidebar ausblenden"}
       >
         {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}

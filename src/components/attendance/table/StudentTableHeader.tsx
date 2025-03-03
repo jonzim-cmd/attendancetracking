@@ -52,25 +52,25 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
 
   return (
     <thead className="sticky top-0 z-50 bg-table-light-header dark:bg-table-dark-header shadow-sm">
-      <tr>
+      <tr className="bg-table-light-header dark:bg-table-dark-header">
         {/* Grundinformationen - immer sichtbar */}
-        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark w-12">Nr.</th>
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-r border-tableBorder-light dark:border-tableBorder-dark w-12">Nr.</th>
         <th 
           onClick={() => onSort('name')}
-          className={`px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark w-48 ${getSortableHeaderClass('name')}`}
+          className={`px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-r border-tableBorder-light dark:border-tableBorder-dark w-48 ${getSortableHeaderClass('name')}`}
         >
           Name {renderSortIndicator('name')}
         </th>
         <th 
           onClick={() => onSort('klasse')}
-          className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark min-w-[3rem] max-w-[6rem] whitespace-nowrap ${getSortableHeaderClass('klasse')}`}
+          className={`px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-r border-tableBorder-light dark:border-tableBorder-dark min-w-[3rem] max-w-[6rem] whitespace-nowrap ${getSortableHeaderClass('klasse')}`}
         >
           Klasse {renderSortIndicator('klasse')}
         </th>
         
         {/* Verspätungen - nur wenn sichtbar */}
         {visibleColumns.includes('verspaetungen') && (
-          <th colSpan={verspColspan} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark">
+          <th colSpan={verspColspan} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-r border-tableBorder-light dark:border-tableBorder-dark">
             Verspätungen
             <div className="text-xs font-normal normal-case text-gray-400 dark:text-gray-400">E, U und O betreffen gewählten Zeitraum</div>
           </th>
@@ -78,14 +78,14 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
         
         {/* Fehlzeiten - nur wenn sichtbar */}
         {visibleColumns.includes('fehlzeiten') && (
-          <th colSpan={fehlzColspan} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-r border-tableBorder-light dark:border-tableBorder-dark">
+          <th colSpan={fehlzColspan} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-r border-tableBorder-light dark:border-tableBorder-dark">
             Fehltage
             <div className="text-xs font-normal normal-case text-gray-400 dark:text-gray-400">E, U und O betreffen gewählten Zeitraum</div>
           </th>
         )}
         
         {/* Auswahl-Spalte */}
-        <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-tableBorder-light dark:border-tableBorder-dark w-16">
+        <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-tableBorder-light dark:border-tableBorder-dark w-16">
           <button
             onClick={onResetSelection}
             className="text-xs h-6 px-2 bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark rounded text-gray-700 dark:text-gray-300 transition-colors duration-200"
@@ -94,7 +94,7 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
           </button>
         </th>
       </tr>
-      <tr>
+      <tr className="bg-table-light-header dark:bg-table-dark-header">
         {/* Grundinformationen - Unterkategorien */}
         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark"></th>
         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border-b border-r border-tableBorder-light dark:border-tableBorder-dark"></th>

@@ -292,7 +292,7 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
     if (visibleColumns.includes('fehlzeiten')) {
       colCount += 3; // E, U, O
     }
-    
+
     // Statistikspalten (wenn sichtbar)
     if (visibleColumns.includes('stats')) {
       if (visibleColumns.includes('verspaetungen')) {
@@ -302,15 +302,15 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
         colCount += 3; // SJ, SJ-Gesamt, ∑W für Fehlzeiten
       }
     }
-    
+
     return colCount;
-  };
+    };
 
-  // Entscheide, ob dieser Filter zur Statistik gehört und versteckt werden soll, wenn stats nicht aktiviert sind
-  const isStatsFilter = filterType && ['sj_verspaetungen', 'sj_fehlzeiten', 'sj_fehlzeiten_ges', 'sum_verspaetungen', 'sum_fehlzeiten'].includes(filterType);
-  if (isStatsFilter && !visibleColumns.includes('stats')) return null;
+    // Entscheide, ob dieser Filter zur Statistik gehört und versteckt werden soll, wenn stats nicht aktiviert sind
+    const isStatsFilter = filterType && ['sj_verspaetungen', 'sj_fehlzeiten', 'sj_fehlzeiten_ges', 'sum_verspaetungen', 'sum_fehlzeiten'].includes(filterType);
+    if (isStatsFilter && !visibleColumns.includes('stats')) return null;
 
-  return (
+    return (
     <tr 
       id={`details-${student}`}
       className={`${rowColor} transition-all duration-300 ${isVisible ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0 overflow-hidden'}`}
@@ -322,7 +322,7 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
         </div>
       </td>
     </tr>
-  );
-};
+    );
+    };
 
-export default StudentDetailsRow;
+    export default StudentDetailsRow;

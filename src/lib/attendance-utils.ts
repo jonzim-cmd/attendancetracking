@@ -1,4 +1,6 @@
 interface Week {
+  week?: number;
+  year?: number;
   startDate: Date;
   endDate: Date;
 }
@@ -21,17 +23,55 @@ interface DetailedStats {
   fehlzeiten_offen: AbsenceEntry[];
 }
 
+// Helper function to get week number from date
+export const getWeekNumber = (d: Date): number => {
+  const date = new Date(d);
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 4 - (date.getDay() || 7));
+  const yearStart = new Date(date.getFullYear(), 0, 1);
+  return Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+};
+
 export const getLastNWeeks = (n: number): Week[] => {
-  const weeks: Week[] = [];
   const today = new Date();
-  for (let i = 0; i < n; i++) {
-    const endDate = new Date(today);
-    endDate.setDate(today.getDate() - i * 7);
-    const startDate = new Date(endDate);
-    startDate.setDate(endDate.getDate() - 6);
-    weeks.push({ startDate, endDate });
+  const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+  // Find the last completed Friday
+  let lastFriday = new Date(today);
+  lastFriday.setHours(23, 59, 59, 999);
+
+  // Adjustiere auf den letzten abgeschlossenen Freitag
+  if (dayOfWeek === 0) { // Sonntag
+    lastFriday.setDate(lastFriday.getDate() - 2);
+  } else if (dayOfWeek === 6) { // Samstag
+    lastFriday.setDate(lastFriday.getDate() - 1);
+  } else { // Montag bis Freitag
+    lastFriday.setDate(lastFriday.getDate() - (dayOfWeek - 5));
   }
-  return weeks.reverse(); // Älteste Woche zuerst
+
+  const weeks: Week[] = [];
+
+  // Gehe n Wochen zurück
+  for (let i = 0; i < n; i++) {
+    // Berechne Freitag der aktuellen Woche
+    const friday = new Date(lastFriday);
+    friday.setDate(lastFriday.getDate() - (7 * i));
+    friday.setHours(23, 59, 59, 999);
+
+    // Berechne Montag derselben Woche (4 Tage vor Freitag)
+    const monday = new Date(friday);
+    monday.setDate(friday.getDate() - 4);
+    monday.setHours(0, 0, 0, 0);
+
+    weeks.unshift({
+      week: getWeekNumber(monday),
+      year: monday.getFullYear(),
+      startDate: monday,
+      endDate: friday
+    });
+  }
+
+  return weeks;
 };
 
 export const parseDate = (dateStr: string | Date): Date => {
@@ -40,14 +80,25 @@ export const parseDate = (dateStr: string | Date): Date => {
   return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
 };
 
+// Hilfsfunktion: Wandelt eine Zeitangabe (z. B. "16:50") in Minuten um
+export const parseTimeToMinutes = (timeStr: string): number => {
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return hours * 60 + minutes;
+};
+
+// Angepasste Funktion zur Erkennung von Verspätung ausschließlich basierend auf Abwesenheitsgrund und Endzeit
 export const isVerspaetungFunc = (row: any): boolean => {
+  // Nutze ausschließlich Abwesenheitsgrund zur Klassifizierung
   const absenceReason = row.Abwesenheitsgrund ? row.Abwesenheitsgrund.trim() : '';
   const isTardyByReason = absenceReason === 'Verspätung';
-  const expectedMinutes = 16 * 60 + 50; // 16:50 in minutes
+  
+  // Falls kein Abwesenheitsgrund vorliegt, dann prüfe die Endzeit
+  const expectedMinutes = parseTimeToMinutes('16:50');
   const isTardyByEndzeit =
     (!absenceReason || absenceReason === '') &&
     row.Endzeit &&
-    row.Endzeit.split(':').reduce((h: number, m: number) => h * 60 + m, 0) < expectedMinutes;
+    parseTimeToMinutes(row.Endzeit) < expectedMinutes;
+  
   return isTardyByReason || isTardyByEndzeit;
 };
 
@@ -170,8 +221,10 @@ export const processData = (
 
     if (date >= sjStartDate && date <= sjEndDate) {
       if (isVerspaetung) {
+        // Für die Details: alle Verspätungen (entschuldigt, unentschuldigt, offen) sollen in den Detaildaten erscheinen.
         schoolYearDetails[studentName].verspaetungen_unentsch.push(entry);
       } else {
+        // Für Fehlzeiten: immer in fehlzeiten_gesamt aufnehmen
         schoolYearDetails[studentName].fehlzeiten_gesamt.push(entry);
         if (isUnentschuldigt || (!effectiveStatus && isOverDeadline)) {
           schoolYearDetails[studentName].fehlzeiten_unentsch.push(entry);
@@ -233,6 +286,7 @@ export const calculateSchoolYearStats = (data: any[]): Record<string, any> => {
 
     if (date >= sjStartDate && date <= sjEndDate) {
       if (!isVerspaetung) {
+        // Fehlzeiten: immer zur Gesamtzahl hinzufügen
         stats[studentName].fehlzeiten_gesamt++;
         const isUnentschuldigt = effectiveStatus === 'nicht entsch.' || effectiveStatus === 'nicht akzep.';
         const deadlineDate = new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -240,10 +294,8 @@ export const calculateSchoolYearStats = (data: any[]): Record<string, any> => {
           stats[studentName].fehlzeiten_unentsch++;
         }
       } else {
-        const isUnentschuldigt =
-          effectiveStatus === 'nicht entsch.' ||
-          effectiveStatus === 'nicht akzep.' ||
-          (!effectiveStatus && today > new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000));
+        // Bei Verspätungen soll als Zahl nur unentschuldigt gezählt werden.
+        const isUnentschuldigt = effectiveStatus === 'nicht entsch.' || effectiveStatus === 'nicht akzep.' || (!effectiveStatus && today > new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000));
         if (isUnentschuldigt) {
           stats[studentName].verspaetungen_unentsch++;
         }
@@ -307,6 +359,6 @@ export const calculateWeeklyStats = (data: any[], selectedWeeks: string): Record
 
 const getCurrentSchoolYear = (): { start: string; end: string } => {
   const today = new Date();
-  const year = today.getMonth() < 6 ? today.getFullYear() - 1 : today.getFullYear();
+  const year = today.getMonth() < 8 ? today.getFullYear() - 1 : today.getFullYear();
   return { start: `${year}`, end: `${year + 1}` };
 };

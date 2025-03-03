@@ -30,8 +30,8 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
   onToggleChecked,
   visibleColumns,
 }) => {
-  const verspaetungenSum = `${weeklyData.verspaetungen.total}(${weeklyData.verspaetungen.weekly.join(',')})`;
-  const fehlzeitenSum = `${weeklyData.fehlzeiten.total}(${weeklyData.fehlzeiten.weekly.join(',')})`;
+  const verspaetungenSum = `${weeklyData.verspaetungen.total}(${[...weeklyData.verspaetungen.weekly].reverse().join(',')})`;
+  const fehlzeitenSum = `${weeklyData.fehlzeiten.total}(${[...weeklyData.fehlzeiten.weekly].reverse().join(',')})`;
 
   const createClickableCell = (value: number, type: string, className: string = "") => (
     <span
@@ -45,7 +45,7 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
   const createClickableWeeklyCell = (displayText: string, weeklyData: number[], type: string) => (
     <span
       className="cursor-pointer hover:underline"
-      onClick={() => onShowFilteredDetails(student, type, weeklyData)}
+      onClick={() => onShowFilteredDetails(student, type, [...weeklyData].reverse())}
     >
       {displayText}
     </span>

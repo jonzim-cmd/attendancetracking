@@ -93,7 +93,7 @@ const NormalView: React.FC<NormalViewProps> = ({
       case 'details': {
         const unexcusedEntries = [
           ...studentData.verspaetungen_unentsch,
-          ...studentData.fehlzeiten_unentsch,
+          ...studentData.fehlzeiten_unentsch
         ];
 
         const today = new Date();
@@ -107,7 +107,7 @@ const NormalView: React.FC<NormalViewProps> = ({
 
         const overdueEntries = [
           ...addOverdueEntries(studentData.verspaetungen_offen),
-          ...addOverdueEntries(studentData.fehlzeiten_offen),
+          ...addOverdueEntries(studentData.fehlzeiten_offen)
         ];
 
         return [...unexcusedEntries, ...overdueEntries].sort(

@@ -14,6 +14,7 @@ interface SidebarProps {
   onExportExcel: () => void;
   onExportCSV: () => void;
   onExportPDF: () => void;
+  uploadTrigger: number;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -28,6 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onExportExcel,
   onExportCSV,
   onExportPDF,
+  uploadTrigger,
 }) => {
   const quickSelectOptions = [
     { value: 'thisWeek', label: 'Diese Woche' },
@@ -112,6 +114,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <span>Datei hochladen</span>
             </label>
             <FileUploadHandler
+              key={uploadTrigger}
               onFileProcessed={onFileUpload}
               startDate={startDate}
               endDate={endDate}

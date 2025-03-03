@@ -383,6 +383,7 @@ const AttendanceAnalyzer: React.FC = () => {
         onExportExcel={handleExportExcel}
         onExportCSV={handleExportCSV}
         onExportPDF={handleExportPDF}
+        uploadTrigger={uploadTrigger}
       />
       <MainContent
         getFilteredStudents={getFilteredStudents}

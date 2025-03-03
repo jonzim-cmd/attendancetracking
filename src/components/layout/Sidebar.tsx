@@ -54,7 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   // false = Sidebar aufgeklappt, true = komplett eingeklappt (nicht im Layout enthalten)
   const [collapsed, setCollapsed] = useState(false);
   // Breite des Toggle-Buttons, die wir als minimalen Abstand nutzen, wenn die Sidebar verschwindet
-  const toggleButtonWidth = 60; // px
+  const toggleButtonWidth = 45; // px
 
   // Zum Messen der vollen Sidebar-Breite (nur wenn aufgeklappt)
   const exportRef = useRef<HTMLDivElement>(null);

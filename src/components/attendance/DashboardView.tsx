@@ -1,18 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { StudentStats } from '@/types';
-import { TAB_CLASSES } from './dashboard/styles';
+import EnhancedDashboard from './dashboard/EnhancedDashboard';
 import { formatDate } from './dashboard/utils';
-import {
-  prepareWeeklyTrends,
-  prepareClassComparison,
-  prepareAbsenceTypes,
-  prepareDayOfWeekAnalysis
-} from './dashboard/utils';
-
-// Tab-Komponenten importieren
-import OverviewTab from './dashboard/OverviewTab';
-import ClassesTab from './dashboard/ClassesTab';
-import PatternsTab from './dashboard/PatternsTab';
 
 interface DashboardViewProps {
   getFilteredStudents: () => [string, StudentStats][];
@@ -33,24 +22,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   availableClasses,
   selectedClasses,
 }) => {
-  // States für die verschiedenen Datenaufbereitungen
-  const [weeklyTrends, setWeeklyTrends] = useState<any[]>([]);
-  const [classComparison, setClassComparison] = useState<any[]>([]);
-  const [absenceTypes, setAbsenceTypes] = useState<any[]>([]);
-  const [dayOfWeekData, setDayOfWeekData] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'classes' | 'patterns'>('overview');
-  
-  // Effekt zum Aufbereiten aller Daten
-  useEffect(() => {
-    if (!rawData || !startDate || !endDate) return;
-    
-    // Aufbereitung der Daten für die verschiedenen Diagramme
-    setWeeklyTrends(prepareWeeklyTrends(rawData, selectedWeeks));
-    setClassComparison(prepareClassComparison(rawData, startDate, endDate, selectedClasses));
-    setAbsenceTypes(prepareAbsenceTypes(rawData, startDate, endDate, selectedClasses));
-    setDayOfWeekData(prepareDayOfWeekAnalysis(rawData, startDate, endDate, selectedClasses));
-  }, [rawData, startDate, endDate, selectedWeeks, selectedClasses]);
-  
   if (!rawData) {
     return (
       <div className="p-4 text-center text-gray-500 dark:text-gray-400">
@@ -67,57 +38,19 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         <h3 className="text-base font-semibold text-chatGray-textLight dark:text-chatGray-textDark mb-2">
           Dashboard für den Zeitraum {formatDate(startDate)} - {formatDate(endDate)}
         </h3>
-        
-        {/* Tab-Navigation mit neutraler Grenzfarbe */}
-        <div className="flex border-b border-gray-200 dark:border-gray-600">
-          <button
-            className={activeTab === 'overview' ? TAB_CLASSES.active : TAB_CLASSES.inactive}
-            onClick={() => setActiveTab('overview')}
-          >
-            Übersicht
-          </button>
-          <button
-            className={activeTab === 'classes' ? TAB_CLASSES.active : TAB_CLASSES.inactive}
-            onClick={() => setActiveTab('classes')}
-          >
-            Klassenvergleich
-          </button>
-          <button
-            className={activeTab === 'patterns' ? TAB_CLASSES.active : TAB_CLASSES.inactive}
-            onClick={() => setActiveTab('patterns')}
-          >
-            Muster & Trends
-          </button>
-        </div>
       </div>
       
-      {/* Content container mit neutraler Grenzfarbe */}
-      <div 
-        className="relative border border-gray-200 dark:border-gray-600 rounded-md overflow-auto bg-table-light-base dark:bg-table-dark-base p-4 mt-4"
-        style={{ height: 'calc(100vh - 135px)' }}
-      >
-        {activeTab === 'overview' && (
-          <OverviewTab 
-            weeklyTrends={weeklyTrends}
-            absenceTypes={absenceTypes}
-            dayOfWeekData={dayOfWeekData}
-            getFilteredStudents={getFilteredStudents}
-          />
-        )}
-        
-        {activeTab === 'classes' && (
-          <ClassesTab 
-            classComparison={classComparison}
-          />
-        )}
-        
-        {activeTab === 'patterns' && (
-          <PatternsTab 
-            weeklyTrends={weeklyTrends}
-            absenceTypes={absenceTypes}
-            dayOfWeekData={dayOfWeekData}
-          />
-        )}
+      {/* Integration der neuen EnhancedDashboard-Komponente */}
+      <div className="relative bg-table-light-base dark:bg-table-dark-base pt-4">
+        <EnhancedDashboard
+          getFilteredStudents={getFilteredStudents}
+          rawData={rawData}
+          startDate={startDate}
+          endDate={endDate}
+          selectedWeeks={selectedWeeks}
+          availableClasses={availableClasses}
+          selectedClasses={selectedClasses}
+        />
       </div>
     </div>
   );

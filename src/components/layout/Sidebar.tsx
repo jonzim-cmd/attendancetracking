@@ -90,25 +90,23 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [hasFileUploaded, userPinned]);
 
-  // Sidebar-Breite messen und CSS-Variablen setzen
+  // Sidebar-Breite messen und CSS-Variablen setzen - Optimiert
   useEffect(() => {
     const measureWidth = () => {
-      if (!collapsed) {
-        if (exportRef.current) {
-          const exportWidth = exportRef.current.offsetWidth;
-          const totalWidth = exportWidth + 32;
-          setFullSidebarWidth(totalWidth);
-          document.documentElement.style.setProperty('--sidebar-width', `${totalWidth}px`);
-          document.documentElement.style.setProperty('--header-padding-left', '0px');
-        }
-      } else {
-        setFullSidebarWidth(0);
-        document.documentElement.style.setProperty('--sidebar-width', '0px');
-        document.documentElement.style.setProperty('--header-padding-left', `${toggleButtonWidth}px`);
+      // Immer die Breite messen, unabhängig vom Collapsed-Status
+      if (exportRef.current) {
+        const exportWidth = exportRef.current.offsetWidth;
+        const totalWidth = exportWidth + 32;
+        setFullSidebarWidth(totalWidth);
+        
+        // CSS-Variablen nur einmal pro Collapsed-Status-Änderung aktualisieren
+        requestAnimationFrame(() => {
+          document.documentElement.style.setProperty('--sidebar-width', collapsed ? '0px' : `${totalWidth}px`);
+          document.documentElement.style.setProperty('--header-padding-left', collapsed ? `${toggleButtonWidth}px` : '0px');
+        });
       }
     };
 
-    // Sofortige Ausführung ohne setTimeout
     measureWidth();
     window.addEventListener('resize', measureWidth);
     return () => window.removeEventListener('resize', measureWidth);
@@ -190,120 +188,125 @@ const Sidebar: React.FC<SidebarProps> = ({
         {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
 
-      {/* Sidebar-Inhalt */}
-      {!collapsed && (
-        <aside
-          ref={sidebarRef}
-          className="fixed top-0 left-0 min-h-screen bg-chatGray-sidebarLight dark:bg-chatGray-sidebarDark p-4 overflow-y-auto transition-all duration-150" // Schnellere Transition
-          style={fullSidebarWidth ? { width: `${fullSidebarWidth}px` } : {}}
+      {/* Sidebar-Inhalt - immer im DOM, aber mit animierter Transformation */}
+      <aside
+        ref={sidebarRef}
+        className="fixed top-0 left-0 min-h-screen bg-chatGray-sidebarLight dark:bg-chatGray-sidebarDark p-4 overflow-y-auto transition-all duration-300 z-20"
+        style={{
+          transform: collapsed ? 'translateX(-100%)' : 'translateX(0)',
+          width: fullSidebarWidth ? `${fullSidebarWidth}px` : 'auto',
+          opacity: collapsed ? 0 : 1,
+          pointerEvents: collapsed ? 'none' : 'auto',
+          visibility: collapsed ? 'hidden' : 'visible',
+          transitionProperty: 'transform, opacity, visibility'
+        }}
+      >
+        {/* Pin-Button */}
+        <button
+          onClick={togglePin}
+          className="absolute right-4 z-30 p-1 rounded-sm bg-sidebar-btn dark:bg-sidebar-btn-dark hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors opacity-60 hover:opacity-100"
+          title={isPinned ? "Sidebar nicht mehr fixieren" : "Sidebar fixieren"}
+          style={{ top: "15px", height: "18px", width: "20px", display: "flex", alignItems: "center", justifyContent: "center" }}
         >
-          {/* Pin-Button */}
-          <button
-            onClick={togglePin}
-            className="absolute right-4 z-30 p-1 rounded-sm bg-sidebar-btn dark:bg-sidebar-btn-dark hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors opacity-60 hover:opacity-100"
-            title={isPinned ? "Sidebar nicht mehr fixieren" : "Sidebar fixieren"}
-            style={{ top: "15px", height: "18px", width: "20px", display: "flex", alignItems: "center", justifyContent: "center" }}
+          <PinIcon isPinned={isPinned} />
+        </button>
+
+        {/* Upload-Bereich */}
+        <div className="mb-6 mt-10">
+          <label
+            htmlFor="file-upload"
+            className="flex items-center gap-2 cursor-pointer bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors justify-center text-xs"
+            title="Anwesenheitsdaten importieren - CSV oder Excel-Datei mit Schülerdaten hochladen"
           >
-            <PinIcon isPinned={isPinned} />
-          </button>
+            <Upload className="w-4 h-4" />
+            <span>Datei hochladen</span>
+          </label>
+          <FileUploadHandler
+            key={uploadTrigger}
+            onFileProcessed={handleFileUpload} // Verwende die eigene Wrapper-Funktion
+            startDate={startDate}
+            endDate={endDate}
+            setError={console.error}
+          />
+        </div>
 
-          {/* Upload-Bereich */}
-          <div className="mb-6 mt-10">
-            <label
-              htmlFor="file-upload"
-              className="flex items-center gap-2 cursor-pointer bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors justify-center text-xs"
-              title="Anwesenheitsdaten importieren - CSV oder Excel-Datei mit Schülerdaten hochladen"
-            >
-              <Upload className="w-4 h-4" />
-              <span>Datei hochladen</span>
-            </label>
-            <FileUploadHandler
-              key={uploadTrigger}
-              onFileProcessed={handleFileUpload} // Verwende die eigene Wrapper-Funktion
-              startDate={startDate}
-              endDate={endDate}
-              setError={console.error}
-            />
-          </div>
+        {/* Zeitraum-Bereich */}
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-chatGray-textLight dark:text-chatGray-textDark mb-2">Zeitraum</h3>
+          <label className="block text-xs text-gray-600 dark:text-gray-400">Startdatum</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => onStartDateChange(e.target.value)}
+            className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+            title="Startdatum des Analysezeitraums auswählen"
+          />
+          <label className="block text-xs text-gray-600 dark:text-gray-400 mt-2">Enddatum</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => onEndDateChange(e.target.value)}
+            className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+            title="Enddatum des Analysezeitraums auswählen"
+          />
+          <label className="block text-xs text-gray-600 dark:text-gray-400 mt-2">Schnellauswahl</label>
+          <select
+            onChange={(e) => onQuickSelect(e.target.value)}
+            className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+            title="Vordefinierte Zeiträume für schnelle Auswahl"
+          >
+            <option value="">Auswählen</option>
+            {quickSelectOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          
+          {/* Wochen-Zurück-Bereich */}
+          <label className="block text-xs text-gray-600 dark:text-gray-400 mt-2">Wochen zurück</label>
+          <select
+            value={selectedWeeks}
+            onChange={(e) => onSelectedWeeksChange(e.target.value)}
+            className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+            title="Anzahl der Wochen für die wöchentliche Statistikberechnung auswählen"
+          >
+            {weekOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-          {/* Zeitraum-Bereich */}
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-chatGray-textLight dark:text-chatGray-textDark mb-2">Zeitraum</h3>
-            <label className="block text-xs text-gray-600 dark:text-gray-400">Startdatum</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => onStartDateChange(e.target.value)}
-              className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
-              title="Startdatum des Analysezeitraums auswählen"
-            />
-            <label className="block text-xs text-gray-600 dark:text-gray-400 mt-2">Enddatum</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => onEndDateChange(e.target.value)}
-              className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
-              title="Enddatum des Analysezeitraums auswählen"
-            />
-            <label className="block text-xs text-gray-600 dark:text-gray-400 mt-2">Schnellauswahl</label>
-            <select
-              onChange={(e) => onQuickSelect(e.target.value)}
-              className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
-              title="Vordefinierte Zeiträume für schnelle Auswahl"
+        {/* Export-Bereich */}
+        <div className="mb-6 mt-8" ref={exportRef}>
+          <h3 className="text-sm font-medium text-chatGray-textLight dark:text-chatGray-textDark mb-2">Export</h3>
+          <div className="flex gap-2">
+            <button
+              onClick={onExportExcel}
+              className="bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors text-xs"
+              title="Daten als Excel-Datei exportieren - Mit Details für ausgewählte Schüler"
             >
-              <option value="">Auswählen</option>
-              {quickSelectOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            
-            {/* Wochen-Zurück-Bereich */}
-            <label className="block text-xs text-gray-600 dark:text-gray-400 mt-2">Wochen zurück</label>
-            <select
-              value={selectedWeeks}
-              onChange={(e) => onSelectedWeeksChange(e.target.value)}
-              className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
-              title="Anzahl der Wochen für die wöchentliche Statistikberechnung auswählen"
+              XLS
+            </button>
+            <button
+              onClick={onExportCSV}
+              className="bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors text-xs"
+              title="Daten als CSV-Datei exportieren - Mit Details für ausgewählte Schüler"
             >
-              {weekOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              CSV
+            </button>
+            <button
+              onClick={onExportPDF}
+              className="bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors text-xs"
+              title="Daten als PDF-Datei exportieren - Mit Details für ausgewählte Schüler"
+            >
+              PDF
+            </button>
           </div>
-
-          {/* Export-Bereich */}
-          <div className="mb-6 mt-8" ref={exportRef}>
-            <h3 className="text-sm font-medium text-chatGray-textLight dark:text-chatGray-textDark mb-2">Export</h3>
-            <div className="flex gap-2">
-              <button
-                onClick={onExportExcel}
-                className="bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors text-xs"
-                title="Daten als Excel-Datei exportieren - Mit Details für ausgewählte Schüler"
-              >
-                XLS
-              </button>
-              <button
-                onClick={onExportCSV}
-                className="bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors text-xs"
-                title="Daten als CSV-Datei exportieren - Mit Details für ausgewählte Schüler"
-              >
-                CSV
-              </button>
-              <button
-                onClick={onExportPDF}
-                className="bg-sidebar-btn dark:bg-sidebar-btn-dark text-chatGray-textLight dark:text-chatGray-textDark px-2 py-1 rounded-md hover:bg-sidebar-btn-hover dark:hover:bg-sidebar-btn-hover-dark transition-colors text-xs"
-                title="Daten als PDF-Datei exportieren - Mit Details für ausgewählte Schüler"
-              >
-                PDF
-              </button>
-            </div>
-          </div>
-        </aside>
-      )}
+        </div>
+      </aside>
     </>
   );
 };

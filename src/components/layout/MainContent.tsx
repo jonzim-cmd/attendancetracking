@@ -44,7 +44,7 @@ const MainContent: React.FC<MainContentProps> = ({
 
   return (
     <main
-      className="overflow-hidden bg-chatGray-light dark:bg-chatGray-dark min-h-screen transition-all duration-300"
+      className="overflow-hidden bg-chatGray-light dark:bg-chatGray-dark min-h-screen transition-all duration-300 transition-property-margin"
       style={{
         marginLeft: 'var(--sidebar-width)',
         paddingTop: '48px', // Feste Höhe statt pt-20 für konsistente Berechnung

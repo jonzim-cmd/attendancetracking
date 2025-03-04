@@ -21,13 +21,15 @@ interface LineChartProps {
   }[];
   formatXAxis?: (value: string) => string;
   yAxisMax?: number;
+  customTooltip?: any;
 }
 
 export const AttendanceLineChart: React.FC<LineChartProps> = ({ 
   data, 
   lines,
   formatXAxis,
-  yAxisMax
+  yAxisMax,
+  customTooltip
 }) => {
   const CustomizedXAxisTick = (props: any) => {
     const { x, y, payload } = props;
@@ -50,7 +52,7 @@ export const AttendanceLineChart: React.FC<LineChartProps> = ({
     );
   };
   
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const DefaultCustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const formattedLabel = formatXAxis ? formatXAxis(label) : label;
       
@@ -75,7 +77,7 @@ export const AttendanceLineChart: React.FC<LineChartProps> = ({
   };
   
   return (
-    <div className={CHART_CONTAINER_CLASSES}>
+    <div className="h-full w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 25 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#777" opacity={0.2} />
@@ -92,7 +94,7 @@ export const AttendanceLineChart: React.FC<LineChartProps> = ({
             tickLine={{ stroke: '#777' }}
             domain={yAxisMax ? [0, yAxisMax] : [0, 'auto']}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={customTooltip || <DefaultCustomTooltip />} />
           <Legend 
             verticalAlign="bottom" 
             height={36} 

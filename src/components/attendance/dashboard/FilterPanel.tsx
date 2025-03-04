@@ -8,8 +8,6 @@ interface FilterPanelProps {
   getFilteredStudents: () => [string, StudentStats][];
   selectedStudents: string[];
   onStudentsChange: (students: string[]) => void;
-  timeRange: 'days' | 'weeks' | 'months';
-  onTimeRangeChange: (range: 'days' | 'weeks' | 'months') => void;
   groupingOption: 'daily' | 'weekly' | 'monthly';
   onGroupingChange: (option: 'daily' | 'weekly' | 'monthly') => void;
 }
@@ -21,8 +19,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   getFilteredStudents,
   selectedStudents,
   onStudentsChange,
-  timeRange,
-  onTimeRangeChange,
   groupingOption,
   onGroupingChange
 }) => {
@@ -141,7 +137,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </div>
           
           {isClassDropdownOpen && (
-            <div className="absolute top-full left-0 mt-1 w-full bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50">
+            <div className="absolute top-full left-0 mt-1 w-auto min-w-full bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50">
               <div className="p-2">
                 <input
                   type="text"
@@ -232,7 +228,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </div>
           
           {isStudentDropdownOpen && (
-            <div className="absolute top-full left-0 mt-1 w-full bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50">
+            <div className="absolute top-full left-0 mt-1 w-auto min-w-full max-w-md bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50">
               <div className="p-2">
                 <input
                   type="text"
@@ -315,22 +311,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             <option value="daily">Täglich</option>
             <option value="weekly">Wöchentlich</option>
             <option value="monthly">Monatlich</option>
-          </select>
-        </div>
-        
-        {/* Time Range */}
-        <div className="min-w-[180px]">
-          <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1" title="Zeitlicher Verlauf für die Trendanzeige">
-            Trendanzeige
-          </label>
-          <select
-            value={timeRange}
-            onChange={(e) => onTimeRangeChange(e.target.value as 'days' | 'weeks' | 'months')}
-            className="w-full rounded px-3 py-2 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
-          >
-            <option value="days">Tage</option>
-            <option value="weeks">Wochen</option>
-            <option value="months">Monate</option>
           </select>
         </div>
         

@@ -100,7 +100,7 @@ const StudentRanking: React.FC<StudentRankingProps> = ({
       
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+          <thead className="bg-table-light-header dark:bg-table-dark-header">
             <tr>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" title="Ranglistenposition">
                 #
@@ -122,9 +122,9 @@ const StudentRanking: React.FC<StudentRankingProps> = ({
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-table-light-base dark:bg-table-dark-base divide-y divide-gray-200 dark:divide-gray-700">
             {sortedStudents.slice(0, 10).map(({ student, stats, fehlzeitenGesamt, verspaetungenGesamt }, index) => (
-              <tr key={student} className={index % 2 === 0 ? '' : 'bg-gray-50 dark:bg-gray-700'}>
+              <tr key={student} className={index % 2 === 0 ? 'bg-table-light-base dark:bg-table-dark-base' : 'bg-table-light-alternate dark:bg-table-dark-alternate'}>
                 <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300" title={`Platz ${index + 1} in der Rangliste`}>
                   {index + 1}
                 </td>

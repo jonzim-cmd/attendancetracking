@@ -36,7 +36,7 @@ export const TAB_CLASSES = {
 export const DASHBOARD_CONTAINER_CLASSES = "grid grid-cols-1 md:grid-cols-2 gap-6 pb-6";
 
 // Gemeinsame Tailwind-Klassen für Info-Kacheln
-export const INFO_TILE_CLASSES = "p-4 bg-gray-100/50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600";
+export const INFO_TILE_CLASSES = "p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600";
 
 // Text-Styling für normale Beschreibungen
 export const TEXT_DESCRIPTION_CLASSES = "text-sm text-gray-600 dark:text-gray-300";

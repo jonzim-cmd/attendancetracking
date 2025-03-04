@@ -3,7 +3,6 @@ import FilterPanel from './FilterPanel';
 import StatCards from './StatCards';
 import TrendCharts from './TrendCharts';
 import ComparisonView from './ComparisonView';
-import AdvancedStats from './AdvancedStats';
 import StudentRanking from './StudentRanking';
 import { 
   prepareWeeklyTrends, 
@@ -55,7 +54,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   const [showCriticalPatternsModal, setShowCriticalPatternsModal] = useState(false);
   
   // Chart settings
-  const [timeRange, setTimeRange] = useState<'days' | 'weeks' | 'months'>('weeks');
   const [groupingOption, setGroupingOption] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
   const [viewMode, setViewMode] = useState<'dashboard' | 'comparison'>('dashboard');
   
@@ -204,8 +202,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         getFilteredStudents={getFilteredStudents}
         selectedStudents={selectedStudents}
         onStudentsChange={setSelectedStudents}
-        timeRange={timeRange}
-        onTimeRangeChange={setTimeRange}
         groupingOption={groupingOption}
         onGroupingChange={setGroupingOption}
       />
@@ -230,7 +226,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
             attendanceOverTime={attendanceOverTime}
             dayOfWeekData={dayOfWeekData}
             absenceTypes={absenceTypes}
-            timeRange={timeRange}
             groupingOption={groupingOption}
             chartVisibility={trendChartVisibility}
             setChartVisibility={setTrendChartVisibility}
@@ -244,15 +239,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
             selectedClasses={selectedClasses}
             selectedStudents={selectedStudents}
           />
-          
-          {/* Advanced Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
-            <AdvancedStats 
-              entschuldigungsverhalten={entschuldigungsverhalten}
-              dayOfWeekData={dayOfWeekData}
-              absenceTypes={absenceTypes}
-            />
-          </div>
         </>
       ) : (
         <ComparisonView 
@@ -295,7 +281,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
             </p>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+                <thead className="bg-table-light-header dark:bg-table-dark-header">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Name
@@ -308,9 +294,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="bg-table-light-base dark:bg-table-dark-base divide-y divide-gray-200 dark:divide-gray-700">
                   {criticalStudents.map((student, index) => (
-                    <tr key={student.name} className={index % 2 === 0 ? '' : 'bg-gray-50 dark:bg-gray-700'}>
+                    <tr key={student.name} className={index % 2 === 0 ? 'bg-table-light-base dark:bg-table-dark-base' : 'bg-table-light-alternate dark:bg-table-dark-alternate'}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                         {student.name}
                       </td>
@@ -364,7 +350,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
             </p>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+                <thead className="bg-table-light-header dark:bg-table-dark-header">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Wochentag
@@ -383,11 +369,11 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="bg-table-light-base dark:bg-table-dark-base divide-y divide-gray-200 dark:divide-gray-700">
                   {dayOfWeekData
                     .sort((a, b) => (b.verspaetungen + b.fehlzeitenGesamt) - (a.verspaetungen + a.fehlzeitenGesamt))
                     .map((day, index) => (
-                      <tr key={day.name} className={index % 2 === 0 ? '' : 'bg-gray-50 dark:bg-gray-700'}>
+                      <tr key={day.name} className={index % 2 === 0 ? 'bg-table-light-base dark:bg-table-dark-base' : 'bg-table-light-alternate dark:bg-table-dark-alternate'}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                           {day.name}
                         </td>

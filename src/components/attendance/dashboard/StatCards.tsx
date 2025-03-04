@@ -49,11 +49,6 @@ const StatCards: React.FC<StatCardsProps> = ({
     ? dayOfWeekData.reduce((max, day) => day.verspaetungen > max.verspaetungen ? day : max, dayOfWeekData[0]).name
     : 'N/A';
   
-  // Get day with most total absences (not used in UI currently)
-  // const maxFehlzeitenGesamtTag = dayOfWeekData.length > 0 
-  //   ? dayOfWeekData.reduce((max, day) => day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, dayOfWeekData[0]).name
-  //   : 'N/A';
-  
   const maxFehlzeitenUnentschTag = dayOfWeekData.length > 0
     ? dayOfWeekData.reduce((max, day) => day.fehlzeitenUnentsch > max.fehlzeitenUnentsch ? day : max, dayOfWeekData[0]).name
     : 'N/A';

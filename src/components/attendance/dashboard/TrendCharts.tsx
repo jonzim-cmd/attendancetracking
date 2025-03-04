@@ -15,7 +15,6 @@ interface TrendChartsProps {
   attendanceOverTime: any[];
   dayOfWeekData: any[];
   absenceTypes: any[];
-  timeRange: 'days' | 'weeks' | 'months';
   groupingOption: 'daily' | 'weekly' | 'monthly';
   chartVisibility: {
     verspaetungen: boolean;
@@ -48,20 +47,12 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
   attendanceOverTime,
   dayOfWeekData,
   absenceTypes,
-  timeRange,
   groupingOption,
   chartVisibility,
   setChartVisibility,
   weekdayChartVisibility,
   setWeekdayChartVisibility
 }) => {
-  // Ermittle den geeigneten Trend-Title basierend auf timeRange
-  const trendTitle = {
-    'days': 'Täglicher Trend',
-    'weeks': 'Wöchentlicher Trend',
-    'months': 'Monatlicher Trend'
-  }[timeRange];
-  
   // Ermittle den geeigneten Gruppierungstitel basierend auf groupingOption
   const groupingTitle = {
     'daily': 'Tägliche Gruppierung',
@@ -107,6 +98,35 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
     } else {
       return dateStr; // Monatsformat bereits sinnvoll (z.B. 'Mai 2023')
     }
+  };
+  
+  // Helper function to get date range for a calendar week
+  const getWeekDateRange = (weekLabel: string) => {
+    const weekNumber = parseInt(weekLabel.replace('KW ', ''));
+    const year = new Date().getFullYear();
+    
+    // Calculate the date of the first day of the year
+    const firstDayOfYear = new Date(year, 0, 1);
+    
+    // Calculate the first monday of the year
+    let firstMonday = new Date(firstDayOfYear);
+    while (firstMonday.getDay() !== 1) {
+      firstMonday.setDate(firstMonday.getDate() + 1);
+    }
+    
+    // Calculate the Monday of the given week
+    const targetMonday = new Date(firstMonday);
+    targetMonday.setDate(firstMonday.getDate() + (weekNumber - 1) * 7);
+    
+    // Calculate the Sunday of the given week
+    const targetSunday = new Date(targetMonday);
+    targetSunday.setDate(targetMonday.getDate() + 6);
+    
+    // Format dates to DD.MM.
+    const mondayFormatted = `${String(targetMonday.getDate()).padStart(2, '0')}.${String(targetMonday.getMonth() + 1).padStart(2, '0')}.`;
+    const sundayFormatted = `${String(targetSunday.getDate()).padStart(2, '0')}.${String(targetSunday.getMonth() + 1).padStart(2, '0')}.`;
+    
+    return `${mondayFormatted} - ${sundayFormatted}`;
   };
   
   // Entschuldigungsstatistik berechnen
@@ -195,6 +215,35 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
       color: "#3b82f6" // Blue
     });
   }
+
+  // Custom tooltip for attendance chart
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      let formattedLabel = label;
+      
+      // Special formatting for weekly data to show date range
+      if (groupingOption === 'weekly' && label.startsWith('KW ')) {
+        formattedLabel = `${label} (${getWeekDateRange(label)})`;
+      }
+      
+      return (
+        <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
+          <p className="text-gray-700 dark:text-gray-300 font-medium mb-1">{formattedLabel}</p>
+          <div className="flex flex-col space-y-1">
+            {payload.map((entry: any, index: number) => (
+              <div key={`item-${index}`} className="flex items-center">
+                <div className="w-3 h-3 mr-2" style={{ backgroundColor: entry.color }}></div>
+                <span className="text-gray-700 dark:text-gray-300">
+                  {entry.name}: {entry.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
   
   return (
     <>
@@ -202,7 +251,7 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
       <div className={CARD_CLASSES}>
         <div className="flex justify-between items-center mb-4">
           <h3 className={CARD_TITLE_CLASSES.replace('mb-4', '')}>
-            {trendTitle} 
+            Zeitlicher Verlauf
             <span className="text-sm font-normal ml-2 text-gray-500 dark:text-gray-400">
               ({groupingTitle})
             </span>
@@ -246,13 +295,16 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
             </label>
           </div>
         </div>
-        <div className="h-64 w-full">
-          <AttendanceLineChart 
-            data={attendanceOverTime}
-            lines={visibleLines}
-            formatXAxis={formatDate}
-            yAxisMax={maxAttendanceValue > 0 ? undefined : 10}
-          />
+        <div className="overflow-x-auto">
+          <div style={{ minWidth: attendanceOverTime.length * 50 + 'px', height: '300px' }}>
+            <AttendanceLineChart 
+              data={attendanceOverTime}
+              lines={visibleLines}
+              formatXAxis={formatDate}
+              yAxisMax={maxAttendanceValue > 0 ? undefined : 10}
+              customTooltip={CustomTooltip}
+            />
+          </div>
         </div>
         {attendanceOverTime.length === 0 && (
           <div className="text-center text-gray-500 dark:text-gray-400 mt-4">

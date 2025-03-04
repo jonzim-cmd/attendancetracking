@@ -118,14 +118,15 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   return (
     <div className="p-4 bg-table-light-base dark:bg-table-dark-base rounded-lg shadow-sm mb-4">
       <div className="flex flex-wrap items-center gap-6">
-        {/* Class Filter */}
-        <div className="min-w-[240px] relative" ref={classDropdownRef}>
+        {/* Class Filter - Fixed width and no wrapping */}
+        <div className="min-w-[260px] relative" ref={classDropdownRef}>
           <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
             Klassen filtern
           </label>
           <div
             onClick={() => setIsClassDropdownOpen(!isClassDropdownOpen)}
             className="w-full rounded px-3 py-2 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm cursor-pointer flex items-center justify-between"
+            title="Klassen auswählen - mehrere Klassen können gleichzeitig ausgewählt werden"
           >
             <span className="truncate">
               {selectedClasses.length === 0 
@@ -208,14 +209,15 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           )}
         </div>
         
-        {/* Student Filter */}
-        <div className="min-w-[240px] relative" ref={studentDropdownRef}>
+        {/* Student Filter - Fixed width and no wrapping */}
+        <div className="min-w-[260px] relative" ref={studentDropdownRef}>
           <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
             Schüler filtern
           </label>
           <div
             onClick={() => setIsStudentDropdownOpen(!isStudentDropdownOpen)}
             className="w-full rounded px-3 py-2 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm cursor-pointer flex items-center justify-between"
+            title="Schüler auswählen - es werden nur Schüler der ausgewählten Klassen angezeigt"
           >
             <span className="truncate">
               {selectedStudents.length === 0 
@@ -302,7 +304,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         
         {/* Grouping Option */}
         <div className="min-w-[180px]">
-          <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+          <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1" title="Gruppierung der Daten für Trendanalysen">
             Zeitliche Gruppierung
           </label>
           <select
@@ -318,7 +320,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         
         {/* Time Range */}
         <div className="min-w-[180px]">
-          <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+          <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1" title="Zeitlicher Verlauf für die Trendanzeige">
             Trendanzeige
           </label>
           <select

@@ -97,15 +97,6 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
       )
     : null;
   
-  // Ermittle den Tag mit den meisten Fehlzeiten (gesamt)
-  // Commented out since we're not currently using this in the UI
-  // const maxFehlzeitenGesamtTag = dayOfWeekData.length > 0
-  //   ? dayOfWeekData.reduce((max, day) => 
-  //       day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
-  //       dayOfWeekData[0]
-  //     )
-  //   : null;
-  
   // Formatiere das Datum für die Anzeige
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
@@ -123,6 +114,13 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
   const totalUnentschuldigt = absenceTypes.find(type => type.name === 'Unentschuldigt')?.value || 0;
   const totalOffen = absenceTypes.find(type => type.name === 'Offen')?.value || 0;
   const totalAll = totalEntschuldigt + totalUnentschuldigt + totalOffen;
+  
+  // Berechnung der Verspätungsquote
+  const totalVerspaetungen = weeklyTrends.reduce((sum, week) => sum + week.verspaetungen, 0);
+  const totalFehlzeitenGesamt = weeklyTrends.reduce((sum, week) => sum + week.fehlzeitenTotal, 0);
+  const verspaetungsQuote = (totalVerspaetungen + totalFehlzeitenGesamt) > 0
+    ? Math.round((totalVerspaetungen / (totalVerspaetungen + totalFehlzeitenGesamt)) * 100)
+    : 0;
   
   // Prepare visible lines for the chart based on user preferences
   const visibleLines = [];
@@ -210,7 +208,7 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
             </span>
           </h3>
           <div className="flex space-x-2 text-sm">
-            <label className="inline-flex items-center cursor-pointer">
+            <label className="inline-flex items-center cursor-pointer" title="Verspätungen im Trend anzeigen">
               <input 
                 type="checkbox" 
                 checked={chartVisibility.verspaetungen} 
@@ -219,7 +217,7 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
               />
               <span className="text-purple-600 dark:text-purple-400">Verspätungen</span>
             </label>
-            <label className="inline-flex items-center cursor-pointer">
+            <label className="inline-flex items-center cursor-pointer" title="Entschuldigte Fehltage im Trend anzeigen">
               <input 
                 type="checkbox" 
                 checked={chartVisibility.fehlzeitenEntsch} 
@@ -228,7 +226,7 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
               />
               <span className="text-green-600 dark:text-green-400">F (entsch.)</span>
             </label>
-            <label className="inline-flex items-center cursor-pointer">
+            <label className="inline-flex items-center cursor-pointer" title="Unentschuldigte Fehltage im Trend anzeigen">
               <input 
                 type="checkbox" 
                 checked={chartVisibility.fehlzeitenUnentsch} 
@@ -237,7 +235,7 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
               />
               <span className="text-red-600 dark:text-red-400">F (unentsch.)</span>
             </label>
-            <label className="inline-flex items-center cursor-pointer">
+            <label className="inline-flex items-center cursor-pointer" title="Gesamte Fehltage im Trend anzeigen">
               <input 
                 type="checkbox" 
                 checked={chartVisibility.fehlzeitenGesamt} 
@@ -274,7 +272,7 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
               </span>
             </h3>
             <div className="flex space-x-2 text-sm">
-              <label className="inline-flex items-center cursor-pointer">
+              <label className="inline-flex items-center cursor-pointer" title="Verspätungen nach Wochentag anzeigen">
                 <input 
                   type="checkbox" 
                   checked={weekdayChartVisibility.verspaetungen} 
@@ -283,7 +281,7 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
                 />
                 <span className="text-purple-600 dark:text-purple-400">Versp.</span>
               </label>
-              <label className="inline-flex items-center cursor-pointer">
+              <label className="inline-flex items-center cursor-pointer" title="Entschuldigte Fehltage nach Wochentag anzeigen">
                 <input 
                   type="checkbox" 
                   checked={weekdayChartVisibility.fehlzeitenEntsch} 
@@ -292,7 +290,7 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
                 />
                 <span className="text-green-600 dark:text-green-400">F (entsch.)</span>
               </label>
-              <label className="inline-flex items-center cursor-pointer">
+              <label className="inline-flex items-center cursor-pointer" title="Unentschuldigte Fehltage nach Wochentag anzeigen">
                 <input 
                   type="checkbox" 
                   checked={weekdayChartVisibility.fehlzeitenUnentsch} 
@@ -301,7 +299,7 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
                 />
                 <span className="text-red-600 dark:text-red-400">F (unentsch.)</span>
               </label>
-              <label className="inline-flex items-center cursor-pointer">
+              <label className="inline-flex items-center cursor-pointer" title="Gesamte Fehltage nach Wochentag anzeigen">
                 <input 
                   type="checkbox" 
                   checked={weekdayChartVisibility.fehlzeitenGesamt} 
@@ -324,17 +322,16 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
                 <InfoTile 
                   title="Kritischer Tag (Verspätungen)" 
                   value={`${maxVerspaetungenTag.name} (${maxVerspaetungenTag.verspaetungen})`}
-                  className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-purple-600 dark:text-purple-400"
+                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-purple-600 dark:text-purple-400"
                 />
               )}
               {maxFehlzeitenUnentschTag && (
                 <InfoTile 
                   title="Kritischer Tag (unentsch. Fehltage)" 
                   value={`${maxFehlzeitenUnentschTag.name} (${maxFehlzeitenUnentschTag.fehlzeitenUnentsch})`}
-                  className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-red-600 dark:text-red-400"
+                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-red-600 dark:text-red-400"
                 />
               )}
-              {/* Removed the gesamt Fehltage InfoTile as it's not currently needed */}
             </div>
           )}
         </div>

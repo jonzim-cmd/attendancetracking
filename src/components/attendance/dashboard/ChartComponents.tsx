@@ -269,7 +269,7 @@ interface InfoTileProps {
 
 export const InfoTile: React.FC<InfoTileProps> = ({ title, value, className = "" }) => {
   return (
-    <div className={`${INFO_TILE_CLASSES} ${className}`}>
+    <div className={`${INFO_TILE_CLASSES} ${className}`} title={`${title}: ${value}`}>
       <p className={TEXT_DESCRIPTION_CLASSES}>{title}</p>
       <p className={TEXT_VALUE_CLASSES}>
         {value}
@@ -280,7 +280,7 @@ export const InfoTile: React.FC<InfoTileProps> = ({ title, value, className = ""
 
 export const InsightTile: React.FC<{ title: string; content: string }> = ({ title, content }) => {
   return (
-    <div className={INFO_TILE_CLASSES}>
+    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800" title={content}>
       <p className="font-medium mb-1 text-gray-800 dark:text-gray-100">{title}</p>
       <p className="text-gray-700 dark:text-gray-300">{content}</p>
     </div>

@@ -6,17 +6,12 @@ import ComparisonView from './ComparisonView';
 import AdvancedStats from './AdvancedStats';
 import StudentRanking from './StudentRanking';
 import { 
-  CARD_CLASSES, 
-  CARD_TITLE_CLASSES
-} from './styles';
-import { 
   prepareWeeklyTrends, 
   prepareAbsenceTypes, 
   prepareDayOfWeekAnalysis,
   prepareStudentComparisonData,
   prepareAttendanceOverTime,
-  prepareEntschuldigungsverhalten,
-  getStudentsInClass
+  prepareEntschuldigungsverhalten
 } from './utils';
 import { StudentStats } from '@/types';
 
@@ -280,9 +275,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       {showCriticalStudentsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowCriticalStudentsModal(false)}>
           <div 
-            className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-auto" 
+            className="bg-table-light-base dark:bg-table-dark-base rounded-lg p-6 max-w-2xl w-full"
             onClick={e => e.stopPropagation()}
-            style={{ maxHeight: 'calc(100vh - 100px)' }}
+            style={{ maxHeight: 'calc(100vh - 100px)', overflow: 'auto' }}
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
@@ -349,9 +344,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       {showCriticalDaysModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowCriticalDaysModal(false)}>
           <div 
-            className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-auto"
+            className="bg-table-light-base dark:bg-table-dark-base rounded-lg p-6 max-w-2xl w-full"
             onClick={e => e.stopPropagation()}
-            style={{ maxHeight: 'calc(100vh - 100px)' }}
+            style={{ maxHeight: 'calc(100vh - 100px)', overflow: 'auto' }}
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
@@ -428,9 +423,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       {showCriticalPatternsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowCriticalPatternsModal(false)}>
           <div 
-            className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-auto"
+            className="bg-table-light-base dark:bg-table-dark-base rounded-lg p-6 max-w-2xl w-full"
             onClick={e => e.stopPropagation()}
-            style={{ maxHeight: 'calc(100vh - 100px)' }}
+            style={{ maxHeight: 'calc(100vh - 100px)', overflow: 'auto' }}
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
@@ -501,10 +496,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
                         {absenceTypes.map((type, index) => {
                           const total = absenceTypes.reduce((sum, t) => sum + t.value, 0);
                           const percent = total > 0 ? (type.value / total) * 100 : 0;
-                          const offset = absenceTypes.slice(0, index).reduce((sum, t) => {
-                            const total = absenceTypes.reduce((sum, t) => sum + t.value, 0);
-                            return sum + (total > 0 ? (t.value / total) * 100 : 0);
-                          }, 0);
                           
                           return (
                             <div

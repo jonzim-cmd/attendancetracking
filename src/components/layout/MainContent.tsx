@@ -1,6 +1,6 @@
 import React from 'react';
 import NormalView from '@/components/attendance/NormalView';
-import DashboardView from '@/components/attendance/DashboardView';  // Neue Komponente importieren
+import DashboardView from '@/components/attendance/DashboardView';
 import { StudentStats } from '@/types';
 
 interface MainContentProps {
@@ -50,10 +50,9 @@ const MainContent: React.FC<MainContentProps> = ({
   viewMode = 'table',
   rawData = null
 }) => {
-
   return (
     <main
-      className="overflow-hidden bg-chatGray-light dark:bg-chatGray-dark min-h-screen transition-all duration-300 transition-property-margin"
+      className="overflow-hidden bg-chatGray-light dark:bg-chatGray-dark min-h-screen transition-all duration-300"
       style={{
         marginLeft: 'var(--sidebar-width)',
         paddingTop: '48px', // Feste Höhe statt pt-20 für konsistente Berechnung

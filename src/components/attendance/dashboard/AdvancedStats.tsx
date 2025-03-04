@@ -98,7 +98,7 @@ const AdvancedStats: React.FC<AdvancedStatsProps> = ({
                     : 'Die Situation ist stabil.'
               }`}
             />
-            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800">
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800">
               <h4 className="font-medium mb-1 text-gray-800 dark:text-gray-100">Erklärung Unentschuldigungsquote</h4>
               <p className="text-gray-700 dark:text-gray-300">
                 Die Unentschuldigungsquote bezeichnet den Anteil unentschuldigter Fehltage im Verhältnis zu allen Fehltagen. 

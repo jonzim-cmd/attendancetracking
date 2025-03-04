@@ -546,6 +546,8 @@ const getWeekNumber = (date: Date): number => {
   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 };
 
+// Fix for the prepareEntschuldigungsverhalten function to accept correct groupingOption type
+
 // Bereitet Daten für das Entschuldigungsverhalten vor
 export const prepareEntschuldigungsverhalten = (
   rawData: any[] | null,
@@ -553,8 +555,8 @@ export const prepareEntschuldigungsverhalten = (
   endDate: string,
   selectedClasses: string[] = [],
   selectedEntities: string[] = [],
-  entityType: 'classes' | 'students' = 'classes',
-  groupingOption: 'daily' | 'weekly' | 'monthly' = 'monthly'
+  groupingOption: 'daily' | 'weekly' | 'monthly' = 'monthly',
+  entityType: 'classes' | 'students' = 'classes'
 ) => {
   if (!rawData) return [];
   
@@ -700,3 +702,10 @@ export const prepareEntschuldigungsverhalten = (
     };
   }).sort((a, b) => a.klasse.localeCompare(b.klasse));
 };
+
+// Helper function to parse date
+function parseDate(dateStr: string | Date): Date {
+  if (dateStr instanceof Date) return dateStr;
+  const [day, month, year] = dateStr.split('.');
+  return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+}

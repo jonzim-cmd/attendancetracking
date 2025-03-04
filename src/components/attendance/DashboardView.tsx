@@ -60,38 +60,41 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   }
   
   return (
-    <div className="space-y-2 pb-6">
-      {/* Kompakte Überschrift */}
-      <h3 className="text-base font-semibold text-chatGray-textLight dark:text-chatGray-textDark mb-1">
-        Dashboard für den Zeitraum {formatDate(startDate)} - {formatDate(endDate)}
-      </h3>
-      
-      {/* Tab-Navigation */}
-      <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
-        <button
-          className={activeTab === 'overview' ? TAB_CLASSES.active : TAB_CLASSES.inactive}
-          onClick={() => setActiveTab('overview')}
-        >
-          Übersicht
-        </button>
-        <button
-          className={activeTab === 'classes' ? TAB_CLASSES.active : TAB_CLASSES.inactive}
-          onClick={() => setActiveTab('classes')}
-        >
-          Klassenvergleich
-        </button>
-        <button
-          className={activeTab === 'patterns' ? TAB_CLASSES.active : TAB_CLASSES.inactive}
-          onClick={() => setActiveTab('patterns')}
-        >
-          Muster & Trends
-        </button>
+    <div className="space-y-2 pb-6 relative">
+      {/* Sticky Header Container */}
+      <div className="sticky top-0 z-10 bg-table-light-base dark:bg-table-dark-base pt-2 pb-0">
+        {/* Kompakte Überschrift */}
+        <h3 className="text-base font-semibold text-chatGray-textLight dark:text-chatGray-textDark mb-2">
+          Dashboard für den Zeitraum {formatDate(startDate)} - {formatDate(endDate)}
+        </h3>
+        
+        {/* Tab-Navigation mit neutraler Grenzfarbe */}
+        <div className="flex border-b border-gray-200 dark:border-gray-600">
+          <button
+            className={activeTab === 'overview' ? TAB_CLASSES.active : TAB_CLASSES.inactive}
+            onClick={() => setActiveTab('overview')}
+          >
+            Übersicht
+          </button>
+          <button
+            className={activeTab === 'classes' ? TAB_CLASSES.active : TAB_CLASSES.inactive}
+            onClick={() => setActiveTab('classes')}
+          >
+            Klassenvergleich
+          </button>
+          <button
+            className={activeTab === 'patterns' ? TAB_CLASSES.active : TAB_CLASSES.inactive}
+            onClick={() => setActiveTab('patterns')}
+          >
+            Muster & Trends
+          </button>
+        </div>
       </div>
       
-      {/* Optimierter Container für die Diagramme mit fester Höhe */}
+      {/* Content container mit neutraler Grenzfarbe */}
       <div 
-        className="relative border border-tableBorder-light dark:border-tableBorder-dark rounded-md overflow-auto bg-table-light-base dark:bg-table-dark-base p-4"
-        style={{ height: 'calc(100vh - 115px)' }}
+        className="relative border border-gray-200 dark:border-gray-600 rounded-md overflow-auto bg-table-light-base dark:bg-table-dark-base p-4 mt-4"
+        style={{ height: 'calc(100vh - 135px)' }}
       >
         {activeTab === 'overview' && (
           <OverviewTab 

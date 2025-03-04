@@ -86,16 +86,16 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
     if (!entries || entries.length === 0) return null;
 
     return (
-      <div className="mb-4">
-        <h5 className="font-medium text-gray-700 dark:text-gray-300 mb-2">{title}</h5>
-        <div className="space-y-1 pl-4">
+      <div className="mb-2">
+        <h5 className="font-medium text-gray-700 dark:text-gray-300 mb-1">{title}</h5>
+        <div className="space-y-0.5 pl-3">
           {entries.map((entry, i) => {
             const statusColor = getStatusColor(entry.status || '', entry.datum);
             const reverseIndex = entries.length - i;
             return (
               <div 
                 key={i}
-                className={`${statusColor} hover:bg-table-light-hover dark:hover:bg-table-dark-hover p-1 rounded`}
+                className={`${statusColor} hover:bg-table-light-hover dark:hover:bg-table-dark-hover py-0.5 px-1 rounded`}
               >
                 <span className="font-medium">{reverseIndex}. {formatDate(entry.datum)}</span>
                 {entry.art === 'Verspätung' ? (
@@ -153,14 +153,19 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
     return grouped;
   };
 
+  // Verbesserte renderWeeklyDetails-Funktion mit Nummerierung
   const renderWeeklyDetails = (isVerspaetung: boolean) => {
     const weeks = getLastNWeeks(parseInt(selectedWeeks));
     const reversedWeeks = [...weeks].reverse();
     const groupedEntries = groupEntriesByWeek(detailedData.filter(e => (isVerspaetung ? e.art === 'Verspätung' : e.art !== 'Verspätung')), weeks);
     const reversedGroupedEntries = [...groupedEntries].reverse();
+    
+    // Gesamtanzahl der Einträge berechnen für globale Nummerierung
+    const totalEntries = reversedGroupedEntries.flat().length;
+    let entryCounter = totalEntries;
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-2">
         {reversedWeeks.map((week, index) => {
           const weekEntries = reversedGroupedEntries[index];
           const weekStart = week.startDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
@@ -170,19 +175,25 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
             parseDateString(b.datum).getTime() - parseDateString(a.datum).getTime()
           );
 
+          // Wochen ohne Einträge trotzdem anzeigen
+
           return (
-            <div key={index}>
-              <h5 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Woche {index + 1} ({weekStart} - {weekEnd})</h5>
-              <div className="space-y-1 pl-4">
+            <div key={index} className="mb-1">
+              <h5 className="font-medium text-gray-700 dark:text-gray-300 mb-0.5 text-sm">
+                Woche {index + 1} ({weekStart} - {weekEnd})
+              </h5>
+              <div className="space-y-0.5 pl-3">
                 {sortedWeekEntries.length > 0 ? (
                   sortedWeekEntries.map((entry, i) => {
                     const statusColor = getStatusColor(entry.status || '', entry.datum);
+                    const currentEntryNumber = entryCounter--;
+                    
                     return (
                       <div 
                         key={i}
-                        className={`${statusColor} hover:bg-table-light-hover dark:hover:bg-table-dark-hover p-1 rounded`}
+                        className={`${statusColor} hover:bg-table-light-hover dark:hover:bg-table-dark-hover py-0.5 px-1 rounded`}
                       >
-                        <span className="font-medium">{formatDate(entry.datum)}</span>
+                        <span className="font-medium">{currentEntryNumber}. {formatDate(entry.datum)}</span>
                         {entry.art === 'Verspätung' ? (
                           <span className="ml-2">
                             {entry.beginnZeit} - {entry.endZeit} Uhr
@@ -201,7 +212,7 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
                     );
                   })
                 ) : (
-                  <div className="text-gray-500 dark:text-gray-400 italic">Keine Einträge</div>
+                  <div className="text-gray-500 dark:text-gray-400 italic py-0.5 px-1">Keine Einträge in dieser Woche</div>
                 )}
               </div>
             </div>
@@ -243,7 +254,7 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
     );
 
     return (
-      <div className="space-y-1">
+      <div className="space-y-0.5">
         {sortedData.length > 0 ? (
           sortedData.map((entry, i) => {
             const statusColor = getStatusColor(entry.status || '', entry.datum);
@@ -251,7 +262,7 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
             return (
               <div 
                 key={i}
-                className={`${statusColor} hover:bg-table-light-hover dark:hover:bg-table-dark-hover p-1 rounded`}
+                className={`${statusColor} hover:bg-table-light-hover dark:hover:bg-table-dark-hover py-0.5 px-1 rounded`}
               >
                 <span className="font-medium">{reverseIndex}. {formatDate(entry.datum)}</span>
                 {entry.art === 'Verspätung' ? (
@@ -315,10 +326,10 @@ const StudentDetailsRow: React.FC<StudentDetailsRowProps> = ({
       id={`details-${student}`}
       className={`${rowColor} transition-all duration-300 ${isVisible ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0 overflow-hidden'}`}
     >
-      <td colSpan={calculateColSpan()} className="px-4 py-2 text-sm border-b border-tableBorder-light dark:border-tableBorder-dark hover:bg-table-light-hover dark:hover:bg-table-dark-hover">
-        <div className="space-y-2">
-          <h4 className="font-medium text-gray-900 dark:text-white">{getFilterTitle()}</h4>
-          <div className="pl-4">{renderDetailsContent()}</div>
+      <td colSpan={calculateColSpan()} className="px-3 py-1.5 text-sm border-b border-tableBorder-light dark:border-tableBorder-dark hover:bg-table-light-hover dark:hover:bg-table-dark-hover">
+        <div className="space-y-1">
+          <h4 className="font-medium text-gray-900 dark:text-white text-sm">{getFilterTitle()}</h4>
+          <div className="pl-2">{renderDetailsContent()}</div>
         </div>
       </td>
     </tr>

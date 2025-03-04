@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell,
-  ReferenceLine, AreaChart, Area, Label
+  ReferenceLine, Label
 } from 'recharts';
 import { 
   CHART_CONTAINER_CLASSES,
@@ -31,7 +31,7 @@ export const AttendanceLineChart: React.FC<LineChartProps> = ({
 }) => {
   const CustomizedXAxisTick = (props: any) => {
     const { x, y, payload } = props;
-    // Anwenden des Formatters, wenn vorhanden
+    // Apply formatter if available
     const value = formatXAxis ? formatXAxis(payload.value) : payload.value;
     
     return (
@@ -50,10 +50,34 @@ export const AttendanceLineChart: React.FC<LineChartProps> = ({
     );
   };
   
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const formattedLabel = formatXAxis ? formatXAxis(label) : label;
+      
+      return (
+        <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
+          <p className="text-gray-700 dark:text-gray-300 font-medium mb-1">{formattedLabel}</p>
+          <div className="flex flex-col space-y-1">
+            {payload.map((entry: any, index: number) => (
+              <div key={`item-${index}`} className="flex items-center">
+                <div className="w-3 h-3 mr-2" style={{ backgroundColor: entry.color }}></div>
+                <span className="text-gray-700 dark:text-gray-300">
+                  {entry.name}: {entry.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+  
   return (
     <div className={CHART_CONTAINER_CLASSES}>
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
+        <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 25 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#777" opacity={0.2} />
           <XAxis 
             dataKey="name" 
@@ -68,14 +92,12 @@ export const AttendanceLineChart: React.FC<LineChartProps> = ({
             tickLine={{ stroke: '#777' }}
             domain={yAxisMax ? [0, yAxisMax] : [0, 'auto']}
           />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.9)', 
-              borderColor: '#ddd',
-              color: '#333' 
-            }} 
+          <Tooltip content={<CustomTooltip />} />
+          <Legend 
+            verticalAlign="bottom" 
+            height={36} 
+            wrapperStyle={{ paddingTop: '10px' }}
           />
-          <Legend verticalAlign="bottom" height={36} />
           {lines.map((line, index) => (
             <Line 
               key={index}
@@ -94,57 +116,6 @@ export const AttendanceLineChart: React.FC<LineChartProps> = ({
   );
 };
 
-// Neue Komponente für gestapelte Flächendiagramme
-export const AttendanceAreaChart: React.FC<{
-  data: any[];
-  areas: {
-    dataKey: string;
-    name: string;
-    color: string;
-    stackId: string;
-  }[];
-}> = ({ data, areas }) => {
-  return (
-    <div className={CHART_CONTAINER_CLASSES}>
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#777" opacity={0.2} />
-          <XAxis 
-            dataKey="name" 
-            tick={{ fill: 'currentColor' }} 
-            axisLine={{ stroke: '#777' }}
-            tickLine={{ stroke: '#777' }}
-          />
-          <YAxis 
-            tick={{ fill: 'currentColor' }} 
-            axisLine={{ stroke: '#777' }}
-            tickLine={{ stroke: '#777' }}
-          />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.9)', 
-              borderColor: '#ddd',
-              color: '#333' 
-            }} 
-          />
-          <Legend />
-          {areas.map((area, index) => (
-            <Area 
-              key={index}
-              type="monotone" 
-              dataKey={area.dataKey} 
-              name={area.name} 
-              fill={area.color} 
-              stroke={area.color}
-              stackId={area.stackId}
-            />
-          ))}
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-};
-
 interface BarChartProps {
   data: any[];
   bars: {
@@ -156,10 +127,32 @@ interface BarChartProps {
 }
 
 export const AttendanceBarChart: React.FC<BarChartProps> = ({ data, bars, average }) => {
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
+          <p className="text-gray-700 dark:text-gray-300 font-medium mb-1">{label}</p>
+          <div className="flex flex-col space-y-1">
+            {payload.map((entry: any, index: number) => (
+              <div key={`item-${index}`} className="flex items-center">
+                <div className="w-3 h-3 mr-2" style={{ backgroundColor: entry.color }}></div>
+                <span className="text-gray-700 dark:text-gray-300">
+                  {entry.name}: {entry.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+  
   return (
     <div className={CHART_CONTAINER_CLASSES}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data}>
+        <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#777" opacity={0.2} />
           <XAxis 
             dataKey="name" 
@@ -172,13 +165,7 @@ export const AttendanceBarChart: React.FC<BarChartProps> = ({ data, bars, averag
             axisLine={{ stroke: '#777' }}
             tickLine={{ stroke: '#777' }}
           />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.9)', 
-              borderColor: '#ddd',
-              color: '#333' 
-            }} 
-          />
+          <Tooltip content={<CustomTooltip />} />
           <Legend />
           {bars.map((bar, index) => (
             <Bar 
@@ -212,6 +199,42 @@ export const AttendancePieChart: React.FC<PieChartProps> = ({
   nameKey = "name", 
   label = true 
 }) => {
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
+          <p className="text-gray-700 dark:text-gray-300 font-medium">
+            {payload[0].name}: {payload[0].value} ({(payload[0].percent * 100).toFixed(0)}%)
+          </p>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+  
+  const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }: any) => {
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 1.1;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    
+    if (percent < 0.05) return null; // Don't show labels for small slices
+    
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="currentColor" 
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        fontSize={12}
+      >
+        {`${name}: ${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
+  
   return (
     <div className={CHART_CONTAINER_CLASSES}>
       <ResponsiveContainer width="100%" height="100%">
@@ -220,8 +243,8 @@ export const AttendancePieChart: React.FC<PieChartProps> = ({
             data={data}
             cx="50%"
             cy="50%"
-            labelLine={label}
-            label={label ? ({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%` : undefined}
+            labelLine={false}
+            label={label ? CustomLabel : undefined}
             outerRadius={80}
             fill="#8884d8"
             dataKey={dataKey}
@@ -231,14 +254,7 @@ export const AttendancePieChart: React.FC<PieChartProps> = ({
               <Cell key={`cell-${index}`} fill={entry.color || `#${Math.floor(Math.random()*16777215).toString(16)}`} />
             ))}
           </Pie>
-          <Tooltip 
-            formatter={(value) => [`${value} Einträge`, 'Anzahl']}
-            contentStyle={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.9)', 
-              borderColor: '#ddd',
-              color: '#333' 
-            }} 
-          />
+          <Tooltip content={<CustomTooltip />} />
         </PieChart>
       </ResponsiveContainer>
     </div>

@@ -1,5 +1,5 @@
 // src/components/attendance/dashboard/utils.ts
-import { parseDate, getLastNWeeks } from '@/lib/attendance-utils';
+import { parseDate, getLastNWeeks, isVerspaetungFunc } from '@/lib/attendance-utils';
 
 // Formatiert ein Datum als DD.MM.YYYY
 export const formatDate = (dateStr: string) => {
@@ -11,8 +11,29 @@ export const formatDate = (dateStr: string) => {
   });
 };
 
+// Helper function to get students in a specific class
+export const getStudentsInClass = (rawData: any[] | null, selectedClasses: string[]): string[] => {
+  if (!rawData || selectedClasses.length === 0) return [];
+  
+  const studentsSet = new Set<string>();
+  
+  rawData.forEach(row => {
+    if (row.Langname && row.Vorname && row.Klasse && selectedClasses.includes(row.Klasse)) {
+      studentsSet.add(`${row.Langname}, ${row.Vorname}`);
+    }
+  });
+  
+  return Array.from(studentsSet).sort();
+};
+
 // Bereitet die Daten für die Wochentrends vor
-export const prepareWeeklyTrends = (rawData: any[] | null, selectedWeeks: string) => {
+export const prepareWeeklyTrends = (
+  rawData: any[] | null, 
+  selectedWeeks: string,
+  selectedClasses: string[] = [],
+  selectedEntities: string[] = [],
+  entityType: 'classes' | 'students' = 'classes'
+) => {
   if (!rawData) return [];
   
   const weeks = getLastNWeeks(parseInt(selectedWeeks));
@@ -27,81 +48,66 @@ export const prepareWeeklyTrends = (rawData: any[] | null, selectedWeeks: string
       if (!entry.Beginndatum) return false;
       
       const entryDate = parseDate(entry.Beginndatum);
-      return entryDate >= week.startDate && entryDate <= week.endDate;
+      
+      // Zeitfilter
+      if (!(entryDate >= week.startDate && entryDate <= week.endDate)) return false;
+      
+      // Klassenfilter
+      if (selectedClasses.length > 0 && !selectedClasses.includes(entry.Klasse)) return false;
+      
+      // Entitätsfilter
+      if (selectedEntities.length > 0) {
+        if (entityType === 'classes') {
+          if (!selectedEntities.includes(entry.Klasse)) return false;
+        } else { // students
+          const studentName = `${entry.Langname}, ${entry.Vorname}`;
+          if (!selectedEntities.includes(studentName)) return false;
+        }
+      }
+      
+      return true;
     });
     
     // Zählen der verschiedenen Arten von Fehlzeiten/Verspätungen
-    const verspaetungen = weekEntries.filter(entry => 
-      entry.Abwesenheitsgrund === 'Verspätung' || 
-      (entry.Endzeit && new Date(`01/01/2000 ${entry.Endzeit}`) < new Date(`01/01/2000 16:50`))
-    ).length;
+    const verspaetungen = weekEntries.filter(entry => isVerspaetungFunc(entry)).length;
     
-    const fehlzeiten = weekEntries.filter(entry => 
-      entry.Abwesenheitsgrund !== 'Verspätung' && 
-      !(entry.Endzeit && new Date(`01/01/2000 ${entry.Endzeit}`) < new Date(`01/01/2000 16:50`))
-    ).length;
+    const fehlzeitenTotal = weekEntries.filter(entry => !isVerspaetungFunc(entry)).length;
+    
+    // Entschuldigte vs. unentschuldigte Fehltage
+    const today = new Date();
+    
+    const fehlzeitenEntsch = weekEntries.filter(entry => {
+      if (isVerspaetungFunc(entry)) return false;
+      const status = entry.Status ? entry.Status.trim() : '';
+      return status === 'entsch.' || status === 'Attest' || status === 'Attest Amtsarzt';
+    }).length;
+    
+    const fehlzeitenUnentsch = weekEntries.filter(entry => {
+      if (isVerspaetungFunc(entry)) return false;
+      const status = entry.Status ? entry.Status.trim() : '';
+      const isUnentschuldigt = status === 'nicht entsch.' || status === 'nicht akzep.';
+      
+      if (isUnentschuldigt) return true;
+      
+      if (!status || status.trim() === '') {
+        const entryDate = parseDate(entry.Beginndatum);
+        const deadlineDate = new Date(entryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+        if (today > deadlineDate) return true;
+      }
+      
+      return false;
+    }).length;
     
     return {
       name: weekLabel,
       verspaetungen,
-      fehlzeiten
+      fehlzeitenTotal,
+      fehlzeitenEntsch,
+      fehlzeitenUnentsch
     };
   });
   
   return weeklyData;
-};
-
-// Bereitet die Daten für den Klassenvergleich vor
-export const prepareClassComparison = (
-  rawData: any[] | null, 
-  startDate: string, 
-  endDate: string, 
-  selectedClasses: string[]
-) => {
-  if (!rawData) return [];
-  
-  const classStats: {[key: string]: any} = {};
-  
-  rawData.forEach(entry => {
-    if (!entry.Beginndatum || !entry.Klasse) return;
-    
-    const entryDate = parseDate(entry.Beginndatum);
-    const startDateTime = new Date(startDate + 'T00:00:00');
-    const endDateTime = new Date(endDate + 'T23:59:59');
-    
-    // Nur Einträge im gewählten Zeitraum berücksichtigen
-    if (entryDate < startDateTime || entryDate > endDateTime) return;
-    
-    // Nur ausgewählte Klassen berücksichtigen oder alle, wenn keine ausgewählt sind
-    if (selectedClasses.length > 0 && !selectedClasses.includes(entry.Klasse)) return;
-    
-    const className = entry.Klasse;
-    
-    if (!classStats[className]) {
-      classStats[className] = {
-        name: className,
-        verspaetungen: 0,
-        fehlzeiten: 0,
-        total: 0
-      };
-    }
-    
-    const isVerspaetung = entry.Abwesenheitsgrund === 'Verspätung' || 
-                          (entry.Endzeit && new Date(`01/01/2000 ${entry.Endzeit}`) < new Date(`01/01/2000 16:50`));
-    
-    if (isVerspaetung) {
-      classStats[className].verspaetungen++;
-    } else {
-      classStats[className].fehlzeiten++;
-    }
-    
-    classStats[className].total++;
-  });
-  
-  // In Array konvertieren und nach Klasse sortieren
-  const classArray = Object.values(classStats).sort((a: any, b: any) => a.name.localeCompare(b.name));
-  
-  return classArray;
 };
 
 // Bereitet die Daten für die Absenztypen vor
@@ -109,7 +115,9 @@ export const prepareAbsenceTypes = (
   rawData: any[] | null, 
   startDate: string, 
   endDate: string, 
-  selectedClasses: string[]
+  selectedClasses: string[] = [],
+  selectedEntities: string[] = [],
+  entityType: 'classes' | 'students' = 'classes'
 ) => {
   if (!rawData) return [];
   
@@ -117,18 +125,29 @@ export const prepareAbsenceTypes = (
   let unentschuldigt = 0;
   let offen = 0;
   
+  const startDateTime = new Date(startDate + 'T00:00:00');
+  const endDateTime = new Date(endDate + 'T23:59:59');
+  
   rawData.forEach(entry => {
     if (!entry.Beginndatum) return;
     
     const entryDate = parseDate(entry.Beginndatum);
-    const startDateTime = new Date(startDate + 'T00:00:00');
-    const endDateTime = new Date(endDate + 'T23:59:59');
     
-    // Nur Einträge im gewählten Zeitraum berücksichtigen
+    // Zeitfilter
     if (entryDate < startDateTime || entryDate > endDateTime) return;
     
-    // Nur ausgewählte Klassen berücksichtigen oder alle, wenn keine ausgewählt sind
+    // Klassenfilter
     if (selectedClasses.length > 0 && !selectedClasses.includes(entry.Klasse)) return;
+    
+    // Entitätsfilter
+    if (selectedEntities.length > 0) {
+      if (entityType === 'classes') {
+        if (!selectedEntities.includes(entry.Klasse)) return;
+      } else { // students
+        const studentName = `${entry.Langname}, ${entry.Vorname}`;
+        if (!selectedEntities.includes(studentName)) return;
+      }
+    }
     
     const status = entry.Status ? entry.Status.trim() : '';
     
@@ -156,53 +175,79 @@ export const prepareAbsenceTypes = (
   ];
 };
 
-// Bereitet die Daten für die Wochentagsanalyse vor
+// Bereitet die Daten für die Wochentagsanalyse vor - nur Montag bis Freitag
 export const prepareDayOfWeekAnalysis = (
   rawData: any[] | null, 
   startDate: string, 
   endDate: string, 
-  selectedClasses: string[]
+  selectedClasses: string[] = [],
+  selectedEntities: string[] = [],
+  entityType: 'classes' | 'students' = 'classes'
 ) => {
   if (!rawData) return [];
   
-  const dayStats = Array(7).fill(0).map((_, index) => ({
-    name: ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'][index],
-    fehlzeiten: 0,
-    verspaetungen: 0
+  // Nur Montag bis Freitag (1-5)
+  const dayStats = Array(5).fill(0).map((_, index) => ({
+    name: ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'][index],
+    fehlzeitenGesamt: 0,
+    fehlzeitenEntsch: 0,
+    fehlzeitenUnentsch: 0,
+    verspaetungen: 0,
+    dayIndex: index + 1 // 1 = Montag, 5 = Freitag
   }));
+  
+  const startDateTime = new Date(startDate + 'T00:00:00');
+  const endDateTime = new Date(endDate + 'T23:59:59');
+  const today = new Date();
   
   rawData.forEach(entry => {
     if (!entry.Beginndatum) return;
     
     const entryDate = parseDate(entry.Beginndatum);
-    const startDateTime = new Date(startDate + 'T00:00:00');
-    const endDateTime = new Date(endDate + 'T23:59:59');
     
-    // Nur Einträge im gewählten Zeitraum berücksichtigen
+    // Zeitfilter
     if (entryDate < startDateTime || entryDate > endDateTime) return;
     
-    // Nur ausgewählte Klassen berücksichtigen oder alle, wenn keine ausgewählt sind
+    // Klassenfilter
     if (selectedClasses.length > 0 && !selectedClasses.includes(entry.Klasse)) return;
     
-    const dayOfWeek = entryDate.getDay(); // 0 = Sonntag, 1 = Montag, ...
+    // Entitätsfilter
+    if (selectedEntities.length > 0) {
+      if (entityType === 'classes') {
+        if (!selectedEntities.includes(entry.Klasse)) return;
+      } else { // students
+        const studentName = `${entry.Langname}, ${entry.Vorname}`;
+        if (!selectedEntities.includes(studentName)) return;
+      }
+    }
     
-    const isVerspaetung = entry.Abwesenheitsgrund === 'Verspätung' || 
-                        (entry.Endzeit && new Date(`01/01/2000 ${entry.Endzeit}`) < new Date(`01/01/2000 16:50`));
+    const dayOfWeek = entryDate.getDay(); // 0 = Sonntag, 1 = Montag, ..., 6 = Samstag
+    
+    // Überspringen des Wochenendes
+    if (dayOfWeek === 0 || dayOfWeek === 6) return;
+    
+    const dayIndex = dayOfWeek - 1; // 0 = Montag, 4 = Freitag
+    const isVerspaetung = isVerspaetungFunc(entry);
+    const status = entry.Status ? entry.Status.trim() : '';
+    const isEntschuldigt = status === 'entsch.' || status === 'Attest' || status === 'Attest Amtsarzt';
+    const isUnentschuldigt = status === 'nicht entsch.' || status === 'nicht akzep.';
+    const deadlineDate = new Date(entryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const isOverDeadline = today > deadlineDate;
     
     if (isVerspaetung) {
-      dayStats[dayOfWeek].verspaetungen++;
+      dayStats[dayIndex].verspaetungen++;
     } else {
-      dayStats[dayOfWeek].fehlzeiten++;
+      dayStats[dayIndex].fehlzeitenGesamt++;
+      
+      if (isEntschuldigt) {
+        dayStats[dayIndex].fehlzeitenEntsch++;
+      } else if (isUnentschuldigt || (!status && isOverDeadline)) {
+        dayStats[dayIndex].fehlzeitenUnentsch++;
+      }
     }
   });
   
-  // Filtere Wochenenden heraus, wenn keine Daten vorhanden
-  const filteredDayStats = dayStats.filter(day => 
-    (day.name !== 'Samstag' && day.name !== 'Sonntag') || 
-    (day.fehlzeiten > 0 || day.verspaetungen > 0)
-  );
-  
-  return filteredDayStats;
+  return dayStats;
 };
 
 // Bereitet Daten für den Schüler-/Klassenvergleich vor
@@ -218,6 +263,7 @@ export const prepareStudentComparisonData = (
   const startDateTime = new Date(startDate + 'T00:00:00');
   const endDateTime = new Date(endDate + 'T23:59:59');
   const resultData: any[] = [];
+  const today = new Date();
   
   // Verarbeitungsfunktion abhängig vom Entity-Typ
   entities.forEach(entity => {
@@ -241,15 +287,9 @@ export const prepareStudentComparisonData = (
     if (entityEntries.length === 0) return;
     
     // Verspätungen und Fehlzeiten zählen
-    const verspaetungen = entityEntries.filter(entry => 
-      entry.Abwesenheitsgrund === 'Verspätung' || 
-      (entry.Endzeit && new Date(`01/01/2000 ${entry.Endzeit}`) < new Date(`01/01/2000 16:50`))
-    ).length;
+    const verspaetungen = entityEntries.filter(entry => isVerspaetungFunc(entry)).length;
     
-    const fehlzeiten = entityEntries.filter(entry => 
-      entry.Abwesenheitsgrund !== 'Verspätung' && 
-      !(entry.Endzeit && new Date(`01/01/2000 ${entry.Endzeit}`) < new Date(`01/01/2000 16:50`))
-    ).length;
+    const fehlzeitenGesamt = entityEntries.filter(entry => !isVerspaetungFunc(entry)).length;
     
     // Entschuldigungsdaten aufbereiten
     let entschuldigt = 0;
@@ -265,7 +305,6 @@ export const prepareStudentComparisonData = (
         unentschuldigt++;
       } else {
         // Prüfen, ob die Entschuldigungsfrist abgelaufen ist
-        const today = new Date();
         const entryDate = parseDate(entry.Beginndatum);
         const deadlineDate = new Date(entryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
         
@@ -279,24 +318,44 @@ export const prepareStudentComparisonData = (
     
     // Trendsdaten vorbereiten
     // Wir gruppieren die Daten nach Woche
-    const trendData: { [key: string]: { verspaetungen: number, fehlzeiten: number } } = {};
+    const trendData: { [key: string]: { 
+      verspaetungen: number, 
+      fehlzeitenGesamt: number,
+      fehlzeitenEntsch: number,
+      fehlzeitenUnentsch: number
+    } } = {};
     
     entityEntries.forEach(entry => {
       const entryDate = parseDate(entry.Beginndatum);
-      // Zur Einfachheit verwenden wir den Wochennamen als Schlüssel
+      // Zur Einfachheit verwenden wir das Datum als Schlüssel
       const weekKey = entryDate.toLocaleDateString('de-DE', { year: 'numeric', month: '2-digit', day: '2-digit' });
       
       if (!trendData[weekKey]) {
-        trendData[weekKey] = { verspaetungen: 0, fehlzeiten: 0 };
+        trendData[weekKey] = { 
+          verspaetungen: 0, 
+          fehlzeitenGesamt: 0,
+          fehlzeitenEntsch: 0,
+          fehlzeitenUnentsch: 0
+        };
       }
       
-      const isVerspaetung = entry.Abwesenheitsgrund === 'Verspätung' || 
-                          (entry.Endzeit && new Date(`01/01/2000 ${entry.Endzeit}`) < new Date(`01/01/2000 16:50`));
+      const isVerspaetung = isVerspaetungFunc(entry);
+      const status = entry.Status ? entry.Status.trim() : '';
+      const isEntschuldigt = status === 'entsch.' || status === 'Attest' || status === 'Attest Amtsarzt';
+      const isUnentschuldigt = status === 'nicht entsch.' || status === 'nicht akzep.';
+      const deadlineDate = new Date(entryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const isOverDeadline = today > deadlineDate;
       
       if (isVerspaetung) {
         trendData[weekKey].verspaetungen++;
       } else {
-        trendData[weekKey].fehlzeiten++;
+        trendData[weekKey].fehlzeitenGesamt++;
+        
+        if (isEntschuldigt) {
+          trendData[weekKey].fehlzeitenEntsch++;
+        } else if (isUnentschuldigt || (!status && isOverDeadline)) {
+          trendData[weekKey].fehlzeitenUnentsch++;
+        }
       }
     });
     
@@ -305,14 +364,30 @@ export const prepareStudentComparisonData = (
       .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
       .map(([date, data]) => ({
         date,
-        ...Object.fromEntries(entities.map(e => [e, e === entity ? data.verspaetungen + data.fehlzeiten : 0]))
+        ...Object.fromEntries(entities.map(e => [e, e === entity ? data.fehlzeitenGesamt + data.verspaetungen : 0]))
       }));
       
     // Daten ins Ergebnis einfügen
     resultData.push(
-      { type: 'verspaetungen', entity, verspaetungen },
-      { type: 'fehlzeiten', entity, fehlzeiten },
-      { type: 'entschuldigung', entity, entschuldigt, unentschuldigt, offen }
+      { 
+        type: 'verspaetungen', 
+        entity, 
+        verspaetungen 
+      },
+      { 
+        type: 'fehlzeiten', 
+        entity, 
+        fehlzeiten: fehlzeitenGesamt,
+        fehlzeitenEntsch: entschuldigt,
+        fehlzeitenUnentsch: unentschuldigt
+      },
+      { 
+        type: 'entschuldigung', 
+        entity, 
+        entschuldigt, 
+        unentschuldigt, 
+        offen 
+      }
     );
     
     // Trendsdaten nur einmal als Gesamtdatensatz einfügen
@@ -330,12 +405,15 @@ export const prepareAttendanceOverTime = (
   startDate: string,
   endDate: string,
   groupingOption: 'daily' | 'weekly' | 'monthly',
-  selectedClasses: string[]
+  selectedClasses: string[] = [],
+  selectedEntities: string[] = [],
+  entityType: 'classes' | 'students' = 'classes'
 ) => {
   if (!rawData) return [];
   
   const startDateTime = new Date(startDate + 'T00:00:00');
   const endDateTime = new Date(endDate + 'T23:59:59');
+  const today = new Date();
   
   // Filtere relevante Einträge
   const relevantEntries = rawData.filter(entry => {
@@ -349,6 +427,16 @@ export const prepareAttendanceOverTime = (
     // Klassenfilter anwenden
     if (selectedClasses.length > 0 && !selectedClasses.includes(entry.Klasse)) return false;
     
+    // Entitätsfilter
+    if (selectedEntities.length > 0) {
+      if (entityType === 'classes') {
+        if (!selectedEntities.includes(entry.Klasse)) return false;
+      } else { // students
+        const studentName = `${entry.Langname}, ${entry.Vorname}`;
+        if (!selectedEntities.includes(studentName)) return false;
+      }
+    }
+    
     return true;
   });
   
@@ -356,6 +444,8 @@ export const prepareAttendanceOverTime = (
   const groupedData: { [key: string]: { 
     verspaetungen: number, 
     fehlzeiten: number,
+    fehlzeitenEntsch: number,
+    fehlzeitenUnentsch: number,
     entschuldigt: number,
     unentschuldigt: number 
   } } = {};
@@ -382,29 +472,36 @@ export const prepareAttendanceOverTime = (
       groupedData[groupKey] = { 
         verspaetungen: 0, 
         fehlzeiten: 0,
+        fehlzeitenEntsch: 0,
+        fehlzeitenUnentsch: 0,
         entschuldigt: 0,
         unentschuldigt: 0 
       };
     }
     
-    // Zähle Verspätungen/Fehlzeiten
-    const isVerspaetung = entry.Abwesenheitsgrund === 'Verspätung' || 
-                        (entry.Endzeit && new Date(`01/01/2000 ${entry.Endzeit}`) < new Date(`01/01/2000 16:50`));
+    // Verarbeite Eintrag
+    const isVerspaetung = isVerspaetungFunc(entry);
+    const status = entry.Status ? entry.Status.trim() : '';
+    const isEntschuldigt = status === 'entsch.' || status === 'Attest' || status === 'Attest Amtsarzt';
+    const isUnentschuldigt = status === 'nicht entsch.' || status === 'nicht akzep.';
+    const deadlineDate = new Date(entryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const isOverDeadline = today > deadlineDate;
     
     if (isVerspaetung) {
       groupedData[groupKey].verspaetungen++;
     } else {
       groupedData[groupKey].fehlzeiten++;
+      
+      if (isEntschuldigt) {
+        groupedData[groupKey].fehlzeitenEntsch++;
+      } else if (isUnentschuldigt || (!status && isOverDeadline)) {
+        groupedData[groupKey].fehlzeitenUnentsch++;
+      }
     }
     
-    // Zähle entschuldigte/unentschuldigte Einträge
-    const status = entry.Status ? entry.Status.trim() : '';
-    const today = new Date();
-    const deadlineDate = new Date(entryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-    
-    if (status === 'entsch.' || status === 'Attest' || status === 'Attest Amtsarzt') {
+    if (isEntschuldigt) {
       groupedData[groupKey].entschuldigt++;
-    } else if (status === 'nicht entsch.' || status === 'nicht akzep.' || (!status && today > deadlineDate)) {
+    } else if (isUnentschuldigt || (!status && isOverDeadline)) {
       groupedData[groupKey].unentschuldigt++;
     }
   });
@@ -450,43 +547,20 @@ const getWeekNumber = (date: Date): number => {
 };
 
 // Bereitet Daten für das Entschuldigungsverhalten vor
-// Hilfsfunktion zum Testen und Debuggen von Daten
-export const test = (
-  data: any[] | null,
-  startDate: string,
-  endDate: string
-) => {
-  if (!data) return [];
-  // Diese Funktion kann für Debug-Zwecke und Tests verwendet werden
-  // z.B. um Datenstrukturen zu inspizieren
-  
-  const startDateTime = new Date(startDate + 'T00:00:00');
-  const endDateTime = new Date(endDate + 'T23:59:59');
-  
-  // Filtere relevante Einträge
-  const relevantEntries = data.filter(entry => {
-    if (!entry.Beginndatum) return false;
-    
-    const entryDate = parseDate(entry.Beginndatum);
-    // Zeitraumfilter anwenden
-    if (entryDate < startDateTime || entryDate > endDateTime) return false;
-    
-    return true;
-  });
-  
-  return relevantEntries;
-};
-
 export const prepareEntschuldigungsverhalten = (
   rawData: any[] | null,
   startDate: string,
   endDate: string,
-  selectedClasses: string[]
+  selectedClasses: string[] = [],
+  selectedEntities: string[] = [],
+  entityType: 'classes' | 'students' = 'classes',
+  groupingOption: 'daily' | 'weekly' | 'monthly' = 'monthly'
 ) => {
   if (!rawData) return [];
   
   const startDateTime = new Date(startDate + 'T00:00:00');
   const endDateTime = new Date(endDate + 'T23:59:59');
+  const today = new Date();
   
   // Filtere relevante Einträge
   const relevantEntries = rawData.filter(entry => {
@@ -499,6 +573,16 @@ export const prepareEntschuldigungsverhalten = (
     
     // Klassenfilter anwenden
     if (selectedClasses.length > 0 && !selectedClasses.includes(entry.Klasse)) return false;
+    
+    // Entitätsfilter
+    if (selectedEntities.length > 0) {
+      if (entityType === 'classes') {
+        if (!selectedEntities.includes(entry.Klasse)) return false;
+      } else { // students
+        const studentName = `${entry.Langname}, ${entry.Vorname}`;
+        if (!selectedEntities.includes(studentName)) return false;
+      }
+    }
     
     return true;
   });
@@ -516,34 +600,80 @@ export const prepareEntschuldigungsverhalten = (
     dataByClass[className].push(entry);
   });
   
+  const entschuldigungsQuotenOverall: { 
+    datum: string; 
+    entschuldigtRate: number; 
+    unentschuldigtRate: number; 
+    total: number; 
+  }[] = [];
+  
+  // Entschuldigungsquoten über Zeit berechnen
+  if (groupingOption === 'monthly') {
+    const monthlyData: { [key: string]: { entschuldigt: number, unentschuldigt: number, total: number } } = {};
+    
+    relevantEntries.forEach(entry => {
+      const entryDate = parseDate(entry.Beginndatum);
+      const monthKey = entryDate.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' });
+      
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = { entschuldigt: 0, unentschuldigt: 0, total: 0 };
+      }
+      
+      const status = entry.Status ? entry.Status.trim() : '';
+      const isEntschuldigt = status === 'entsch.' || status === 'Attest' || status === 'Attest Amtsarzt';
+      const isUnentschuldigt = status === 'nicht entsch.' || status === 'nicht akzep.';
+      const deadlineDate = new Date(entryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const isOverDeadline = today > deadlineDate;
+      
+      monthlyData[monthKey].total++;
+      
+      if (isEntschuldigt) {
+        monthlyData[monthKey].entschuldigt++;
+      } else if (isUnentschuldigt || (!status && isOverDeadline)) {
+        monthlyData[monthKey].unentschuldigt++;
+      }
+    });
+    
+    Object.entries(monthlyData).forEach(([month, data]) => {
+      if (data.total > 0) {
+        entschuldigungsQuotenOverall.push({
+          datum: month,
+          entschuldigtRate: (data.entschuldigt / data.total) * 100,
+          unentschuldigtRate: (data.unentschuldigt / data.total) * 100,
+          total: data.total
+        });
+      }
+    });
+  }
+  
+  // Sortiere nach Datum
+  entschuldigungsQuotenOverall.sort((a, b) => {
+    const [monthA, yearA] = a.datum.split(' ');
+    const [monthB, yearB] = b.datum.split(' ');
+    const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+    const monthIdxA = months.indexOf(monthA);
+    const monthIdxB = months.indexOf(monthB);
+    const yearDiff = parseInt(yearA) - parseInt(yearB);
+    if (yearDiff !== 0) return yearDiff;
+    return monthIdxA - monthIdxB;
+  });
+  
   // Berechne das Entschuldigungsverhalten je Klasse
   return Object.entries(dataByClass).map(([className, entries]) => {
     let entschuldigt = 0;
     let unentschuldigt = 0;
     let offen = 0;
-    let gesamtEntschuldigungstage = 0;
-    let anzahlEntschuldigungen = 0;
     
     entries.forEach(entry => {
-      const entryDate = parseDate(entry.Beginndatum);
       const status = entry.Status ? entry.Status.trim() : '';
       
       if (status === 'entsch.' || status === 'Attest' || status === 'Attest Amtsarzt') {
         entschuldigt++;
-        
-        // Berechne die Dauer bis zur Entschuldigung, falls Datum vorhanden
-        if (entry.EntschuldigungsDatum) {
-          const entschuldigungsDatum = parseDate(entry.EntschuldigungsDatum);
-          const daysDiff = Math.round((entschuldigungsDatum.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24));
-          
-          gesamtEntschuldigungstage += daysDiff;
-          anzahlEntschuldigungen++;
-        }
       } else if (status === 'nicht entsch.' || status === 'nicht akzep.') {
         unentschuldigt++;
       } else {
         // Prüfen, ob die Entschuldigungsfrist abgelaufen ist
-        const today = new Date();
+        const entryDate = parseDate(entry.Beginndatum);
         const deadlineDate = new Date(entryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
         
         if (today > deadlineDate) {
@@ -557,9 +687,6 @@ export const prepareEntschuldigungsverhalten = (
     const total = entschuldigt + unentschuldigt + offen;
     const entschuldigtRate = total > 0 ? (entschuldigt / total) * 100 : 0;
     const unentschuldigtRate = total > 0 ? (unentschuldigt / total) * 100 : 0;
-    const durchschnittlicheEntschuldigungstage = anzahlEntschuldigungen > 0 
-      ? gesamtEntschuldigungstage / anzahlEntschuldigungen 
-      : null;
     
     return {
       klasse: className,
@@ -569,7 +696,7 @@ export const prepareEntschuldigungsverhalten = (
       total,
       entschuldigtRate,
       unentschuldigtRate,
-      durchschnittlicheEntschuldigungstage
+      quotenEntwicklung: entschuldigungsQuotenOverall
     };
   }).sort((a, b) => a.klasse.localeCompare(b.klasse));
 };

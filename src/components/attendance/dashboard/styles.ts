@@ -2,9 +2,10 @@
 
 // Farbkonstanten für Absenztypen (entschuldigt, unentschuldigt, offen)
 export const STATUS_COLORS = {
-  entschuldigt: '#10B981', // grün
-  unentschuldigt: '#EF4444', // rot
+  entschuldigt: '#16a34a', // grün
+  unentschuldigt: '#dc2626', // rot
   offen: '#F59E0B', // gelb/orange
+  verspaetungen: '#9333ea', // lila
 };
 
 // Gemeinsame Tailwind-Klassen für Karten - Neutrale Grenze

@@ -1,10 +1,8 @@
-// src/components/attendance/dashboard/OverviewTab.tsx
 import React from 'react';
 import { 
   CARD_CLASSES, 
   CARD_TITLE_CLASSES, 
-  DASHBOARD_CONTAINER_CLASSES,
-  STATUS_COLORS
+  DASHBOARD_CONTAINER_CLASSES
 } from './styles';
 import { 
   AttendanceLineChart, 

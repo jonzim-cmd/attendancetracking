@@ -1,12 +1,10 @@
-// src/components/attendance/dashboard/ChartComponents.tsx
 import React from 'react';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
 import { 
-  CHART_CONTAINER_CLASSES,
-  STATUS_COLORS
+  CHART_CONTAINER_CLASSES
 } from './styles';
 
 interface LineChartProps {

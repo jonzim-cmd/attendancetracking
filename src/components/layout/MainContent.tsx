@@ -1,5 +1,6 @@
 import React from 'react';
 import NormalView from '@/components/attendance/NormalView';
+import DashboardView from '@/components/attendance/DashboardView';  // Neue Komponente importieren
 import { StudentStats } from '@/types';
 
 interface MainContentProps {
@@ -20,6 +21,10 @@ interface MainContentProps {
   activeFilters: Map<string, string>;
   setActiveFilters: React.Dispatch<React.SetStateAction<Map<string, string>>>;
   visibleColumns: string[];
+  
+  // Neue Props - als optional deklariert für Abwärtskompatibilität
+  viewMode?: 'table' | 'dashboard';
+  rawData?: any[] | null;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -40,6 +45,10 @@ const MainContent: React.FC<MainContentProps> = ({
   activeFilters,
   setActiveFilters,
   visibleColumns,
+  
+  // Neue Props mit Standardwerten
+  viewMode = 'table',
+  rawData = null
 }) => {
 
   return (
@@ -52,25 +61,37 @@ const MainContent: React.FC<MainContentProps> = ({
       }}
     >
       <div className="p-6">
-        <NormalView
-          getFilteredStudents={getFilteredStudents}
-          detailedData={detailedData}
-          schoolYearDetailedData={schoolYearDetailedData}
-          weeklyDetailedData={weeklyDetailedData}
-          startDate={startDate}
-          endDate={endDate}
-          schoolYearStats={schoolYearStats}
-          weeklyStats={weeklyStats}
-          selectedWeeks={selectedWeeks}
-          availableClasses={availableClasses}
-          selectedClasses={selectedClasses}
-          onClassesChange={onClassesChange}
-          expandedStudents={expandedStudents}
-          setExpandedStudents={setExpandedStudents}
-          activeFilters={activeFilters}
-          setActiveFilters={setActiveFilters}
-          visibleColumns={visibleColumns}
-        />
+        {viewMode === 'table' ? (
+          <NormalView
+            getFilteredStudents={getFilteredStudents}
+            detailedData={detailedData}
+            schoolYearDetailedData={schoolYearDetailedData}
+            weeklyDetailedData={weeklyDetailedData}
+            startDate={startDate}
+            endDate={endDate}
+            schoolYearStats={schoolYearStats}
+            weeklyStats={weeklyStats}
+            selectedWeeks={selectedWeeks}
+            availableClasses={availableClasses}
+            selectedClasses={selectedClasses}
+            onClassesChange={onClassesChange}
+            expandedStudents={expandedStudents}
+            setExpandedStudents={setExpandedStudents}
+            activeFilters={activeFilters}
+            setActiveFilters={setActiveFilters}
+            visibleColumns={visibleColumns}
+          />
+        ) : (
+          <DashboardView
+            getFilteredStudents={getFilteredStudents}
+            rawData={rawData}
+            startDate={startDate}
+            endDate={endDate}
+            selectedWeeks={selectedWeeks}
+            availableClasses={availableClasses}
+            selectedClasses={selectedClasses}
+          />
+        )}
       </div>
     </main>
   );  

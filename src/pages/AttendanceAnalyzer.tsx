@@ -36,6 +36,9 @@ const AttendanceAnalyzer: React.FC = () => {
   const [visibleColumns, setVisibleColumns] = useState<string[]>(['basic', 'verspaetungen', 'fehlzeiten', 'stats']);
   
   const [isDarkMode, setIsDarkMode] = useState(true);
+  
+  // Neuer State für Dashboard-Ansicht
+  const [viewMode, setViewMode] = useState<'table' | 'dashboard'>('table');
 
   // Neuer useEffect für document-level dark mode
   useEffect(() => {
@@ -101,6 +104,7 @@ const AttendanceAnalyzer: React.FC = () => {
     setExpandedStudents(new Set());
     setActiveFilters(new Map());
     setVisibleColumns(['basic', 'verspaetungen', 'fehlzeiten', 'stats']);
+    setViewMode('table'); // Zurück zur Tabellenansicht
     // Trigger hochzählen um einen neuen Upload-Zyklus zu starten
     setUploadTrigger(prev => prev + 1);
   };
@@ -389,6 +393,8 @@ const AttendanceAnalyzer: React.FC = () => {
         onToggleColumnGroup={toggleColumnGroup}
         expandedStudents={expandedStudents}
         onCloseAllDetails={closeAllDetails}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
       <Sidebar
         startDate={startDate}
@@ -403,7 +409,7 @@ const AttendanceAnalyzer: React.FC = () => {
         onExportCSV={handleExportCSV}
         onExportPDF={handleExportPDF}
         uploadTrigger={uploadTrigger}
-        hasFileUploaded={hasFileUploaded} // Pass file upload status to sidebar
+        hasFileUploaded={hasFileUploaded}
       />
       <MainContent
         getFilteredStudents={getFilteredStudents}
@@ -423,7 +429,10 @@ const AttendanceAnalyzer: React.FC = () => {
         activeFilters={activeFilters}
         setActiveFilters={setActiveFilters}
         visibleColumns={visibleColumns}
+        viewMode={viewMode}
+        rawData={rawData}
       />
+      
       {error && (
         <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
           {error}

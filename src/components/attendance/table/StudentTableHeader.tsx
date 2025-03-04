@@ -51,7 +51,7 @@ const StudentTableHeader: React.FC<StudentTableHeaderProps> = ({ onSort, sortSta
   const fehlzColspan = visibleColumns.includes('fehlzeiten') ? (visibleColumns.includes('stats') ? 6 : 3) : 0;
 
   return (
-    <thead className="sticky top-0 z-50 bg-table-light-header dark:bg-table-dark-header shadow-sm">
+    <thead className="sticky top-0 z-10 bg-table-light-header dark:bg-table-dark-header shadow-sm">
       <tr className="bg-table-light-header dark:bg-table-dark-header">
         {/* Grundinformationen - immer sichtbar */}
         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-r border-tableBorder-light dark:border-tableBorder-dark w-12">Nr.</th>

@@ -1,6 +1,6 @@
 // src/components/layout/HeaderBar.tsx
-import React from 'react';
-import { Sun, Moon } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Sun, Moon, ChevronDown } from 'lucide-react';
 import ResetButton from '@/components/attendance/ResetButton';
 
 interface HeaderBarProps {
@@ -24,6 +24,10 @@ interface HeaderBarProps {
   onToggleColumnGroup: (group: string) => void;
   expandedStudents: Set<string>;
   onCloseAllDetails: () => void;
+  
+  // Neue Props - optional für Abwärtskompatibilität
+  viewMode?: 'table' | 'dashboard';
+  onViewModeChange?: (mode: 'table' | 'dashboard') => void;
 }
 
 const HeaderBar: React.FC<HeaderBarProps> = ({
@@ -47,6 +51,9 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   onToggleColumnGroup,
   expandedStudents,
   onCloseAllDetails,
+  // Neue Props mit Standardwerten
+  viewMode = 'table',
+  onViewModeChange = () => {},
 }) => {
   const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -58,6 +65,26 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       onClassesChange([...selectedClasses, value]);
     }
   };
+
+  // State für geöffnetes Spalten-Dropdown
+  const [isColumnDropdownOpen, setIsColumnDropdownOpen] = useState(false);
+  
+  // Ref für das Dropdown-Element
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Click-Outside Handler für das Dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsColumnDropdownOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownRef]);
 
   return (
     <header
@@ -145,53 +172,86 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
           title="Suche nach Schülernamen - Eingabe filtert die Ergebnisse"
         />
 
-        {/* SPALTENTOGGLE-BUTTONS */}
-        <div className="ml-3 flex gap-1">
+        {/* Verbessertes Dropdown für Spaltenauswahl */}
+        <div className="relative ml-3" ref={dropdownRef}>
           <button
-            onClick={() => onToggleColumnGroup('verspaetungen')}
-            className={`px-2 py-1 text-sm ${
-              visibleColumns.includes('verspaetungen')
-                ? 'bg-header-btn-selected dark:bg-header-btn-selected-dark text-chatGray-textLight dark:text-chatGray-textDark'
-                : 'bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark'
-            }`}
-            title="Verspätungsspalten ein-/ausblenden"
+            onClick={() => setIsColumnDropdownOpen(!isColumnDropdownOpen)}
+            className="px-2 py-1 text-sm bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark flex items-center"
+            title="Spalten ein-/ausblenden"
           >
-            Verspät.
-          </button>
-          <button
-            onClick={() => onToggleColumnGroup('fehlzeiten')}
-            className={`px-2 py-1 text-sm ${
-              visibleColumns.includes('fehlzeiten')
-                ? 'bg-header-btn-selected dark:bg-header-btn-selected-dark text-chatGray-textLight dark:text-chatGray-textDark'
-                : 'bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark'
-            }`}
-            title="Fehltagesspalten ein-/ausblenden"
-          >
-            Fehltage
-          </button>
-          <button
-            onClick={() => onToggleColumnGroup('stats')}
-            className={`px-2 py-1 text-sm ${
-              visibleColumns.includes('stats')
-                ? 'bg-header-btn-selected dark:bg-header-btn-selected-dark text-chatGray-textLight dark:text-chatGray-textDark'
-                : 'bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark'
-            }`}
-            title="Wochenspalten ein-/ausblenden"
-          >
-            Wochen
+            Spalten
+            <ChevronDown className="w-4 h-4 ml-1" />
           </button>
           
-          {/* "Details einklappen" Button - nur angezeigt, wenn expandedStudents nicht leer ist */}
-          {expandedStudents.size > 0 && (
-            <button
-              onClick={onCloseAllDetails}
-              className="px-2 py-1 text-sm bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark"
-              title="Alle geöffneten Details einklappen"
-            >
-              Details einklappen
-            </button>
+          {isColumnDropdownOpen && (
+            <div className="absolute top-full left-0 mt-1 bg-table-light-base dark:bg-table-dark-base shadow-lg rounded-md overflow-hidden z-[100] border border-tableBorder-light dark:border-tableBorder-dark">
+              <div className="p-2 space-y-1">
+                <div className="flex items-center px-2 py-1 hover:bg-table-light-hover dark:hover:bg-table-dark-hover rounded">
+                  <input
+                    type="checkbox"
+                    id="spalte-verspaetungen"
+                    checked={visibleColumns.includes('verspaetungen')}
+                    onChange={() => onToggleColumnGroup('verspaetungen')}
+                    className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
+                  />
+                  <label htmlFor="spalte-verspaetungen" className="text-sm cursor-pointer text-chatGray-textLight dark:text-chatGray-textDark">
+                    Verspätungen
+                  </label>
+                </div>
+                <div className="flex items-center px-2 py-1 hover:bg-table-light-hover dark:hover:bg-table-dark-hover rounded">
+                  <input
+                    type="checkbox"
+                    id="spalte-fehlzeiten"
+                    checked={visibleColumns.includes('fehlzeiten')}
+                    onChange={() => onToggleColumnGroup('fehlzeiten')}
+                    className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
+                  />
+                  <label htmlFor="spalte-fehlzeiten" className="text-sm cursor-pointer text-chatGray-textLight dark:text-chatGray-textDark">
+                    Fehltage
+                  </label>
+                </div>
+                <div className="flex items-center px-2 py-1 hover:bg-table-light-hover dark:hover:bg-table-dark-hover rounded">
+                  <input
+                    type="checkbox"
+                    id="spalte-stats"
+                    checked={visibleColumns.includes('stats')}
+                    onChange={() => onToggleColumnGroup('stats')}
+                    className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
+                  />
+                  <label htmlFor="spalte-stats" className="text-sm cursor-pointer text-chatGray-textLight dark:text-chatGray-textDark">
+                    Wochen
+                  </label>
+                </div>
+              </div>
+            </div>
           )}
         </div>
+        
+        {/* Dashboard-Toggle Button */}
+        <div className="ml-3">
+          <button
+            onClick={() => onViewModeChange(viewMode === 'table' ? 'dashboard' : 'table')}
+            className={`px-2 py-1 text-sm ${
+              viewMode === 'dashboard'
+                ? 'bg-header-btn-selected dark:bg-header-btn-selected-dark text-chatGray-textLight dark:text-chatGray-textDark'
+                : 'bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark'
+            }`}
+            title={viewMode === 'table' ? 'Zur Dashboard-Ansicht wechseln' : 'Zur Tabellenansicht wechseln'}
+          >
+            {viewMode === 'table' ? 'Dashboard' : 'Tabelle'}
+          </button>
+        </div>
+        
+        {/* "Details einklappen" Button - nur angezeigt, wenn expandedStudents nicht leer ist */}
+        {expandedStudents.size > 0 && (
+          <button
+            onClick={onCloseAllDetails}
+            className="px-2 py-1 text-sm bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark"
+            title="Alle geöffneten Details einklappen"
+          >
+            Details einklappen
+          </button>
+        )}
       </div>
       <div className="flex items-center gap-2 mr-2">
         <ResetButton onReset={onReset} />

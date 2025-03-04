@@ -37,6 +37,21 @@ const AttendanceAnalyzer: React.FC = () => {
   
   const [isDarkMode, setIsDarkMode] = useState(true);
 
+  // Neuer useEffect für document-level dark mode
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      document.body.classList.add('bg-chatGray-dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('bg-chatGray-dark');
+      document.body.classList.add('bg-chatGray-light');
+    }
+    return () => {
+      document.body.classList.remove('bg-chatGray-light', 'bg-chatGray-dark');
+    };
+  }, [isDarkMode]);
+
   // Neue Funktion zum Umschalten der Spaltengruppen
   const toggleColumnGroup = (columnGroup: string) => {
     setVisibleColumns(prev => {
@@ -352,7 +367,7 @@ const AttendanceAnalyzer: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`}>
+    <div className={`min-h-screen bg-chatGray-light dark:bg-chatGray-dark ${isDarkMode ? 'dark' : ''}`}>
       <HeaderBar
         filterUnexcusedLate={filterUnexcusedLate}
         filterUnexcusedAbsent={filterUnexcusedAbsent}

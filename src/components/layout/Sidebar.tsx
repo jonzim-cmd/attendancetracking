@@ -194,7 +194,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {!collapsed && (
         <aside
           ref={sidebarRef}
-          className="fixed top-0 left-0 min-h-screen bg-chatGray-sidebarLight dark:bg-chatGray-sidebarDark p-4 overflow-y-auto transition-all duration-50" // Schnellere Transition
+          className="fixed top-0 left-0 min-h-screen bg-chatGray-sidebarLight dark:bg-chatGray-sidebarDark p-4 overflow-y-auto transition-all duration-150" // Schnellere Transition
           style={fullSidebarWidth ? { width: `${fullSidebarWidth}px` } : {}}
         >
           {/* Pin-Button */}

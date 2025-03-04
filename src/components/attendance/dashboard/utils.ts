@@ -702,10 +702,3 @@ export const prepareEntschuldigungsverhalten = (
     };
   }).sort((a, b) => a.klasse.localeCompare(b.klasse));
 };
-
-// Helper function to parse date
-function parseDate(dateStr: string | Date): Date {
-  if (dateStr instanceof Date) return dateStr;
-  const [day, month, year] = dateStr.split('.');
-  return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-}

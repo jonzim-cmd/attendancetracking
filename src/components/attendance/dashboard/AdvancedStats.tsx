@@ -80,6 +80,7 @@ const AdvancedStats: React.FC<AdvancedStatsProps> = ({
   
   // Wir berechnen die Werte, nutzen sie aber aktuell nicht in der UI
   // Diese Funktion kann für zukünftige Erweiterungen verwendet werden
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const entschuldigungsAnalyse = analyzeEntschuldigungsVerhalten();
   
   // Handlungsempfehlungen basierend auf den Daten

@@ -10,7 +10,6 @@ import {
 } from './styles';
 import { 
   prepareWeeklyTrends, 
-  prepareClassComparison, 
   prepareAbsenceTypes, 
   prepareDayOfWeekAnalysis,
   prepareStudentComparisonData,

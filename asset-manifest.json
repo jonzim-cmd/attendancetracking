@@ -1,18 +1,18 @@
 {
   "files": {
     "main.css": "/attendancetracking/static/css/main.8e53c50f.css",
-    "main.js": "/attendancetracking/static/js/main.59762710.js",
+    "main.js": "/attendancetracking/static/js/main.97993fa4.js",
     "static/js/239.e01b8a23.chunk.js": "/attendancetracking/static/js/239.e01b8a23.chunk.js",
     "static/js/977.37b30e06.chunk.js": "/attendancetracking/static/js/977.37b30e06.chunk.js",
     "static/js/732.1482985d.chunk.js": "/attendancetracking/static/js/732.1482985d.chunk.js",
     "index.html": "/attendancetracking/index.html",
     "main.8e53c50f.css.map": "/attendancetracking/static/css/main.8e53c50f.css.map",
-    "main.59762710.js.map": "/attendancetracking/static/js/main.59762710.js.map",
+    "main.97993fa4.js.map": "/attendancetracking/static/js/main.97993fa4.js.map",
     "239.e01b8a23.chunk.js.map": "/attendancetracking/static/js/239.e01b8a23.chunk.js.map",
     "732.1482985d.chunk.js.map": "/attendancetracking/static/js/732.1482985d.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.8e53c50f.css",
-    "static/js/main.59762710.js"
+    "static/js/main.97993fa4.js"
   ]
 }

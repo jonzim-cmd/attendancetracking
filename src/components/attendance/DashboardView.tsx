@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell 
@@ -32,23 +32,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   const [dayOfWeekData, setDayOfWeekData] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'classes' | 'patterns'>('overview');
   
-  // Farbpalette für Diagramme
-  const COLORS = [
-    '#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE', '#00C49F', 
-    '#FFBB28', '#FF8042', '#a4de6c', '#d0ed57', '#83a6ed', '#8dd1e1'
-  ];
+  // Removed unused COLORS array
   
-  useEffect(() => {
-    if (!rawData || !startDate || !endDate) return;
-    
-    // Aufbereitung der Daten für die verschiedenen Diagramme
-    prepareWeeklyTrends();
-    prepareClassComparison();
-    prepareAbsenceTypes();
-    prepareDayOfWeekAnalysis();
-  }, [rawData, startDate, endDate, selectedWeeks, selectedClasses]);
-  
-  const prepareWeeklyTrends = () => {
+  const prepareWeeklyTrends = useCallback(() => {
     if (!rawData) return;
     
     const weeks = getLastNWeeks(parseInt(selectedWeeks));
@@ -85,9 +71,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     });
     
     setWeeklyTrends(weeklyData);
-  };
+  }, [rawData, selectedWeeks]);
   
-  const prepareClassComparison = () => {
+  const prepareClassComparison = useCallback(() => {
     if (!rawData) return;
     
     const classStats: {[key: string]: any} = {};
@@ -132,9 +118,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     const classArray = Object.values(classStats).sort((a: any, b: any) => a.name.localeCompare(b.name));
     
     setClassComparison(classArray);
-  };
+  }, [rawData, startDate, endDate, selectedClasses]);
   
-  const prepareAbsenceTypes = () => {
+  const prepareAbsenceTypes = useCallback(() => {
     if (!rawData) return;
     
     let entschuldigt = 0;
@@ -178,9 +164,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
       { name: 'Unentschuldigt', value: unentschuldigt, color: '#EF4444' },
       { name: 'Offen', value: offen, color: '#F59E0B' }
     ]);
-  };
+  }, [rawData, startDate, endDate, selectedClasses]);
   
-  const prepareDayOfWeekAnalysis = () => {
+  const prepareDayOfWeekAnalysis = useCallback(() => {
     if (!rawData) return;
     
     const dayStats = Array(7).fill(0).map((_, index) => ({
@@ -221,7 +207,27 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     );
     
     setDayOfWeekData(filteredDayStats);
-  };
+  }, [rawData, startDate, endDate, selectedClasses]);
+  
+  useEffect(() => {
+    if (!rawData || !startDate || !endDate) return;
+    
+    // Aufbereitung der Daten für die verschiedenen Diagramme
+    prepareWeeklyTrends();
+    prepareClassComparison();
+    prepareAbsenceTypes();
+    prepareDayOfWeekAnalysis();
+  }, [
+    rawData, 
+    startDate, 
+    endDate, 
+    selectedWeeks, 
+    selectedClasses, 
+    prepareWeeklyTrends, 
+    prepareClassComparison, 
+    prepareAbsenceTypes, 
+    prepareDayOfWeekAnalysis
+  ]);
   
   // Formatierung der Daten und Beschriftungen für das Dashboard
   const formatDate = (dateStr: string) => {

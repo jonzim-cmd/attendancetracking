@@ -4,6 +4,7 @@ import StatCards from './StatCards';
 import TrendCharts from './TrendCharts';
 import ComparisonView from './ComparisonView';
 import StudentRanking from './StudentRanking';
+import AdvancedStats from './AdvancedStats';
 import { 
   prepareWeeklyTrends, 
   prepareAbsenceTypes, 
@@ -231,6 +232,13 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
             setChartVisibility={setTrendChartVisibility}
             weekdayChartVisibility={weekdayChartVisibility}
             setWeekdayChartVisibility={setWeekdayChartVisibility}
+          />
+          
+          {/* Advanced Stats with Excuse Behavior Analysis */}
+          <AdvancedStats 
+            entschuldigungsverhalten={entschuldigungsverhalten}
+            dayOfWeekData={dayOfWeekData}
+            absenceTypes={absenceTypes}
           />
           
           {/* Student Ranking Tile */}

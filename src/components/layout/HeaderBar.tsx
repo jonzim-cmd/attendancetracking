@@ -2,8 +2,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sun, Moon, ChevronDown } from 'lucide-react';
 import ResetButton from '@/components/attendance/ResetButton';
-import { useFilters } from '@/contexts/FilterContext'; // NEU: useFilters importieren
-import { StudentStats } from '@/types'; // Wird für Typannotationen benötigt
+import { useFilters } from '@/contexts/FilterContext';
+import StudentSearchSelect from '@/components/ui/StudentSearchSelect';
+import { StudentStats } from '@/types';
 
 interface HeaderBarProps {
   filterUnexcusedLate: boolean;
@@ -72,10 +73,8 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
     getContextFilteredStudents
   } = useFilters();
   
-  // NEU: States für Dashboard-Filter Dropdowns
+  // NEU: State für Dashboard-Filter Dropdowns
   const [isDashboardClassDropdownOpen, setIsDashboardClassDropdownOpen] = useState(false);
-  const [isStudentDropdownOpen, setIsStudentDropdownOpen] = useState(false);
-  const [studentSearchTerm, setStudentSearchTerm] = useState('');
   
   // Refs für die Dropdown-Elemente
   const columnDropdownRef = useRef<HTMLDivElement>(null);
@@ -83,7 +82,6 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   
   // NEU: Refs für Dashboard-Filter Dropdowns
   const dashboardClassDropdownRef = useRef<HTMLDivElement>(null);
-  const studentDropdownRef = useRef<HTMLDivElement>(null);
   
   // Timer für verzögertes Schließen bei Hover
   const columnDropdownTimer = useRef<NodeJS.Timeout | null>(null);
@@ -91,7 +89,6 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   
   // NEU: Timer für Dashboard-Filter Dropdowns
   const dashboardClassDropdownTimer = useRef<NodeJS.Timeout | null>(null);
-  const studentDropdownTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Click-Outside Handler für die Dropdowns
   useEffect(() => {
@@ -110,17 +107,13 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       if (dashboardClassDropdownRef.current && !dashboardClassDropdownRef.current.contains(event.target as Node)) {
         setIsDashboardClassDropdownOpen(false);
       }
-      
-      if (studentDropdownRef.current && !studentDropdownRef.current.contains(event.target as Node)) {
-        setIsStudentDropdownOpen(false);
-      }
     };
     
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [columnDropdownRef, classDropdownRef, dashboardClassDropdownRef, studentDropdownRef]);
+  }, [columnDropdownRef, classDropdownRef, dashboardClassDropdownRef]);
 
   // Hilfsfunktionen für Dropdowns
   const handleMouseEnterColumnDropdown = () => {
@@ -165,20 +158,6 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       setIsDashboardClassDropdownOpen(false);
     }, 300);
   };
-  
-  const handleMouseEnterStudentDropdown = () => {
-    if (studentDropdownTimer.current) {
-      clearTimeout(studentDropdownTimer.current);
-      studentDropdownTimer.current = null;
-    }
-    setIsStudentDropdownOpen(true);
-  };
-  
-  const handleMouseLeaveStudentDropdown = () => {
-    studentDropdownTimer.current = setTimeout(() => {
-      setIsStudentDropdownOpen(false);
-    }, 300);
-  };
 
   // Handler für Klassen-Auswahl
   const handleClassToggle = (className: string) => {
@@ -202,38 +181,22 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
     }
   };
   
-  // NEU: Handler für Schüler-Auswahl
-  const handleStudentToggle = (student: string) => {
-    if (student === '') {
-      setSelectedStudents([]);
-    } else if (selectedStudents.includes(student)) {
-      setSelectedStudents(selectedStudents.filter(s => s !== student));
-    } else {
-      setSelectedStudents([...selectedStudents, student]);
-    }
-  };
-  
   // NEU: Überarbeitete getAvailableStudents Funktion, die echte Daten verwendet
   const getAvailableStudents = (): string[] => {
     // Echte Schülerdaten aus dem Context verwenden
     const studentsWithStats = getContextFilteredStudents();
     
     // Nach Klassen filtern, falls Klassenfilter aktiv ist
-    const filteredStudents = selectedDashboardClasses.length > 0
+    const filteredStudents = (viewMode === 'dashboard' && selectedDashboardClasses.length > 0)
       ? studentsWithStats.filter(([_, stats]) => 
           selectedDashboardClasses.includes(stats.klasse))
-      : studentsWithStats;
+      : viewMode === 'table' && selectedClasses.length > 0
+        ? studentsWithStats.filter(([_, stats]) => 
+            selectedClasses.includes(stats.klasse))
+        : studentsWithStats;
     
     // Nur die Namen zurückgeben (ohne die Stats)
     return filteredStudents.map(([name]) => name);
-  };
-  
-  // NEU: Filtere Schüler basierend auf Suchbegriff
-  const getFilteredStudents = () => {
-    const availableStudents = getAvailableStudents();
-    return availableStudents.filter(student => 
-      student.toLowerCase().includes(studentSearchTerm.toLowerCase())
-    );
   };
 
   return (
@@ -365,14 +328,12 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
               />
             </div>
             
-            {/* Suchfeld */}
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+            {/* NEU: StudentSearchSelect anstelle des einfachen Suchfelds */}
+            <StudentSearchSelect
               placeholder="Nach Name suchen"
-              className="w-36 rounded px-2 py-1 bg-header-btn-input dark:bg-header-btn-input-dark hover:bg-header-btn-input-hover dark:hover:bg-header-btn-input-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
-              title="Suche nach Schülernamen - Eingabe filtert die Ergebnisse"
+              className="w-56"
+              getAvailableStudents={getAvailableStudents}
+              mode="table"
             />
 
             {/* Verbessertes Dropdown für Spaltenauswahl mit Hover-Effekt */}
@@ -501,88 +462,13 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
               )}
             </div>
             
-            {/* Schülerfilter mit verbessertem Styling */}
-            <div 
-              className="relative ml-2"
-              ref={studentDropdownRef}
-              onMouseEnter={handleMouseEnterStudentDropdown}
-              onMouseLeave={handleMouseLeaveStudentDropdown}
-            >
-              <div
-                className="min-w-[120px] w-auto rounded px-2 py-1 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm flex items-center justify-between cursor-pointer"
-                onClick={() => setIsStudentDropdownOpen(!isStudentDropdownOpen)}
-                title="Schüler filtern - es werden nur Schüler der ausgewählten Klassen angezeigt"
-              >
-                <span className="truncate">
-                  {selectedStudents.length === 0 
-                    ? 'Alle Schüler' 
-                    : selectedStudents.length === 1 
-                      ? selectedStudents[0].split(',')[0] + ' ' + selectedStudents[0].split(',')[1]
-                      : `${selectedStudents.length} Schüler ausgewählt`}
-                </span>
-                <ChevronDown className="w-4 h-4 ml-1" />
-              </div>
-              
-              {isStudentDropdownOpen && (
-                <div className="absolute top-full left-0 mt-1 w-auto min-w-full max-w-md bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark shadow-lg rounded-md overflow-hidden border border-tableBorder-light dark:border-tableBorder-dark z-50">
-                  <div className="p-2 space-y-1">
-                    <input
-                      type="text"
-                      placeholder="Suchen..."
-                      value={studentSearchTerm}
-                      onChange={(e) => setStudentSearchTerm(e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-full px-3 py-2 mb-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-chatGray-textLight dark:text-chatGray-textDark text-sm"
-                    />
-                    
-                    <div className="max-h-56 overflow-y-auto">
-                      <div
-                        className="flex items-center px-2 py-1 hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark rounded cursor-pointer"
-                        onClick={() => handleStudentToggle('')}
-                      >
-                        <input
-                          type="checkbox"
-                          id="student-all"
-                          checked={selectedStudents.length === 0}
-                          onChange={() => {}}
-                          className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
-                        />
-                        <label htmlFor="student-all" className="text-sm cursor-pointer text-chatGray-textLight dark:text-chatGray-textDark">
-                          Alle Schüler
-                        </label>
-                      </div>
-                      
-                      {getFilteredStudents().length > 0 ? (
-                        getFilteredStudents().map((student) => (
-                          <div
-                            key={student}
-                            className="flex items-center px-2 py-1 hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark rounded cursor-pointer"
-                            onClick={() => handleStudentToggle(student)}
-                          >
-                            <input
-                              type="checkbox"
-                              id={`student-${student}`}
-                              checked={selectedStudents.includes(student)}
-                              onChange={() => {}}
-                              className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
-                            />
-                            <label htmlFor={`student-${student}`} className="text-sm cursor-pointer text-chatGray-textLight dark:text-chatGray-textDark whitespace-nowrap">
-                              {student}
-                            </label>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="px-2 py-1 text-gray-500 dark:text-gray-400">
-                          {getAvailableStudents().length === 0 
-                            ? 'Keine Schüler verfügbar' 
-                            : 'Keine Schüler gefunden'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* NEU: StudentSearchSelect anstelle des bestehenden Schüler-Dropdowns */}
+            <StudentSearchSelect
+              placeholder="Schüler auswählen"
+              className="min-w-[120px]"
+              getAvailableStudents={getAvailableStudents}
+              mode="dashboard"
+            />
             
             {/* Gruppierungsoption für Dashboard */}
             <div className="min-w-[120px]">

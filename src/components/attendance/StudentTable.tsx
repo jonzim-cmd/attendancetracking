@@ -67,48 +67,37 @@ const StudentTable: React.FC<StudentTableProps> = ({
   return (
     <table className="min-w-full border-collapse bg-table-light-base dark:bg-table-dark-base">
       <colgroup>
-        {/* Grundinformationen - immer sichtbar */}
-        <col className="w-12" /> {/* Nr.-Spalte */}
-        <col className="w-56" /> {/* Name-Spalte - etwas breiter für bessere Lesbarkeit */}
-        <col className="w-20" /> {/* Klasse-Spalte */}
-        
-        {/* Verspätungen - alle Daten */}
+        <col className="w-12" />
+        <col className="w-56" />
+        <col className="w-20" />
         {visibleColumns.includes('verspaetungen') && (
           <>
-            <col /> {/* Verspätungen E */}
-            <col /> {/* Verspätungen U */}
-            <col /> {/* Verspätungen O */}
+            <col />
+            <col />
+            <col />
           </>
         )}
-        
-        {/* Verspätungen - Statistiken */}
         {visibleColumns.includes('stats') && visibleColumns.includes('verspaetungen') && (
           <>
-            <col /> {/* SJ V */}
-            <col className="min-w-[80px]" /> {/* Sum V - breiter für "∑W"-Daten */}
+            <col />
+            <col className="min-w-[80px]" />
           </>
         )}
-        
-        {/* Fehlzeiten - alle Daten */}
         {visibleColumns.includes('fehlzeiten') && (
           <>
-            <col /> {/* Fehlzeiten E */}
-            <col /> {/* Fehlzeiten U */}
-            <col /> {/* Fehlzeiten O */}
+            <col />
+            <col />
+            <col />
           </>
         )}
-        
-        {/* Fehlzeiten - Statistiken */}
         {visibleColumns.includes('stats') && visibleColumns.includes('fehlzeiten') && (
           <>
-            <col /> {/* SJ F */}
-            <col /> {/* SJ F(ges) */}
-            <col className="min-w-[80px]" /> {/* Sum F - breiter für "∑W"-Daten */}
+            <col />
+            <col />
+            <col className="min-w-[80px]" />
           </>
         )}
-        
-        {/* Auswahl-Spalte */}
-        <col className="w-20" /> {/* Auswahl-Spalte - breit genug für Checkbox */}
+        <col className="w-20" />
       </colgroup>
       
       <StudentTableHeader

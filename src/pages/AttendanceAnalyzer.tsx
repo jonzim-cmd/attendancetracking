@@ -5,7 +5,7 @@ import MainContent from '@/components/layout/MainContent';
 import { exportToExcel, exportToCSV, exportToPDF } from '@/components/attendance/ExportButtons';
 import { processData, calculateSchoolYearStats, calculateWeeklyStats } from '@/lib/attendance-utils';
 import { ProcessedData, StudentStats } from '@/types';
-import { FilterProvider } from '@/contexts/FilterContext'; // NEU: FilterProvider importieren
+import { FilterProvider } from '@/contexts/FilterContext';
 
 const AttendanceAnalyzer: React.FC = () => {
   const [rawData, setRawData] = useState<any>(null);
@@ -379,12 +379,14 @@ const AttendanceAnalyzer: React.FC = () => {
   };
 
   return (
-    // NEU: Wir umschließen alles mit dem FilterProvider
+    // Erweiterte Props für FilterProvider hinzufügen, um den searchQuery zu synchronisieren
     <FilterProvider 
       propSelectedClasses={selectedClasses} 
       propViewMode={viewMode}
       onViewModeChange={setViewMode}
       getFilteredStudents={getFilteredStudents}
+      propSearchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
     >
       <div className={`min-h-screen bg-chatGray-light dark:bg-chatGray-dark ${isDarkMode ? 'dark' : ''}`}>
         <HeaderBar

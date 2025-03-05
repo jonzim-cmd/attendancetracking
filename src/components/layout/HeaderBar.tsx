@@ -67,7 +67,9 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
     selectedStudents,
     setSelectedStudents,
     groupingOption,
-    setGroupingOption
+    setGroupingOption,
+    // NEU: getContextFilteredStudents aus dem Context holen
+    getContextFilteredStudents
   } = useFilters();
   
   // NEU: States für Dashboard-Filter Dropdowns
@@ -211,32 +213,19 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
     }
   };
   
-  // NEU: Verbesserte getAvailableStudents Funktion
+  // NEU: Überarbeitete getAvailableStudents Funktion, die echte Daten verwendet
   const getAvailableStudents = (): string[] => {
-    // Da wir keinen directen Zugriff auf contextGetFilteredStudents haben, 
-    // verwenden wir eine vereinfachte Logik basierend auf den vorhandenen Schülern
-    const availableStudentsList: string[] = [];
+    // Echte Schülerdaten aus dem Context verwenden
+    const studentsWithStats = getContextFilteredStudents();
     
-    // Hier würden wir normalerweise die echten Schülerdaten aus dem Context verwenden,
-    // aber zur Vereinfachung simulieren wir das jetzt
+    // Nach Klassen filtern, falls Klassenfilter aktiv ist
+    const filteredStudents = selectedDashboardClasses.length > 0
+      ? studentsWithStats.filter(([_, stats]) => 
+          selectedDashboardClasses.includes(stats.klasse))
+      : studentsWithStats;
     
-    // Für jede ausgewählte Klasse einige Schüler hinzufügen
-    selectedDashboardClasses.forEach((className, index) => {
-      for (let i = 1; i <= 5; i++) {
-        availableStudentsList.push(`Nachname${index*5+i}, Vorname${i} (${className})`);
-      }
-    });
-    
-    // Wenn keine Klassen ausgewählt sind, verwenden wir alle Klassen
-    if (selectedDashboardClasses.length === 0) {
-      availableClasses.forEach((className, index) => {
-        for (let i = 1; i <= 5; i++) {
-          availableStudentsList.push(`Nachname${index*5+i}, Vorname${i} (${className})`);
-        }
-      });
-    }
-    
-    return availableStudentsList;
+    // Nur die Namen zurückgeben (ohne die Stats)
+    return filteredStudents.map(([name]) => name);
   };
   
   // NEU: Filtere Schüler basierend auf Suchbegriff
@@ -448,7 +437,6 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
           </>
         ) : (
           <>
-            {/* NEU: DASHBOARD-FILTER HIER */}
             {/* Dashboard-Klassenfilter */}
             <div 
               className="relative ml-2"
@@ -513,7 +501,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
               )}
             </div>
             
-            {/* ANGEPASST: Schülerfilter mit verbessertem Styling */}
+            {/* Schülerfilter mit verbessertem Styling */}
             <div 
               className="relative ml-2"
               ref={studentDropdownRef}

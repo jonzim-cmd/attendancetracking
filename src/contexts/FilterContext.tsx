@@ -18,6 +18,9 @@ interface FilterContextType {
   
   // Hilfsfunktion, um zu prüfen, ob wir im Dashboard-Modus sind
   isDashboardMode: boolean;
+  
+  // NEU: Zugriff auf die gefilterten Schülerdaten
+  getContextFilteredStudents: () => [string, StudentStats][];
 }
 
 // Context erstellen
@@ -61,7 +64,9 @@ export const FilterProvider: React.FC<{
       setGroupingOption,
       viewMode,
       setViewMode,
-      isDashboardMode: viewMode === 'dashboard'
+      isDashboardMode: viewMode === 'dashboard',
+      // NEU: Die getFilteredStudents-Funktion im Context bereitstellen
+      getContextFilteredStudents: getFilteredStudents
     }}>
       {children}
     </FilterContext.Provider>

@@ -224,18 +224,31 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       
       {viewMode === 'dashboard' ? (
         <>
-          {/* Stat Cards - Updated to include only the required cards */}
-          <StatCards 
-            absenceTypes={absenceTypes}
-            dayOfWeekData={dayOfWeekData}
-            weeklyTrends={weeklyTrends}
-            getFilteredStudents={getFilteredStudentsWithFilters}
-            criticalStudents={criticalStudents}
-            onShowCriticalStudents={() => setShowCriticalStudentsModal(true)}
-            onShowCriticalDays={() => setShowCriticalDaysModal(true)}
-            onShowCriticalPatterns={() => setShowCriticalPatternsModal(true)}
-            weeklyStats={weeklyStats}
-          />
+          {/* Stats cards in a flexible layout */}
+          <div className="grid grid-cols-1 gap-4">
+            {/* Top section: Overview and Rankings side by side */}
+            <div className="flex flex-wrap gap-4 justify-start">
+              {/* StatCards Component - Übersicht */}
+              <StatCards 
+                absenceTypes={absenceTypes}
+                dayOfWeekData={dayOfWeekData}
+                weeklyTrends={weeklyTrends}
+                getFilteredStudents={getFilteredStudentsWithFilters}
+                criticalStudents={criticalStudents}
+                onShowCriticalStudents={() => setShowCriticalStudentsModal(true)}
+                onShowCriticalDays={() => setShowCriticalDaysModal(true)}
+                onShowCriticalPatterns={() => setShowCriticalPatternsModal(true)}
+                weeklyStats={weeklyStats}
+              />
+              
+              {/* Student Ranking - narrower and adaptable width */}
+              <StudentRanking
+                filteredStudents={filteredStudentStats}
+                selectedClasses={selectedClasses}
+                selectedStudents={selectedStudents}
+              />
+            </div>
+          </div>
           
           {/* Trend Charts */}
           <TrendCharts 
@@ -248,13 +261,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
             setChartVisibility={setTrendChartVisibility}
             weekdayChartVisibility={weekdayChartVisibility}
             setWeekdayChartVisibility={setWeekdayChartVisibility}
-          />
-          
-          {/* Student Ranking Tile */}
-          <StudentRanking
-            filteredStudents={filteredStudentStats}
-            selectedClasses={selectedClasses}
-            selectedStudents={selectedStudents}
           />
         </>
       ) : (

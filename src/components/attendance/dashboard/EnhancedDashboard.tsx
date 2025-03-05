@@ -54,7 +54,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   const [showCriticalPatternsModal, setShowCriticalPatternsModal] = useState(false);
   
   // Chart settings
-  const [groupingOption, setGroupingOption] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
+  const [groupingOption, setGroupingOption] = useState<'weekly' | 'monthly'>('weekly');
   const [viewMode, setViewMode] = useState<'dashboard' | 'comparison'>('dashboard');
   
   // Chart visibility options

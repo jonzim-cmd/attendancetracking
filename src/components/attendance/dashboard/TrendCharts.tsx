@@ -15,7 +15,7 @@ interface TrendChartsProps {
   attendanceOverTime: any[];
   dayOfWeekData: any[];
   absenceTypes: any[];
-  groupingOption: 'daily' | 'weekly' | 'monthly';
+  groupingOption: 'weekly' | 'monthly';
   chartVisibility: {
     verspaetungen: boolean;
     fehlzeitenEntsch: boolean;
@@ -55,7 +55,6 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
 }) => {
   // Ermittle den geeigneten Gruppierungstitel basierend auf groupingOption
   const groupingTitle = {
-    'daily': 'Tägliche Gruppierung',
     'weekly': 'Wöchentliche Gruppierung',
     'monthly': 'Monatliche Gruppierung'
   }[groupingOption];
@@ -88,15 +87,47 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
       )
     : null;
   
+  // Aktuelles Schuljahr ermitteln - folgt der Logik in attendance-utils.ts
+  const getCurrentSchoolYear = (): { start: number; end: number } => {
+    const today = new Date();
+    const currentMonth = today.getMonth(); // 0-basiert (0 = Januar, 8 = September)
+    const currentYear = today.getFullYear();
+    
+    // Wenn wir vor September sind, begann das Schuljahr im letzten Jahr
+    // Wenn wir im oder nach September sind, begann das Schuljahr in diesem Jahr
+    const schoolYearStart = currentMonth < 8 ? currentYear - 1 : currentYear;
+    const schoolYearEnd = schoolYearStart + 1;
+    
+    return { start: schoolYearStart, end: schoolYearEnd };
+  };
+
   // Formatiere das Datum für die Anzeige
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
-    if (groupingOption === 'daily') {
-      return dateStr; // Tägliches Format bereits sinnvoll (z.B. '01.05.')
-    } else if (groupingOption === 'weekly') {
-      return `${dateStr}`; // Wochenformat (z.B. 'KW 20')
+    
+    if (groupingOption === 'weekly') {
+      // Bei wöchentlicher Gruppierung, KW im Kontext des Schuljahrs anzeigen
+      if (dateStr.startsWith('KW ')) {
+        const weekNumber = parseInt(dateStr.replace('KW ', ''));
+        const schoolYear = getCurrentSchoolYear();
+        
+        // Wir müssen bestimmen, ob diese Woche zum aktuellen oder nächsten Schuljahr gehört
+        // Ein Schuljahr hat etwa 52 Wochen
+        // Wochen 36-52 gehören zum ersten Teil des Schuljahres (Sep-Dez)
+        // Wochen 1-35 gehören zum zweiten Teil des Schuljahres (Jan-Aug)
+        
+        if (weekNumber >= 36) {
+          // September bis Dezember
+          return `${dateStr} (${schoolYear.start}/${schoolYear.end.toString().substring(2)})`;
+        } else {
+          // Januar bis August
+          return `${dateStr} (${schoolYear.start}/${schoolYear.end.toString().substring(2)})`;
+        }
+      }
+      return dateStr;
     } else {
-      return dateStr; // Monatsformat bereits sinnvoll (z.B. 'Mai 2023')
+      // Bei monatlicher Gruppierung ist das Format bereits korrekt
+      return dateStr; // "Mai 2023" etc.
     }
   };
   
@@ -223,7 +254,7 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
       
       // Special formatting for weekly data to show date range
       if (groupingOption === 'weekly' && label.startsWith('KW ')) {
-        formattedLabel = `${label} (${getWeekDateRange(label)})`;
+        formattedLabel = `${formatDate(label)} (${getWeekDateRange(label)})`;
       }
       
       return (
@@ -369,7 +400,7 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
             />
           </div>
           {dayOfWeekData.length > 0 && (
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
               {maxVerspaetungenTag && (
                 <InfoTile 
                   title="Kritischer Tag (Verspätungen)" 
@@ -384,6 +415,18 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
                   value={`${maxFehlzeitenUnentschTag.name} (${maxFehlzeitenUnentschTag.fehlzeitenUnentsch})`}
                   className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
                   valueClassName="text-red-600 dark:text-red-400" // Spezifische Textfarbe
+                />
+              )}
+              {dayOfWeekData.length > 0 && (
+                <InfoTile 
+                  title="Kritischer Tag (Fehltage gesamt)" 
+                  value={`${dayOfWeekData.reduce((max, day) => 
+                    day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
+                    dayOfWeekData[0]).name} (${dayOfWeekData.reduce((max, day) => 
+                      day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
+                      dayOfWeekData[0]).fehlzeitenGesamt})`}
+                  className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
+                  valueClassName="text-blue-600 dark:text-blue-400" // Spezifische Textfarbe
                 />
               )}
             </div>

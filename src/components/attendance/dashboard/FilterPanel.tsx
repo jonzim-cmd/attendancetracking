@@ -8,8 +8,8 @@ interface FilterPanelProps {
   getFilteredStudents: () => [string, StudentStats][];
   selectedStudents: string[];
   onStudentsChange: (students: string[]) => void;
-  groupingOption: 'daily' | 'weekly' | 'monthly';
-  onGroupingChange: (option: 'daily' | 'weekly' | 'monthly') => void;
+  groupingOption: 'weekly' | 'monthly';
+  onGroupingChange: (option: 'weekly' | 'monthly') => void;
 }
 
 const FilterPanel: React.FC<FilterPanelProps> = ({
@@ -305,10 +305,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </label>
           <select
             value={groupingOption}
-            onChange={(e) => onGroupingChange(e.target.value as 'daily' | 'weekly' | 'monthly')}
+            onChange={(e) => onGroupingChange(e.target.value as 'weekly' | 'monthly')}
             className="w-full rounded px-3 py-2 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
           >
-            <option value="daily">Täglich</option>
             <option value="weekly">Wöchentlich</option>
             <option value="monthly">Monatlich</option>
           </select>

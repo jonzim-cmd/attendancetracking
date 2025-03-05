@@ -100,12 +100,6 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
     return dateStr; // Already formatted as "Mon YYYY"
   };
 
-  // Entschuldigungsstatistik berechnen
-  const totalEntschuldigt = absenceTypes.find(type => type.name === 'Entschuldigt')?.value || 0;
-  const totalUnentschuldigt = absenceTypes.find(type => type.name === 'Unentschuldigt')?.value || 0;
-  const totalOffen = absenceTypes.find(type => type.name === 'Offen')?.value || 0;
-  const totalAll = totalEntschuldigt + totalUnentschuldigt + totalOffen;
-  
   // Berechnung der Verspätungsquote
   const totalVerspaetungen = weeklyTrends.reduce((sum, week) => sum + week.verspaetungen, 0);
   const totalFehlzeitenGesamt = weeklyTrends.reduce((sum, week) => sum + week.fehlzeitenTotal, 0);
@@ -216,8 +210,6 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
     return null;
   };
   
-  // We don't need this function anymore since we're using responsive sizing with min-width
-  
   return (
     <>
       {/* Zeitlicher Trend - Full width chart */}
@@ -290,149 +282,98 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
         )}
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Wochentagsanalyse */}
-        <div className={CARD_CLASSES}>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className={CARD_TITLE_CLASSES.replace('mb-4', '')}>
-              Wochentagsanalyse
-              <span className="text-sm font-normal ml-2 text-gray-500 dark:text-gray-400">
-                (Mo-Fr)
-              </span>
-            </h3>
-            <div className="flex space-x-2 text-sm">
-              <label className="inline-flex items-center cursor-pointer" title="Verspätungen nach Wochentag anzeigen">
-                <input 
-                  type="checkbox" 
-                  checked={weekdayChartVisibility.verspaetungen} 
-                  onChange={() => setWeekdayChartVisibility(prev => ({...prev, verspaetungen: !prev.verspaetungen}))}
-                  className="mr-1 w-3 h-3"
-                />
-                <span className="text-purple-600 dark:text-purple-400">Versp.</span>
-              </label>
-              <label className="inline-flex items-center cursor-pointer" title="Entschuldigte Fehltage nach Wochentag anzeigen">
-                <input 
-                  type="checkbox" 
-                  checked={weekdayChartVisibility.fehlzeitenEntsch} 
-                  onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenEntsch: !prev.fehlzeitenEntsch}))}
-                  className="mr-1 w-3 h-3"
-                />
-                <span className="text-green-600 dark:text-green-400">F (entsch.)</span>
-              </label>
-              <label className="inline-flex items-center cursor-pointer" title="Unentschuldigte Fehltage nach Wochentag anzeigen">
-                <input 
-                  type="checkbox" 
-                  checked={weekdayChartVisibility.fehlzeitenUnentsch} 
-                  onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenUnentsch: !prev.fehlzeitenUnentsch}))}
-                  className="mr-1 w-3 h-3"
-                />
-                <span className="text-red-600 dark:text-red-400">F (unentsch.)</span>
-              </label>
-              <label className="inline-flex items-center cursor-pointer" title="Gesamte Fehltage nach Wochentag anzeigen">
-                <input 
-                  type="checkbox" 
-                  checked={weekdayChartVisibility.fehlzeitenGesamt} 
-                  onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenGesamt: !prev.fehlzeitenGesamt}))}
-                  className="mr-1 w-3 h-3"
-                />
-                <span className="text-blue-600 dark:text-blue-400">F (gesamt)</span>
-              </label>
-            </div>
+      {/* Wochentagsanalyse - Jetzt auch full width */}
+      <div className={CARD_CLASSES}>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className={CARD_TITLE_CLASSES.replace('mb-4', '')}>
+            Wochentagsanalyse
+            <span className="text-sm font-normal ml-2 text-gray-500 dark:text-gray-400">
+              (Mo-Fr)
+            </span>
+          </h3>
+          <div className="flex space-x-2 text-sm">
+            <label className="inline-flex items-center cursor-pointer" title="Verspätungen nach Wochentag anzeigen">
+              <input 
+                type="checkbox" 
+                checked={weekdayChartVisibility.verspaetungen} 
+                onChange={() => setWeekdayChartVisibility(prev => ({...prev, verspaetungen: !prev.verspaetungen}))}
+                className="mr-1 w-3 h-3"
+              />
+              <span className="text-purple-600 dark:text-purple-400">Versp.</span>
+            </label>
+            <label className="inline-flex items-center cursor-pointer" title="Entschuldigte Fehltage nach Wochentag anzeigen">
+              <input 
+                type="checkbox" 
+                checked={weekdayChartVisibility.fehlzeitenEntsch} 
+                onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenEntsch: !prev.fehlzeitenEntsch}))}
+                className="mr-1 w-3 h-3"
+              />
+              <span className="text-green-600 dark:text-green-400">F (entsch.)</span>
+            </label>
+            <label className="inline-flex items-center cursor-pointer" title="Unentschuldigte Fehltage nach Wochentag anzeigen">
+              <input 
+                type="checkbox" 
+                checked={weekdayChartVisibility.fehlzeitenUnentsch} 
+                onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenUnentsch: !prev.fehlzeitenUnentsch}))}
+                className="mr-1 w-3 h-3"
+              />
+              <span className="text-red-600 dark:text-red-400">F (unentsch.)</span>
+            </label>
+            <label className="inline-flex items-center cursor-pointer" title="Gesamte Fehltage nach Wochentag anzeigen">
+              <input 
+                type="checkbox" 
+                checked={weekdayChartVisibility.fehlzeitenGesamt} 
+                onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenGesamt: !prev.fehlzeitenGesamt}))}
+                className="mr-1 w-3 h-3"
+              />
+              <span className="text-blue-600 dark:text-blue-400">F (gesamt)</span>
+            </label>
           </div>
-          <div className="h-64 w-full">
+        </div>
+        <div className="overflow-x-auto">
+          <div style={{ 
+            width: dayOfWeekData.length > 5 ? `${Math.max(dayOfWeekData.length * 80, 1200)}px` : '100%', 
+            minWidth: '100%',
+            height: '300px' 
+          }}>
             <AttendanceBarChart 
               data={dayOfWeekData}
               bars={dayOfWeekBars}
             />
           </div>
-          {dayOfWeekData.length > 0 && (
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {maxVerspaetungenTag && (
-                <InfoTile 
-                  title="Kritischer Tag (Verspätungen)" 
-                  value={`${maxVerspaetungenTag.name} (${maxVerspaetungenTag.verspaetungen})`}
-                  className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
-                  valueClassName="text-purple-600 dark:text-purple-400" // Spezifische Textfarbe
-                />
-              )}
-              {maxFehlzeitenUnentschTag && (
-                <InfoTile 
-                  title="Kritischer Tag (unentsch. Fehltage)" 
-                  value={`${maxFehlzeitenUnentschTag.name} (${maxFehlzeitenUnentschTag.fehlzeitenUnentsch})`}
-                  className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
-                  valueClassName="text-red-600 dark:text-red-400" // Spezifische Textfarbe
-                />
-              )}
-              {dayOfWeekData.length > 0 && (
-                <InfoTile 
-                  title="Kritischer Tag (Fehltage gesamt)" 
-                  value={`${dayOfWeekData.reduce((max, day) => 
-                    day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
-                    dayOfWeekData[0]).name} (${dayOfWeekData.reduce((max, day) => 
-                      day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
-                      dayOfWeekData[0]).fehlzeitenGesamt})`}
-                  className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
-                  valueClassName="text-blue-600 dark:text-blue-400" // Spezifische Textfarbe
-                />
-              )}
-            </div>
-          )}
         </div>
-        
-        {/* Entschuldigungsstatus */}
-        <div className={CARD_CLASSES}>
-          <h3 className={CARD_TITLE_CLASSES}>Entschuldigungsstatus</h3>
-          <div className="flex flex-col md:flex-row">
-            <div className="w-full md:w-1/2">
-              <AttendancePieChart 
-                data={absenceTypes} 
-                dataKey="value"
-                label={true}
+        {dayOfWeekData.length > 0 && (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {maxVerspaetungenTag && (
+              <InfoTile 
+                title="Kritischer Tag (Verspätungen)" 
+                value={`${maxVerspaetungenTag.name} (${maxVerspaetungenTag.verspaetungen})`}
+                className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
+                valueClassName="text-purple-600 dark:text-purple-400"
               />
-            </div>
-            <div className="w-full md:w-1/2 flex flex-col justify-center p-4">
-              <h4 className="text-md font-semibold text-gray-800 dark:text-gray-100 mb-2">
-                Gesamtübersicht
-              </h4>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Gesamteinträge:</span>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">{totalAll}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-green-600 dark:text-green-400">Entschuldigt:</span>
-                  <span className="font-medium text-green-600 dark:text-green-400">
-                    {totalEntschuldigt} ({totalAll > 0 ? Math.round((totalEntschuldigt / totalAll) * 100) : 0}%)
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-red-600 dark:text-red-400">Unentschuldigt:</span>
-                  <span className="font-medium text-red-600 dark:text-red-400">
-                    {totalUnentschuldigt} ({totalAll > 0 ? Math.round((totalUnentschuldigt / totalAll) * 100) : 0}%)
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-yellow-600 dark:text-yellow-400">Offen:</span>
-                  <span className="font-medium text-yellow-600 dark:text-yellow-400">
-                    {totalOffen} ({totalAll > 0 ? Math.round((totalOffen / totalAll) * 100) : 0}%)
-                  </span>
-                </div>
-                <div className="flex justify-between mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                  <span className="text-purple-600 dark:text-purple-400">Unentschuldigtquote:</span>
-                  <span className="font-medium text-purple-600 dark:text-purple-400">
-                    {totalAll > 0 ? Math.round((totalUnentschuldigt / totalAll) * 100) : 0}%
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-blue-600 dark:text-blue-400">Verspätungsquote:</span>
-                  <span className="font-medium text-blue-600 dark:text-blue-400">
-                    {verspaetungsQuote}%
-                  </span>
-                </div>
-              </div>
-            </div>
+            )}
+            {maxFehlzeitenUnentschTag && (
+              <InfoTile 
+                title="Kritischer Tag (unentsch. Fehltage)" 
+                value={`${maxFehlzeitenUnentschTag.name} (${maxFehlzeitenUnentschTag.fehlzeitenUnentsch})`}
+                className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
+                valueClassName="text-red-600 dark:text-red-400"
+              />
+            )}
+            {dayOfWeekData.length > 0 && (
+              <InfoTile 
+                title="Kritischer Tag (Fehltage gesamt)" 
+                value={`${dayOfWeekData.reduce((max, day) => 
+                  day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
+                  dayOfWeekData[0]).name} (${dayOfWeekData.reduce((max, day) => 
+                    day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
+                    dayOfWeekData[0]).fehlzeitenGesamt})`}
+                className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
+                valueClassName="text-blue-600 dark:text-blue-400"
+              />
+            )}
           </div>
-        </div>
+        )}
       </div>
     </>
   );

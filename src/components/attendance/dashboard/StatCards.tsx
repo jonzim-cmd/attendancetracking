@@ -1,6 +1,14 @@
 import React from 'react';
 import { CARD_CLASSES } from './styles';
 import { StudentStats } from '@/types';
+import { 
+  calculateLateThreshold, 
+  calculateSchoolDays, 
+  hasWeekWithExcessiveLateArrivals,
+  getMaxWeeklyLateArrivals,
+  calculateUnexcusedRate,
+  calculateClassAverage
+} from './kritische-muster-utils';
 
 interface StatCardsProps {
   absenceTypes: any[];
@@ -11,6 +19,7 @@ interface StatCardsProps {
   onShowCriticalStudents: () => void;
   onShowCriticalDays: () => void;
   onShowCriticalPatterns: () => void;
+  weeklyStats?: Record<string, any>;
 }
 
 const StatCards: React.FC<StatCardsProps> = ({
@@ -21,7 +30,8 @@ const StatCards: React.FC<StatCardsProps> = ({
   criticalStudents,
   onShowCriticalStudents,
   onShowCriticalDays,
-  onShowCriticalPatterns
+  onShowCriticalPatterns,
+  weeklyStats = {}
 }) => {
   // Berechnung der Gesamtzahlen
   const totalVerspaetungen = weeklyTrends.reduce((sum, week) => sum + week.verspaetungen, 0);
@@ -38,37 +48,19 @@ const StatCards: React.FC<StatCardsProps> = ({
   const unentschuldigungsQuote = totalAll > 0 
     ? Math.round((totalUnentschuldigt / totalAll) * 100) 
     : 0;
-  
-  // Berechnung der Verspätungsquote
-  const verspaetungsQuote = (totalVerspaetungen + totalFehlzeitenGesamt) > 0
-    ? Math.round((totalVerspaetungen / (totalVerspaetungen + totalFehlzeitenGesamt)) * 100)
-    : 0;
-  
-  // Ermittlung des kritischsten Wochentags
-  const maxVerspaetungenTag = dayOfWeekData.length > 0 
-    ? dayOfWeekData.reduce((max, day) => day.verspaetungen > max.verspaetungen ? day : max, dayOfWeekData[0]).name
-    : 'N/A';
-  
-  const maxFehlzeitenUnentschTag = dayOfWeekData.length > 0
-    ? dayOfWeekData.reduce((max, day) => day.fehlzeitenUnentsch > max.fehlzeitenUnentsch ? day : max, dayOfWeekData[0]).name
-    : 'N/A';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* Gesamtübersicht Karte */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Übersichtskachel - Aktualisiert nach Anforderungen */}
       <div className={CARD_CLASSES}>
         <div className="flex flex-col h-full">
-          <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">Gesamt</h3>
+          <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">Übersicht</h3>
           <div className="grid grid-cols-2 gap-2 flex-grow">
             <StatBox
               label="Schüler"
               value={getFilteredStudents().length.toString()}
               color="bg-transparent dark:bg-transparent"
-            />
-            <StatBox
-              label="Einträge"
-              value={totalAll.toString()}
-              color="bg-transparent dark:bg-transparent"
+              tooltip="Anzahl der Schüler im gewählten Zeitraum"
             />
             <StatBox
               label="Verspätungen"
@@ -80,17 +72,8 @@ const StatCards: React.FC<StatCardsProps> = ({
               label="Fehltage"
               value={totalFehlzeitenGesamt.toString()}
               color="bg-transparent dark:bg-transparent text-blue-600 dark:text-blue-400"
-              tooltip="Gesamtanzahl der Fehltage im gewählten Zeitraum (entschuldigt + unentschuldigt)"
+              tooltip="Gesamtanzahl der Fehltage im gewählten Zeitraum"
             />
-          </div>
-        </div>
-      </div>
-      
-      {/* Entschuldigungsstatus Karte */}
-      <div className={CARD_CLASSES}>
-        <div className="flex flex-col h-full">
-          <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">Fehltage</h3>
-          <div className="grid grid-cols-2 gap-2 flex-grow">
             <StatBox
               label="Entschuldigt"
               value={totalFehlzeitenEntsch.toString()}
@@ -103,101 +86,152 @@ const StatCards: React.FC<StatCardsProps> = ({
               color="bg-transparent dark:bg-transparent text-red-600 dark:text-red-400"
               tooltip="Anzahl der unentschuldigten Fehltage im gewählten Zeitraum"
             />
-            <StatBox
-              label="Noch offen"
-              value={totalOffen.toString()}
-              color="bg-transparent dark:bg-transparent text-yellow-600 dark:text-yellow-400"
-              tooltip="Anzahl der noch zu entschuldigenden Fehltage (Frist läuft noch)"
-            />
-            <StatBox
-              label="Unentsch. Quote"
-              value={`${unentschuldigungsQuote}%`}
-              color={`bg-transparent dark:bg-transparent ${unentschuldigungsQuote <= 15
-                ? 'text-green-600 dark:text-green-400' 
-                : unentschuldigungsQuote <= 25 
-                  ? 'text-yellow-600 dark:text-yellow-400'
-                  : 'text-red-600 dark:text-red-400'
-              }`}
-              tooltip="Anteil unentschuldigter Fehltage an allen Fehltagen"
-            />
           </div>
         </div>
       </div>
       
-      {/* Muster-Übersicht Karte */}
+      {/* Kachel für kritische Muster (Alerts) - Aktualisiert nach Anforderungen */}
       <div className={CARD_CLASSES}>
         <div className="flex flex-col h-full">
           <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">Kritische Muster</h3>
-          <div className="grid grid-cols-2 gap-2 flex-grow">
-            <StatBox
-              label="Kritische Schüler"
-              value={criticalStudents.length.toString()}
-              color={criticalStudents.length > 0 
-                ? 'bg-transparent dark:bg-transparent text-red-600 dark:text-red-400'
-                : 'bg-transparent dark:bg-transparent'
-              }
-              tooltip="Anzahl der Schüler mit ≥ 3 unentschuldigten Verspätungen oder Fehltagen"
-              onClick={onShowCriticalStudents}
-              isClickable={true}
-            />
-            <StatBox
-              label="Verspät. Quote"
-              value={`${verspaetungsQuote}%`}
-              color="bg-transparent dark:bg-transparent text-purple-600 dark:text-purple-400"
-              tooltip="Anteil der Verspätungen an allen Abwesenheiten (Verspätungen + Fehltage)"
-              onClick={onShowCriticalPatterns}
-              isClickable={true}
-            />
-            <StatBox
-              label="Top Versp. Tag"
-              value={maxVerspaetungenTag}
-              color="bg-transparent dark:bg-transparent text-purple-600 dark:text-purple-400"
-              tooltip="Wochentag mit den meisten Verspätungen"
-              onClick={onShowCriticalDays}
-              isClickable={true}
-            />
-            <StatBox
-              label="Top Fehlz. Tag"
-              value={maxFehlzeitenUnentschTag}
-              color="bg-transparent dark:bg-transparent text-red-600 dark:text-red-400"
-              tooltip="Wochentag mit den meisten unentschuldigten Fehltagen"
-              onClick={onShowCriticalDays}
-              isClickable={true}
-            />
-          </div>
-        </div>
-      </div>
-      
-      {/* Prozent-Übersicht Karte */}
-      <div className={CARD_CLASSES}>
-        <div className="flex flex-col h-full">
-          <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">Statistik</h3>
-          <div className="flex flex-col gap-2 flex-grow">
-            <StatBar 
-              label="Entschuldigt" 
-              percent={totalAll > 0 ? Math.round((totalEntschuldigt / totalAll) * 100) : 0} 
-              color="bg-green-500 dark:bg-green-600" 
-              tooltip="Anteil entschuldigter Abwesenheiten an allen Abwesenheiten"
-            />
-            <StatBar 
-              label="Unentschuldigt" 
-              percent={totalAll > 0 ? Math.round((totalUnentschuldigt / totalAll) * 100) : 0} 
-              color="bg-red-500 dark:bg-red-600" 
-              tooltip="Anteil unentschuldigter Abwesenheiten an allen Abwesenheiten"
-            />
-            <StatBar 
-              label="Offen" 
-              percent={totalAll > 0 ? Math.round((totalOffen / totalAll) * 100) : 0} 
-              color="bg-yellow-500 dark:bg-yellow-600" 
-              tooltip="Anteil offener Abwesenheiten (Frist läuft noch) an allen Abwesenheiten"
-            />
-            <StatBar 
-              label="Verspät./Fehlz." 
-              percent={verspaetungsQuote}
-              color="bg-purple-500 dark:bg-purple-600" 
-              tooltip="Verhältnis zwischen Verspätungen und Fehltagen"
-            />
-          </div>
+          
+          {getFilteredStudents().length === 1 ? (
+            <div className="space-y-3">
+              {(() => {
+                // Einzelner Schüler - Daten extrahieren
+                const [studentName, stats] = getFilteredStudents()[0];
+                
+                // Holen der Wochendaten für den Schüler, falls verfügbar
+                const studentWeeklyData = weeklyStats[studentName] || {
+                  verspaetungen: { total: 0, weekly: Array(4).fill(0) },
+                  fehlzeiten: { total: 0, weekly: Array(4).fill(0) }
+                };
+                
+                // 2.1 Alert bei unentschuldigten Fehltagen
+                const hasUnexcusedAbsences = stats.fehlzeiten_unentsch > 0;
+                
+                // 2.2 Alert bei hoher Anzahl von Verspätungen
+                const weeksCount = weeklyTrends.length;
+                const lateThreshold = calculateLateThreshold(weeksCount);
+                
+                // Prüfen, ob Schwellenwert überschritten wird
+                const exceedsLateThreshold = stats.verspaetungen_unentsch >= lateThreshold;
+                
+                // Prüfen, ob mehr als 3 Verspätungen in einer Woche
+                const hasWeekWithManyLateArrivals = hasWeekWithExcessiveLateArrivals(
+                  studentWeeklyData.verspaetungen.weekly,
+                  3 // Schwellenwert: mehr als 3 Verspätungen pro Woche
+                );
+                
+                const maxWeeklyLateArrivals = getMaxWeeklyLateArrivals(studentWeeklyData.verspaetungen.weekly);
+                
+                const hasLateAlert = exceedsLateThreshold || hasWeekWithManyLateArrivals;
+                
+                // 2.3 Fehltage-Ratio
+                const schoolDays = calculateSchoolDays(weeksCount);
+                const totalAbsences = stats.fehlzeiten_entsch + stats.fehlzeiten_unentsch + stats.fehlzeiten_offen;
+                const absenceRatio = schoolDays > 0 
+                  ? (totalAbsences / schoolDays) * 100 
+                  : 0;
+                
+                // 2.5 Quote der unentschuldigten Fehltage
+                const unexcusedRate = calculateUnexcusedRate(stats.fehlzeiten_unentsch, totalAbsences);
+                
+                // 2.6 Vergleich mit Klassendurchschnitt
+                const classAverage = calculateClassAverage(getFilteredStudents(), stats.klasse);
+                
+                // Berechne abweichungen vom Klassendurchschnitt in Prozent
+                const verspaetungenComparedToAverage = classAverage.averageVerspaetungen > 0
+                  ? Math.round(((stats.verspaetungen_unentsch / classAverage.averageVerspaetungen) - 1) * 100)
+                  : 0;
+                
+                const fehlzeitenComparedToAverage = classAverage.averageFehlzeiten > 0
+                  ? Math.round(((totalAbsences / classAverage.averageFehlzeiten) - 1) * 100)
+                  : 0;
+                
+                return (
+                  <div className="flex flex-col space-y-3">
+                    {/* 2.1 Alert bei unentschuldigten Fehltagen */}
+                    {hasUnexcusedAbsences && (
+                      <div className="p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-md">
+                        <div className="font-medium text-red-600 dark:text-red-400 text-sm">Unentschuldigte Fehltage</div>
+                        <div className="text-sm">
+                          Der Schüler hat <span className="font-bold">{stats.fehlzeiten_unentsch}</span> unentschuldigte Fehltage im gewählten Zeitraum.
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* 2.2 Alert bei hoher Anzahl von Verspätungen */}
+                    {hasLateAlert && (
+                      <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-md">
+                        <div className="font-medium text-yellow-600 dark:text-yellow-400 text-sm">Zu viele Verspätungen</div>
+                        <div className="text-sm">
+                          <p>
+                            Der Schüler hat <span className="font-bold">{stats.verspaetungen_unentsch}</span> Verspätungen 
+                            (Schwellenwert: {lateThreshold} für {weeksCount} Wochen).
+                          </p>
+                          {hasWeekWithManyLateArrivals && (
+                            <p className="mt-1">
+                              <span className="font-medium">Kritisch:</span> Maximale Anzahl von <span className="font-bold">{maxWeeklyLateArrivals}</span> Verspätungen 
+                              in einer einzelnen Woche (Schwellenwert: 3).
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* 2.3 Fehltage-Ratio */}
+                    <div className="p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-md">
+                      <div className="font-medium text-blue-600 dark:text-blue-400 text-sm">Fehltage-Ratio</div>
+                      <div className="text-sm">
+                        <span className="font-bold">{absenceRatio.toFixed(1)}%</span> der Schultage im gewählten Zeitraum wurden versäumt.
+                        ({totalAbsences} von ca. {schoolDays} Schultagen)
+                      </div>
+                    </div>
+                    
+                    {/* 2.5 Quote der unentschuldigten Fehltage */}
+                    {totalAbsences > 0 && (
+                      <div className="p-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-md">
+                        <div className="font-medium text-purple-600 dark:text-purple-400 text-sm">Unentschuldigungsquote</div>
+                        <div className="text-sm">
+                          <span className="font-bold">{unexcusedRate.toFixed(1)}%</span> der Fehltage sind unentschuldigt.
+                          ({stats.fehlzeiten_unentsch} von {totalAbsences} Fehltagen)
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* 2.6 Vergleich mit Klassendurchschnitt */}
+                    <div className="p-2 bg-gray-50 dark:bg-gray-700/20 border border-gray-200 dark:border-gray-600 rounded-md">
+                      <div className="font-medium text-gray-600 dark:text-gray-400 text-sm">Vergleich mit Klassendurchschnitt</div>
+                      <div className="text-sm mt-1">
+                        <div className="flex justify-between">
+                          <span>Fehltage:</span>
+                          <span className={fehlzeitenComparedToAverage > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}>
+                            {totalAbsences} ({fehlzeitenComparedToAverage > 0 ? '+' : ''}{fehlzeitenComparedToAverage}% ggü. Durchschnitt)
+                          </span>
+                        </div>
+                        <div className="flex justify-between mt-1">
+                          <span>Verspätungen:</span>
+                          <span className={verspaetungenComparedToAverage > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}>
+                            {stats.verspaetungen_unentsch} ({verspaetungenComparedToAverage > 0 ? '+' : ''}{verspaetungenComparedToAverage}% ggü. Durchschnitt)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Hinweis auf fehlende Daten für 2.4 Alert bei Verschlechterung des Trends */}
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      Hinweis: Für den Trend-Vergleich werden Daten des vorherigen Zeitraums benötigt.
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400 p-4">
+              Diese Kachel ist nur für einzelne Schüler relevant.
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -221,29 +255,6 @@ const StatBox: React.FC<{
     >
       <div className="text-xs font-medium mb-1 opacity-80">{label}</div>
       <div className="text-lg font-bold">{value}</div>
-    </div>
-  );
-};
-
-// StatBar Komponente für Prozentbalken
-const StatBar: React.FC<{
-  label: string;
-  percent: number;
-  color?: string;
-  tooltip?: string;
-}> = ({ label, percent, color = "bg-blue-500 dark:bg-blue-600", tooltip }) => {
-  return (
-    <div className="flex-grow flex flex-col" title={tooltip}>
-      <div className="flex justify-between items-center mb-1">
-        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span>
-        <span className="text-xs font-medium text-gray-800 dark:text-gray-200">{percent}%</span>
-      </div>
-      <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-        <div 
-          className={`h-full ${color} rounded-full`}
-          style={{ width: `${percent}%` }}
-        ></div>
-      </div>
     </div>
   );
 };

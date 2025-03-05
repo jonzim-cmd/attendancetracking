@@ -17,7 +17,6 @@ const StudentRanking: React.FC<StudentRankingProps> = ({
   selectedClasses,
   selectedStudents
 }) => {
-  // Updated state for column-based sorting
   const [sortColumn, setSortColumn] = useState<SortColumn>('fehlzeiten_unentsch');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   
@@ -25,7 +24,6 @@ const StudentRanking: React.FC<StudentRankingProps> = ({
     return null;
   }
   
-  // Get title based on filter selection
   const getTitle = () => {
     if (selectedStudents.length > 0) {
       return `Schüler-Rangliste (${selectedStudents.length} ausgewählte Schüler)`;
@@ -36,7 +34,6 @@ const StudentRanking: React.FC<StudentRankingProps> = ({
     }
   };
   
-  // Calculate total values for each student
   const studentsWithTotals = filteredStudents.map(([student, stats]) => {
     const fehlzeitenGesamt = stats.fehlzeiten_entsch + stats.fehlzeiten_unentsch + stats.fehlzeiten_offen;
     const verspaetungenGesamt = stats.verspaetungen_entsch + stats.verspaetungen_unentsch + stats.verspaetungen_offen;
@@ -51,19 +48,15 @@ const StudentRanking: React.FC<StudentRankingProps> = ({
     };
   });
   
-  // Function to handle column header clicks
   const handleColumnClick = (column: SortColumn) => {
     if (sortColumn === column) {
-      // Toggle direction if same column
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      // Set new column with default desc direction
       setSortColumn(column);
       setSortDirection('desc');
     }
   };
   
-  // Sort students based on selected column and direction
   const sortedStudents = [...studentsWithTotals].sort((a, b) => {
     const modifier = sortDirection === 'asc' ? 1 : -1;
     
@@ -83,7 +76,6 @@ const StudentRanking: React.FC<StudentRankingProps> = ({
     }
   });
   
-  // Helper function to render sort indicator
   const renderSortIndicator = (column: SortColumn) => {
     if (sortColumn !== column) return null;
     
@@ -92,21 +84,19 @@ const StudentRanking: React.FC<StudentRankingProps> = ({
       : <ChevronDown className="inline-block w-4 h-4 ml-1" />;
   };
   
-  // Helper function for sortable column classes
   const getSortableColumnClass = (column: SortColumn) => {
-    return `px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
+    return `px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
       sortColumn === column ? 'bg-gray-50 dark:bg-gray-700' : ''
     }`;
   };
   
   return (
-    <div className={CARD_CLASSES}>
-      <div className="flex flex-wrap justify-between items-center mb-4">
-        <h3 className={CARD_TITLE_CLASSES.replace('mb-4', '')}>
+    <div className={`${CARD_CLASSES} w-max`}>
+      <div className="mb-4">
+        <h3 className={CARD_TITLE_CLASSES.replace('mb-4', 'mb-2')}>
           {getTitle()}
         </h3>
-        
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 justify-start">
           <button
             onClick={() => handleColumnClick('fehlzeiten_unentsch')}
             className={`px-3 py-1 text-sm rounded ${
@@ -144,10 +134,10 @@ const StudentRanking: React.FC<StudentRankingProps> = ({
       </div>
       
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <table className="w-auto max-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-table-light-header dark:bg-table-dark-header">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" title="Ranglistenposition">
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" title="Ranglistenposition">
                 #
               </th>
               <th 
@@ -195,22 +185,22 @@ const StudentRanking: React.FC<StudentRankingProps> = ({
           <tbody className="bg-table-light-base dark:bg-table-dark-base divide-y divide-gray-200 dark:divide-gray-700">
             {sortedStudents.slice(0, 10).map(({ student, stats, klasse, fehlzeiten_unentsch, fehlzeitenGesamt, verspaetungenGesamt }, index) => (
               <tr key={student} className={index % 2 === 0 ? 'bg-table-light-base dark:bg-table-dark-base' : 'bg-table-light-alternate dark:bg-table-dark-alternate'}>
-                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300" title={`Platz ${index + 1} in der Rangliste`}>
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300" title={`Platz ${index + 1} in der Rangliste`}>
                   {index + 1}
                 </td>
-                <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white" title={student}>
+                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white" title={student}>
                   {student}
                 </td>
-                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" title={`Klasse: ${klasse}`}>
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" title={`Klasse: ${klasse}`}>
                   {klasse}
                 </td>
-                <td className="px-6 py-3 whitespace-nowrap text-sm text-right text-red-600 dark:text-red-400" title={`Unentschuldigte Fehltage: ${fehlzeiten_unentsch}`}>
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-right text-red-600 dark:text-red-400" title={`Unentschuldigte Fehltage: ${fehlzeiten_unentsch}`}>
                   {fehlzeiten_unentsch}
                 </td>
-                <td className="px-6 py-3 whitespace-nowrap text-sm text-right text-blue-600 dark:text-blue-400" title={`Gesamte Fehltage: ${fehlzeitenGesamt}`}>
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-right text-blue-600 dark:text-blue-400" title={`Gesamte Fehltage: ${fehlzeitenGesamt}`}>
                   {fehlzeitenGesamt}
                 </td>
-                <td className="px-6 py-3 whitespace-nowrap text-sm text-right text-purple-600 dark:text-purple-400" title={`Gesamte Verspätungen: ${verspaetungenGesamt}`}>
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-right text-purple-600 dark:text-purple-400" title={`Gesamte Verspätungen: ${verspaetungenGesamt}`}>
                   {verspaetungenGesamt}
                 </td>
               </tr>
@@ -218,7 +208,7 @@ const StudentRanking: React.FC<StudentRankingProps> = ({
             
             {sortedStudents.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                <td colSpan={6} className="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                   Keine Schüler gefunden.
                 </td>
               </tr>

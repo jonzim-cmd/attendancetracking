@@ -89,6 +89,7 @@ const MainContent: React.FC<MainContentProps> = ({
             selectedWeeks={selectedWeeks}
             availableClasses={availableClasses}
             selectedClasses={selectedClasses}
+            weeklyStats={weeklyStats} // weeklyStats an DashboardView übergeben
           />
         )}
       </div>

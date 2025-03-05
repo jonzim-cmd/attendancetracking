@@ -11,6 +11,7 @@ interface DashboardViewProps {
   selectedWeeks: string;
   availableClasses: string[];
   selectedClasses: string[];
+  weeklyStats?: Record<string, any>; // Neue Prop für weeklyStats
 }
 
 const DashboardView: React.FC<DashboardViewProps> = ({
@@ -21,6 +22,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   selectedWeeks,
   availableClasses,
   selectedClasses,
+  weeklyStats = {}, // Default-Wert setzen
 }) => {
   if (!rawData) {
     return (
@@ -50,6 +52,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           selectedWeeks={selectedWeeks}
           availableClasses={availableClasses}
           selectedClasses={selectedClasses}
+          weeklyStats={weeklyStats} // weeklyStats an EnhancedDashboard übergeben
         />
       </div>
     </div>

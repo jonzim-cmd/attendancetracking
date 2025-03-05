@@ -22,6 +22,7 @@ interface EnhancedDashboardProps {
   selectedWeeks: string;
   availableClasses: string[];
   selectedClasses: string[];
+  weeklyStats?: Record<string, any>; // Optional prop für weeklyStats
 }
 
 const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
@@ -32,6 +33,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   selectedWeeks,
   availableClasses,
   selectedClasses: propSelectedClasses,
+  weeklyStats = {}, // Default-Wert für weeklyStats
 }) => {
   // Internal state for selected classes and students
   const [selectedClasses, setSelectedClasses] = useState<string[]>(propSelectedClasses);
@@ -222,7 +224,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       
       {viewMode === 'dashboard' ? (
         <>
-          {/* Stat Cards */}
+          {/* Stat Cards - Updated to include only the required cards */}
           <StatCards 
             absenceTypes={absenceTypes}
             dayOfWeekData={dayOfWeekData}
@@ -232,6 +234,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
             onShowCriticalStudents={() => setShowCriticalStudentsModal(true)}
             onShowCriticalDays={() => setShowCriticalDaysModal(true)}
             onShowCriticalPatterns={() => setShowCriticalPatternsModal(true)}
+            weeklyStats={weeklyStats}
           />
           
           {/* Trend Charts */}
@@ -444,7 +447,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow">
-                <h4 className="text-gray-800 dark:text-gray-100 font-medium mb-2">Wochentagsverteilung</h4>
+                <h4 className="text-gray-800 dark:text-gray-100 font-medium mb-2">Wochentagsmuster</h4>
                 <ul className="space-y-1 text-sm">
                   {dayOfWeekData
                     .sort((a, b) => b.verspaetungen - a.verspaetungen)

@@ -399,6 +399,33 @@ export const prepareStudentComparisonData = (
   return resultData;
 };
 
+// Helper function to get German calendar week (ISO 8601) with year context
+const getGermanCalendarWeekWithYear = (date: Date): { week: number; year: number } => {
+  // Copy the date to avoid modifying the original
+  const targetDate = new Date(date);
+  
+  // ISO 8601 week starts on Monday and ends on Sunday
+  // Find Thursday in the current week for proper ISO week number determination
+  targetDate.setDate(targetDate.getDate() + (4 - (targetDate.getDay() || 7)));
+  
+  // January 1st of the current year
+  const yearStart = new Date(targetDate.getFullYear(), 0, 1);
+  
+  // Calculate week number
+  const weekNum = Math.ceil((((targetDate.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  
+  // Use the year of the Thursday in the target week for proper year context
+  const weekYear = targetDate.getFullYear();
+  
+  return { week: weekNum, year: weekYear };
+};
+
+// Generate a unique sort key for week+year combination
+const generateWeekSortKey = (week: number, year: number): number => {
+  // Return a value that can be sorted numerically (year*100 + week)
+  return year * 100 + week;
+};
+
 // Bereitet Daten für die zeitliche Analyse vor
 export const prepareAttendanceOverTime = (
   rawData: any[] | null,
@@ -447,24 +474,55 @@ export const prepareAttendanceOverTime = (
     fehlzeitenEntsch: number,
     fehlzeitenUnentsch: number,
     entschuldigt: number,
-    unentschuldigt: number 
+    unentschuldigt: number,
+    sortKey?: number, // Added for proper sorting
+    dateRange?: string // Added for tooltip display
   } } = {};
   
   relevantEntries.forEach(entry => {
     const entryDate = parseDate(entry.Beginndatum);
     let groupKey: string;
+    let sortKey: number = 0;
+    let dateRange: string = '';
     
     // Zeitschlüssel basierend auf Gruppierungsoption generieren
     if (groupingOption === 'daily') {
       // Tägliche Gruppierung im Format "DD.MM."
       groupKey = entryDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+      sortKey = entryDate.getTime();
+      dateRange = entryDate.toLocaleDateString('de-DE', { 
+        day: '2-digit', 
+        month: '2-digit',
+        year: 'numeric' 
+      });
     } else if (groupingOption === 'weekly') {
-      // Wöchentliche Gruppierung als Kalenderwoche
-      const week = getWeekNumber(entryDate);
+      // Wöchentliche Gruppierung als Kalenderwoche mit Jahreskontext
+      const { week, year } = getGermanCalendarWeekWithYear(entryDate);
       groupKey = `KW ${week}`;
+      sortKey = generateWeekSortKey(week, year);
+      
+      // Calculate the start and end dates of the week for display in tooltip
+      const weekStart = new Date(entryDate);
+      const dayOfWeek = entryDate.getDay() || 7; // Convert Sunday (0) to 7
+      weekStart.setDate(entryDate.getDate() - dayOfWeek + 1); // Monday
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6); // Sunday
+      
+      dateRange = `${weekStart.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} - ${
+        weekEnd.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      }`;
     } else { // monthly
       // Monatliche Gruppierung im Format "MMM YYYY"
       groupKey = entryDate.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' });
+      sortKey = entryDate.getFullYear() * 100 + entryDate.getMonth() + 1;
+      
+      // Calculate the start and end dates of the month for display
+      const monthStart = new Date(entryDate.getFullYear(), entryDate.getMonth(), 1);
+      const monthEnd = new Date(entryDate.getFullYear(), entryDate.getMonth() + 1, 0);
+      
+      dateRange = `${monthStart.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} - ${
+        monthEnd.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      }`;
     }
     
     // Initialisiere Gruppe, falls noch nicht vorhanden
@@ -475,7 +533,9 @@ export const prepareAttendanceOverTime = (
         fehlzeitenEntsch: 0,
         fehlzeitenUnentsch: 0,
         entschuldigt: 0,
-        unentschuldigt: 0 
+        unentschuldigt: 0,
+        sortKey: sortKey,
+        dateRange: dateRange
       };
     }
     
@@ -506,39 +566,14 @@ export const prepareAttendanceOverTime = (
     }
   });
   
-  // Umwandeln in Array und sortieren
+  // Umwandeln in Array und sortieren mit dem sortKey
   return Object.entries(groupedData)
-    .map(([name, data]) => ({ name, ...data }))
-    .sort((a, b) => {
-      // Sortierung hängt vom Gruppierungstyp ab
-      if (groupingOption === 'daily') {
-        // Parse dates correctly using the year from the date range
-        const parseDate = (dateStr: string) => {
-          const [day, month] = dateStr.split('.');
-          // Use the year from the selected range
-          const year = startDateTime.getFullYear();
-          return new Date(year, parseInt(month) - 1, parseInt(day));
-        };
-        
-        return parseDate(a.name).getTime() - parseDate(b.name).getTime();
-      } else if (groupingOption === 'weekly') {
-        // Extract week numbers and sort numerically
-        const weekA = parseInt(a.name.replace('KW ', ''));
-        const weekB = parseInt(b.name.replace('KW ', ''));
-        return weekA - weekB;
-      } else {
-        // Für monatliche Daten versuchen wir eine sinnvolle Sortierung
-        const getMonthValue = (monthStr: string) => {
-          const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
-          return months.findIndex(m => monthStr.includes(m));
-        };
-        const [monthA, yearA] = a.name.split(' ');
-        const [monthB, yearB] = b.name.split(' ');
-        const yearDiff = parseInt(yearA) - parseInt(yearB);
-        if (yearDiff !== 0) return yearDiff;
-        return getMonthValue(monthA) - getMonthValue(monthB);
-      }
-    });
+    .map(([name, data]) => ({ 
+      name, 
+      ...data,
+      sortKey: data.sortKey 
+    }))
+    .sort((a, b) => (a.sortKey || 0) - (b.sortKey || 0));
 };
 
 // Hilfsfunktion zur Berechnung der Kalenderwoche

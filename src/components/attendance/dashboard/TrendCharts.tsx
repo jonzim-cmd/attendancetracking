@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { 
   CARD_CLASSES, 
   CARD_TITLE_CLASSES
@@ -42,7 +42,7 @@ interface TrendChartsProps {
   }>>;
 }
 
-const TrendCharts: React.FC<TrendChartsProps> = ({
+const TrendCharts: React.FC<TrendChartsProps> = memo(({
   weeklyTrends,
   attendanceOverTime,
   dayOfWeekData,
@@ -87,79 +87,19 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
       )
     : null;
   
-  // Aktuelles Schuljahr ermitteln - folgt der Logik in attendance-utils.ts
-  const getCurrentSchoolYear = (): { start: number; end: number } => {
-    const today = new Date();
-    const currentMonth = today.getMonth(); // 0-basiert (0 = Januar, 8 = September)
-    const currentYear = today.getFullYear();
-    
-    // Wenn wir vor September sind, begann das Schuljahr im letzten Jahr
-    // Wenn wir im oder nach September sind, begann das Schuljahr in diesem Jahr
-    const schoolYearStart = currentMonth < 8 ? currentYear - 1 : currentYear;
-    const schoolYearEnd = schoolYearStart + 1;
-    
-    return { start: schoolYearStart, end: schoolYearEnd };
-  };
-
-  // Formatiere das Datum für die Anzeige
+  // Formatiere das Datum für die Anzeige - Vereinfacht für bessere Lesbarkeit
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
     
-    if (groupingOption === 'weekly') {
-      // Bei wöchentlicher Gruppierung, KW im Kontext des Schuljahrs anzeigen
-      if (dateStr.startsWith('KW ')) {
-        const weekNumber = parseInt(dateStr.replace('KW ', ''));
-        const schoolYear = getCurrentSchoolYear();
-        
-        // Wir müssen bestimmen, ob diese Woche zum aktuellen oder nächsten Schuljahr gehört
-        // Ein Schuljahr hat etwa 52 Wochen
-        // Wochen 36-52 gehören zum ersten Teil des Schuljahres (Sep-Dez)
-        // Wochen 1-35 gehören zum zweiten Teil des Schuljahres (Jan-Aug)
-        
-        if (weekNumber >= 36) {
-          // September bis Dezember
-          return `${dateStr} (${schoolYear.start}/${schoolYear.end.toString().substring(2)})`;
-        } else {
-          // Januar bis August
-          return `${dateStr} (${schoolYear.start}/${schoolYear.end.toString().substring(2)})`;
-        }
-      }
-      return dateStr;
-    } else {
-      // Bei monatlicher Gruppierung ist das Format bereits korrekt
-      return dateStr; // "Mai 2023" etc.
-    }
-  };
-  
-  // Helper function to get date range for a calendar week
-  const getWeekDateRange = (weekLabel: string) => {
-    const weekNumber = parseInt(weekLabel.replace('KW ', ''));
-    const year = new Date().getFullYear();
-    
-    // Calculate the date of the first day of the year
-    const firstDayOfYear = new Date(year, 0, 1);
-    
-    // Calculate the first monday of the year
-    let firstMonday = new Date(firstDayOfYear);
-    while (firstMonday.getDay() !== 1) {
-      firstMonday.setDate(firstMonday.getDate() + 1);
+    // For weekly view, just show "KW XX" without any additional text
+    if (groupingOption === 'weekly' && dateStr.startsWith('KW ')) {
+      return dateStr; // Just return "KW XX"
     }
     
-    // Calculate the Monday of the given week
-    const targetMonday = new Date(firstMonday);
-    targetMonday.setDate(firstMonday.getDate() + (weekNumber - 1) * 7);
-    
-    // Calculate the Sunday of the given week
-    const targetSunday = new Date(targetMonday);
-    targetSunday.setDate(targetMonday.getDate() + 6);
-    
-    // Format dates to DD.MM.
-    const mondayFormatted = `${String(targetMonday.getDate()).padStart(2, '0')}.${String(targetMonday.getMonth() + 1).padStart(2, '0')}.`;
-    const sundayFormatted = `${String(targetSunday.getDate()).padStart(2, '0')}.${String(targetSunday.getMonth() + 1).padStart(2, '0')}.`;
-    
-    return `${mondayFormatted} - ${sundayFormatted}`;
+    // For monthly view
+    return dateStr; // Already formatted as "Mon YYYY"
   };
-  
+
   // Entschuldigungsstatistik berechnen
   const totalEntschuldigt = absenceTypes.find(type => type.name === 'Entschuldigt')?.value || 0;
   const totalUnentschuldigt = absenceTypes.find(type => type.name === 'Unentschuldigt')?.value || 0;
@@ -250,16 +190,16 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
   // Custom tooltip for attendance chart
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      let formattedLabel = label;
-      
-      // Special formatting for weekly data to show date range
-      if (groupingOption === 'weekly' && label.startsWith('KW ')) {
-        formattedLabel = `${formatDate(label)} (${getWeekDateRange(label)})`;
-      }
+      // Find the corresponding data entry to get the date range
+      const dataEntry = attendanceOverTime.find(entry => entry.name === label);
+      const dateRange = dataEntry?.dateRange || '';
       
       return (
         <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
-          <p className="text-gray-700 dark:text-gray-300 font-medium mb-1">{formattedLabel}</p>
+          <p className="text-gray-700 dark:text-gray-300 font-medium mb-1">{formatDate(label)}</p>
+          {dateRange && (
+            <p className="text-gray-600 dark:text-gray-400 text-xs mb-1">{dateRange}</p>
+          )}
           <div className="flex flex-col space-y-1">
             {payload.map((entry: any, index: number) => (
               <div key={`item-${index}`} className="flex items-center">
@@ -275,6 +215,8 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
     }
     return null;
   };
+  
+  // We don't need this function anymore since we're using responsive sizing with min-width
   
   return (
     <>
@@ -327,7 +269,11 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
           </div>
         </div>
         <div className="overflow-x-auto">
-          <div style={{ minWidth: attendanceOverTime.length * 50 + 'px', height: '300px' }}>
+          <div style={{ 
+            width: attendanceOverTime.length > 8 ? `${Math.max(attendanceOverTime.length * 80, 1200)}px` : '100%', 
+            minWidth: '100%',
+            height: '300px' 
+          }}>
             <AttendanceLineChart 
               data={attendanceOverTime}
               lines={visibleLines}
@@ -490,6 +436,6 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
       </div>
     </>
   );
-};
+});
 
 export default TrendCharts;

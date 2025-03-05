@@ -118,62 +118,62 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       }));
   }, [getFilteredStudentsWithFilters, rawData]);
   
+  // Memoized data preparation for different charts to improve performance
+  const memoizedWeeklyTrends = useCallback(() => {
+    if (!rawData || !startDate || !endDate) return [];
+    const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
+    return prepareWeeklyTrends(rawData, selectedWeeks, selectedClasses, selectedStudents, entityType);
+  }, [rawData, startDate, endDate, selectedWeeks, selectedClasses, selectedStudents]);
+  
+  const memoizedAbsenceTypes = useCallback(() => {
+    if (!rawData || !startDate || !endDate) return [];
+    const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
+    return prepareAbsenceTypes(rawData, startDate, endDate, selectedClasses, selectedStudents, entityType);
+  }, [rawData, startDate, endDate, selectedClasses, selectedStudents]);
+  
+  const memoizedDayOfWeekData = useCallback(() => {
+    if (!rawData || !startDate || !endDate) return [];
+    const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
+    return prepareDayOfWeekAnalysis(rawData, startDate, endDate, selectedClasses, selectedStudents, entityType);
+  }, [rawData, startDate, endDate, selectedClasses, selectedStudents]);
+
+  // Separate cached data preparations for weekly and monthly views
+  const memoizedAttendanceOverTimeWeekly = useCallback(() => {
+    if (!rawData || !startDate || !endDate) return [];
+    const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
+    return prepareAttendanceOverTime(rawData, startDate, endDate, 'weekly', selectedClasses, selectedStudents, entityType);
+  }, [rawData, startDate, endDate, selectedClasses, selectedStudents]);
+  
+  const memoizedAttendanceOverTimeMonthly = useCallback(() => {
+    if (!rawData || !startDate || !endDate) return [];
+    const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
+    return prepareAttendanceOverTime(rawData, startDate, endDate, 'monthly', selectedClasses, selectedStudents, entityType);
+  }, [rawData, startDate, endDate, selectedClasses, selectedStudents]);
+  
+  const memoizedEntschuldigungsverhalten = useCallback(() => {
+    if (!rawData || !startDate || !endDate) return [];
+    const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
+    return prepareEntschuldigungsverhalten(rawData, startDate, endDate, selectedClasses, selectedStudents, groupingOption, entityType);
+  }, [rawData, startDate, endDate, selectedClasses, selectedStudents, groupingOption]);
+
   // Effect to prepare all data when filters change
   useEffect(() => {
     if (!rawData || !startDate || !endDate) return;
     
-    // Calculate critical students
+    // Calculate critical students - this is relatively quick
     setCriticalStudents(calculateCriticalStudents());
     
-    // Determine entity type based on selection
-    const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
+    // Update states with memoized data - heavy calculations are cached
+    setWeeklyTrends(memoizedWeeklyTrends());
+    setAbsenceTypes(memoizedAbsenceTypes());
+    setDayOfWeekData(memoizedDayOfWeekData());
     
-    // Data preparation for charts with filtered data
-    setWeeklyTrends(prepareWeeklyTrends(
-      rawData, 
-      selectedWeeks, 
-      selectedClasses, 
-      selectedStudents,
-      entityType
-    ));
+    // Use the appropriate cached data based on grouping option
+    setAttendanceOverTime(groupingOption === 'weekly' 
+      ? memoizedAttendanceOverTimeWeekly() 
+      : memoizedAttendanceOverTimeMonthly());
     
-    setAbsenceTypes(prepareAbsenceTypes(
-      rawData, 
-      startDate, 
-      endDate, 
-      selectedClasses, 
-      selectedStudents,
-      entityType
-    ));
-    
-    setDayOfWeekData(prepareDayOfWeekAnalysis(
-      rawData, 
-      startDate, 
-      endDate, 
-      selectedClasses, 
-      selectedStudents,
-      entityType
-    ));
-    
-    setAttendanceOverTime(prepareAttendanceOverTime(
-      rawData, 
-      startDate, 
-      endDate, 
-      groupingOption, 
-      selectedClasses,
-      selectedStudents,
-      entityType
-    ));
-    
-    setEntschuldigungsverhalten(prepareEntschuldigungsverhalten(
-      rawData, 
-      startDate, 
-      endDate, 
-      selectedClasses,
-      selectedStudents,
-      groupingOption,
-      entityType
-    ));
+    setEntschuldigungsverhalten(memoizedEntschuldigungsverhalten());
   }, [
     rawData, 
     startDate, 
@@ -182,7 +182,13 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     selectedClasses, 
     selectedStudents,
     groupingOption,
-    calculateCriticalStudents
+    calculateCriticalStudents,
+    memoizedWeeklyTrends,
+    memoizedAbsenceTypes,
+    memoizedDayOfWeekData,
+    memoizedAttendanceOverTimeWeekly,
+    memoizedAttendanceOverTimeMonthly,
+    memoizedEntschuldigungsverhalten
   ]);
   
   // Handler to update classes

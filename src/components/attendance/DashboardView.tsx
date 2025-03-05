@@ -40,7 +40,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         </h3>
       </div>
       
-      {/* Integration der neuen EnhancedDashboard-Komponente */}
+      {/* Integration der EnhancedDashboard-Komponente */}
       <div className="relative bg-table-light-base dark:bg-table-dark-base pt-4">
         <EnhancedDashboard
           getFilteredStudents={getFilteredStudents}

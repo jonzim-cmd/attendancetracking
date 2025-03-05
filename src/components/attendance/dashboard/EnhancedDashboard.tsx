@@ -4,7 +4,6 @@ import StatCards from './StatCards';
 import TrendCharts from './TrendCharts';
 import ComparisonView from './ComparisonView';
 import StudentRanking from './StudentRanking';
-import AdvancedStats from './AdvancedStats';
 import { 
   prepareWeeklyTrends, 
   prepareAbsenceTypes, 
@@ -126,12 +125,16 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     // Calculate critical students
     setCriticalStudents(calculateCriticalStudents());
     
+    // Determine entity type based on selection
+    const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
+    
     // Data preparation for charts with filtered data
     setWeeklyTrends(prepareWeeklyTrends(
       rawData, 
       selectedWeeks, 
       selectedClasses, 
-      selectedStudents
+      selectedStudents,
+      entityType
     ));
     
     setAbsenceTypes(prepareAbsenceTypes(
@@ -139,7 +142,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       startDate, 
       endDate, 
       selectedClasses, 
-      selectedStudents
+      selectedStudents,
+      entityType
     ));
     
     setDayOfWeekData(prepareDayOfWeekAnalysis(
@@ -147,7 +151,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       startDate, 
       endDate, 
       selectedClasses, 
-      selectedStudents
+      selectedStudents,
+      entityType
     ));
     
     setAttendanceOverTime(prepareAttendanceOverTime(
@@ -156,7 +161,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       endDate, 
       groupingOption, 
       selectedClasses,
-      selectedStudents
+      selectedStudents,
+      entityType
     ));
     
     setEntschuldigungsverhalten(prepareEntschuldigungsverhalten(
@@ -165,7 +171,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       endDate, 
       selectedClasses,
       selectedStudents,
-      groupingOption
+      groupingOption,
+      entityType
     ));
   }, [
     rawData, 
@@ -232,13 +239,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
             setChartVisibility={setTrendChartVisibility}
             weekdayChartVisibility={weekdayChartVisibility}
             setWeekdayChartVisibility={setWeekdayChartVisibility}
-          />
-          
-          {/* Advanced Stats with Excuse Behavior Analysis */}
-          <AdvancedStats 
-            entschuldigungsverhalten={entschuldigungsverhalten}
-            dayOfWeekData={dayOfWeekData}
-            absenceTypes={absenceTypes}
           />
           
           {/* Student Ranking Tile */}

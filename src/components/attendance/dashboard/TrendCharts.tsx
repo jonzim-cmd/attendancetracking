@@ -94,7 +94,7 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
     if (groupingOption === 'daily') {
       return dateStr; // Tägliches Format bereits sinnvoll (z.B. '01.05.')
     } else if (groupingOption === 'weekly') {
-      return `KW ${dateStr}`; // Wochenformat (z.B. 'KW 20')
+      return `${dateStr}`; // Wochenformat (z.B. 'KW 20')
     } else {
       return dateStr; // Monatsformat bereits sinnvoll (z.B. 'Mai 2023')
     }
@@ -374,14 +374,16 @@ const TrendCharts: React.FC<TrendChartsProps> = ({
                 <InfoTile 
                   title="Kritischer Tag (Verspätungen)" 
                   value={`${maxVerspaetungenTag.name} (${maxVerspaetungenTag.verspaetungen})`}
-                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-purple-600 dark:text-purple-400"
+                  className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
+                  valueClassName="text-purple-600 dark:text-purple-400" // Spezifische Textfarbe
                 />
               )}
               {maxFehlzeitenUnentschTag && (
                 <InfoTile 
                   title="Kritischer Tag (unentsch. Fehltage)" 
                   value={`${maxFehlzeitenUnentschTag.name} (${maxFehlzeitenUnentschTag.fehlzeitenUnentsch})`}
-                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-red-600 dark:text-red-400"
+                  className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
+                  valueClassName="text-red-600 dark:text-red-400" // Spezifische Textfarbe
                 />
               )}
             </div>

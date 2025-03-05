@@ -267,13 +267,14 @@ interface InfoTileProps {
   title: string;
   value: number | string;
   className?: string;
+  valueClassName?: string;
 }
 
-export const InfoTile: React.FC<InfoTileProps> = ({ title, value, className = "" }) => {
+export const InfoTile: React.FC<InfoTileProps> = ({ title, value, className = "", valueClassName = "" }) => {
   return (
     <div className={`${INFO_TILE_CLASSES} ${className}`} title={`${title}: ${value}`}>
       <p className={TEXT_DESCRIPTION_CLASSES}>{title}</p>
-      <p className={TEXT_VALUE_CLASSES}>
+      <p className={`${TEXT_VALUE_CLASSES} ${valueClassName}`}>
         {value}
       </p>
     </div>

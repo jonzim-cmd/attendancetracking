@@ -63,23 +63,23 @@ const StatCards: React.FC<StatCardsProps> = ({
             <StatBox
               label="Schüler"
               value={getFilteredStudents().length.toString()}
-              color="bg-white dark:bg-gray-800"
+              color="bg-transparent dark:bg-transparent"
             />
             <StatBox
               label="Einträge"
               value={totalAll.toString()}
-              color="bg-white dark:bg-gray-800"
+              color="bg-transparent dark:bg-transparent"
             />
             <StatBox
               label="Verspätungen"
               value={totalVerspaetungen.toString()}
-              color="bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400"
+              color="bg-transparent dark:bg-transparent text-purple-600 dark:text-purple-400"
               tooltip="Gesamtanzahl der Verspätungen im gewählten Zeitraum"
             />
             <StatBox
               label="Fehltage"
               value={totalFehlzeitenGesamt.toString()}
-              color="bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400"
+              color="bg-transparent dark:bg-transparent text-blue-600 dark:text-blue-400"
               tooltip="Gesamtanzahl der Fehltage im gewählten Zeitraum (entschuldigt + unentschuldigt)"
             />
           </div>
@@ -94,29 +94,29 @@ const StatCards: React.FC<StatCardsProps> = ({
             <StatBox
               label="Entschuldigt"
               value={totalFehlzeitenEntsch.toString()}
-              color="bg-white dark:bg-gray-800 text-green-600 dark:text-green-400"
+              color="bg-transparent dark:bg-transparent text-green-600 dark:text-green-400"
               tooltip="Anzahl der entschuldigten Fehltage im gewählten Zeitraum"
             />
             <StatBox
               label="Unentschuldigt"
               value={totalFehlzeitenUnentsch.toString()}
-              color="bg-white dark:bg-gray-800 text-red-600 dark:text-red-400"
+              color="bg-transparent dark:bg-transparent text-red-600 dark:text-red-400"
               tooltip="Anzahl der unentschuldigten Fehltage im gewählten Zeitraum"
             />
             <StatBox
               label="Noch offen"
               value={totalOffen.toString()}
-              color="bg-white dark:bg-gray-800 text-yellow-600 dark:text-yellow-400"
+              color="bg-transparent dark:bg-transparent text-yellow-600 dark:text-yellow-400"
               tooltip="Anzahl der noch zu entschuldigenden Fehltage (Frist läuft noch)"
             />
             <StatBox
               label="Unentsch. Quote"
               value={`${unentschuldigungsQuote}%`}
-              color={`${unentschuldigungsQuote <= 15
-                ? 'bg-white dark:bg-gray-800 text-green-600 dark:text-green-400' 
+              color={`bg-transparent dark:bg-transparent ${unentschuldigungsQuote <= 15
+                ? 'text-green-600 dark:text-green-400' 
                 : unentschuldigungsQuote <= 25 
-                  ? 'bg-white dark:bg-gray-800 text-yellow-600 dark:text-yellow-400'
-                  : 'bg-white dark:bg-gray-800 text-red-600 dark:text-red-400'
+                  ? 'text-yellow-600 dark:text-yellow-400'
+                  : 'text-red-600 dark:text-red-400'
               }`}
               tooltip="Anteil unentschuldigter Fehltage an allen Fehltagen"
             />
@@ -133,8 +133,8 @@ const StatCards: React.FC<StatCardsProps> = ({
               label="Kritische Schüler"
               value={criticalStudents.length.toString()}
               color={criticalStudents.length > 0 
-                ? 'bg-white dark:bg-gray-800 text-red-600 dark:text-red-400'
-                : 'bg-white dark:bg-gray-800'
+                ? 'bg-transparent dark:bg-transparent text-red-600 dark:text-red-400'
+                : 'bg-transparent dark:bg-transparent'
               }
               tooltip="Anzahl der Schüler mit ≥ 3 unentschuldigten Verspätungen oder Fehltagen"
               onClick={onShowCriticalStudents}
@@ -143,7 +143,7 @@ const StatCards: React.FC<StatCardsProps> = ({
             <StatBox
               label="Verspät. Quote"
               value={`${verspaetungsQuote}%`}
-              color="bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400"
+              color="bg-transparent dark:bg-transparent text-purple-600 dark:text-purple-400"
               tooltip="Anteil der Verspätungen an allen Abwesenheiten (Verspätungen + Fehltage)"
               onClick={onShowCriticalPatterns}
               isClickable={true}
@@ -151,7 +151,7 @@ const StatCards: React.FC<StatCardsProps> = ({
             <StatBox
               label="Top Versp. Tag"
               value={maxVerspaetungenTag}
-              color="bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400"
+              color="bg-transparent dark:bg-transparent text-purple-600 dark:text-purple-400"
               tooltip="Wochentag mit den meisten Verspätungen"
               onClick={onShowCriticalDays}
               isClickable={true}
@@ -159,7 +159,7 @@ const StatCards: React.FC<StatCardsProps> = ({
             <StatBox
               label="Top Fehlz. Tag"
               value={maxFehlzeitenUnentschTag}
-              color="bg-white dark:bg-gray-800 text-red-600 dark:text-red-400"
+              color="bg-transparent dark:bg-transparent text-red-600 dark:text-red-400"
               tooltip="Wochentag mit den meisten unentschuldigten Fehltagen"
               onClick={onShowCriticalDays}
               isClickable={true}
@@ -212,7 +212,7 @@ const StatBox: React.FC<{
   tooltip?: string;
   onClick?: () => void;
   isClickable?: boolean;
-}> = ({ label, value, color = "bg-white dark:bg-gray-800", tooltip, onClick, isClickable = false }) => {
+}> = ({ label, value, color = "bg-transparent dark:bg-transparent", tooltip, onClick, isClickable = false }) => {
   return (
     <div 
       className={`p-3 rounded-lg border border-gray-200 dark:border-gray-700 ${color} flex flex-col justify-center items-center ${isClickable ? 'cursor-pointer hover:opacity-80' : ''}`}

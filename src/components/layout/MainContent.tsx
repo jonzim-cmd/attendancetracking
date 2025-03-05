@@ -22,7 +22,7 @@ interface MainContentProps {
   setActiveFilters: React.Dispatch<React.SetStateAction<Map<string, string>>>;
   visibleColumns: string[];
   
-  // Neue Props - als optional deklariert für Abwärtskompatibilität
+  // Props - als optional deklariert für Abwärtskompatibilität
   viewMode?: 'table' | 'dashboard';
   rawData?: any[] | null;
 }

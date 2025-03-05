@@ -461,7 +461,7 @@ export const prepareAttendanceOverTime = (
     } else if (groupingOption === 'weekly') {
       // Wöchentliche Gruppierung als Kalenderwoche
       const week = getWeekNumber(entryDate);
-      groupKey = `${week}`;
+      groupKey = `KW ${week}`;
     } else { // monthly
       // Monatliche Gruppierung im Format "MMM YYYY"
       groupKey = entryDate.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' });
@@ -512,16 +512,20 @@ export const prepareAttendanceOverTime = (
     .sort((a, b) => {
       // Sortierung hängt vom Gruppierungstyp ab
       if (groupingOption === 'daily') {
-        // Wir verwenden hier einen Trick: Wir ergänzen das Jahr, um korrekt zu sortieren
-        const currentYear = new Date().getFullYear();
-        const [dayA, monthA] = a.name.split('.');
-        const [dayB, monthB] = b.name.split('.');
-        const dateA = new Date(`${currentYear}-${monthA}-${dayA}`);
-        const dateB = new Date(`${currentYear}-${monthB}-${dayB}`);
-        return dateA.getTime() - dateB.getTime();
+        // Parse dates correctly using the year from the date range
+        const parseDate = (dateStr: string) => {
+          const [day, month] = dateStr.split('.');
+          // Use the year from the selected range
+          const year = startDateTime.getFullYear();
+          return new Date(year, parseInt(month) - 1, parseInt(day));
+        };
+        
+        return parseDate(a.name).getTime() - parseDate(b.name).getTime();
       } else if (groupingOption === 'weekly') {
-        // Einfache numerische Sortierung für Kalenderwochen
-        return parseInt(a.name) - parseInt(b.name);
+        // Extract week numbers and sort numerically
+        const weekA = parseInt(a.name.replace('KW ', ''));
+        const weekB = parseInt(b.name.replace('KW ', ''));
+        return weekA - weekB;
       } else {
         // Für monatliche Daten versuchen wir eine sinnvolle Sortierung
         const getMonthValue = (monthStr: string) => {
@@ -545,8 +549,6 @@ const getWeekNumber = (date: Date): number => {
   const yearStart = new Date(d.getFullYear(), 0, 1);
   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 };
-
-// Fix for the prepareEntschuldigungsverhalten function to accept correct groupingOption type
 
 // Bereitet Daten für das Entschuldigungsverhalten vor
 export const prepareEntschuldigungsverhalten = (

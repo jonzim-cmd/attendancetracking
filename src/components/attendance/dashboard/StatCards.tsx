@@ -49,12 +49,17 @@ const StatCards: React.FC<StatCardsProps> = ({
     ? Math.round((totalUnentschuldigt / totalAll) * 100) 
     : 0;
 
+  // Bestimme, ob ein einzelner Schüler ausgewählt ist
+  const isSingleStudentSelected = getFilteredStudents().length === 1;
+
   return (
-    <div className="space-y-4">
-      {/* Übersichtskachel - Kompakt mit Inline-Flex statt Grid */}
-      <div className={`${CARD_CLASSES} flex flex-col w-auto`}>
-        <h3 className="text-base font-semibold mb-2 text-gray-800 dark:text-gray-100">Übersicht</h3>
-        <div className="flex flex-wrap gap-2 mt-1">
+    <div className={`${CARD_CLASSES} h-full overflow-auto`}>
+      {/* Überschrift */}
+      <h3 className="text-sm font-semibold mb-3 text-gray-800 dark:text-gray-100">Dashboard Übersicht</h3>
+      
+      {/* Übersichtskachel - Kompakt mit Flex statt Grid */}
+      <div className="mb-4">
+        <div className="flex flex-wrap gap-2">
           <StatBox
             label="Schüler"
             value={getFilteredStudents().length.toString()}
@@ -88,12 +93,11 @@ const StatCards: React.FC<StatCardsProps> = ({
         </div>
       </div>
       
-      {/* Kachel für kritische Muster (Alerts) - Angepasst für dark mode */}
-      <div className={`${CARD_CLASSES} flex flex-col h-full w-full`}>
-        <h3 className="text-base font-semibold mb-2 text-gray-800 dark:text-gray-100">Kritische Muster</h3>
-        
-        {getFilteredStudents().length === 1 ? (
-          <div className="space-y-2 pr-1">
+      {/* Kachel für kritische Muster (nur wenn ein Schüler ausgewählt ist) */}
+      {isSingleStudentSelected && (
+        <div className="mt-4">
+          <h3 className="text-sm font-semibold mb-3 text-gray-800 dark:text-gray-100">Kritische Muster</h3>
+          <div className="space-y-2">
             {(() => {
               // Einzelner Schüler - Daten extrahieren
               const [studentName, stats] = getFilteredStudents()[0];
@@ -120,8 +124,6 @@ const StatCards: React.FC<StatCardsProps> = ({
                 3 // Schwellenwert: mehr als 3 Verspätungen pro Woche
               );
               
-              const maxWeeklyLateArrivals = getMaxWeeklyLateArrivals(studentWeeklyData.verspaetungen.weekly);
-              
               const hasLateAlert = exceedsLateThreshold || hasWeekWithManyLateArrivals;
               
               // 2.3 Fehltage-Ratio
@@ -147,13 +149,13 @@ const StatCards: React.FC<StatCardsProps> = ({
                 : 0;
               
               return (
-                <div className="flex flex-col space-y-2">
+                <div className="grid grid-cols-1 gap-2">
                   {/* 2.1 Alert bei unentschuldigten Fehltagen */}
                   {hasUnexcusedAbsences && (
                     <div className="p-2 bg-transparent dark:bg-transparent border border-red-200 dark:border-red-700 rounded-md">
-                      <div className="font-medium text-red-600 dark:text-red-400 text-sm">Unentschuldigte Fehltage</div>
-                      <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                        Der Schüler hat <span className="font-bold">{stats.fehlzeiten_unentsch}</span> unentschuldigte Fehltage im gewählten Zeitraum.
+                      <div className="font-medium text-red-600 dark:text-red-400 text-xs">Unentschuldigte Fehltage</div>
+                      <div className="text-xs text-gray-700 dark:text-gray-300">
+                        <span className="font-bold">{stats.fehlzeiten_unentsch}</span> unentsch. Fehltage im Zeitraum
                       </div>
                     </div>
                   )}
@@ -161,70 +163,55 @@ const StatCards: React.FC<StatCardsProps> = ({
                   {/* 2.2 Alert bei hoher Anzahl von Verspätungen */}
                   {hasLateAlert && (
                     <div className="p-2 bg-transparent dark:bg-transparent border border-yellow-200 dark:border-yellow-700 rounded-md">
-                      <div className="font-medium text-yellow-600 dark:text-yellow-400 text-sm">Zu viele Verspätungen</div>
-                      <div className="text-sm text-gray-700 dark:text-gray-300">
-                        <div className="whitespace-nowrap">
-                          Der Schüler hat <span className="font-bold">{stats.verspaetungen_unentsch}</span> Verspätungen 
-                          (Schwellenwert: {lateThreshold} für {weeksCount} Wochen).
-                        </div>
-                        {hasWeekWithManyLateArrivals && (
-                          <div className="whitespace-nowrap mt-1">
-                            <span className="font-medium">Kritisch:</span> Maximale Anzahl von <span className="font-bold">{maxWeeklyLateArrivals}</span> Verspätungen 
-                            in einer einzelnen Woche (Schwellenwert: 3).
-                          </div>
-                        )}
+                      <div className="font-medium text-yellow-600 dark:text-yellow-400 text-xs">Verspätungen</div>
+                      <div className="text-xs text-gray-700 dark:text-gray-300">
+                        <span className="font-bold">{stats.verspaetungen_unentsch}</span> Versp. (Schwelle: {lateThreshold})
                       </div>
                     </div>
                   )}
                   
                   {/* 2.3 Fehltage-Ratio */}
                   <div className="p-2 bg-transparent dark:bg-transparent border border-blue-200 dark:border-blue-700 rounded-md">
-                    <div className="font-medium text-blue-600 dark:text-blue-400 text-sm">Fehltage-Ratio</div>
-                    <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                      <span className="font-bold">{absenceRatio.toFixed(1)}%</span> der Schultage im gewählten Zeitraum wurden versäumt.
-                      ({totalAbsences} von ca. {schoolDays} Schultagen)
+                    <div className="font-medium text-blue-600 dark:text-blue-400 text-xs">Fehltage-Ratio</div>
+                    <div className="text-xs text-gray-700 dark:text-gray-300">
+                      <span className="font-bold">{absenceRatio.toFixed(1)}%</span> ({totalAbsences} von ca. {schoolDays} Tagen)
                     </div>
                   </div>
                   
                   {/* 2.5 Quote der unentschuldigten Fehltage */}
                   {totalAbsences > 0 && (
                     <div className="p-2 bg-transparent dark:bg-transparent border border-purple-200 dark:border-purple-700 rounded-md">
-                      <div className="font-medium text-purple-600 dark:text-purple-400 text-sm">Unentschuldigungsquote</div>
-                      <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                        <span className="font-bold">{unexcusedRate.toFixed(1)}%</span> der Fehltage sind unentschuldigt.
-                        ({stats.fehlzeiten_unentsch} von {totalAbsences} Fehltagen)
+                      <div className="font-medium text-purple-600 dark:text-purple-400 text-xs">Unentsch. Quote</div>
+                      <div className="text-xs text-gray-700 dark:text-gray-300">
+                        <span className="font-bold">{unexcusedRate.toFixed(1)}%</span> ({stats.fehlzeiten_unentsch} von {totalAbsences})
                       </div>
                     </div>
                   )}
                   
                   {/* 2.6 Vergleich mit Klassendurchschnitt */}
-                  <div className="p-2 bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600 rounded-md">
-                    <div className="font-medium text-gray-600 dark:text-gray-400 text-sm">Vergleich mit Klassendurchschnitt</div>
-                    <div className="text-sm mt-1 text-gray-700 dark:text-gray-300">
-                      <div className="flex justify-between whitespace-nowrap">
-                        <span>Fehltage:</span>
-                        <span className={fehlzeitenComparedToAverage > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}>
-                          {totalAbsences} ({fehlzeitenComparedToAverage > 0 ? '+' : ''}{fehlzeitenComparedToAverage}% ggü. Durchschnitt)
-                        </span>
-                      </div>
-                      <div className="flex justify-between mt-1 whitespace-nowrap">
-                        <span>Verspätungen:</span>
-                        <span className={verspaetungenComparedToAverage > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}>
-                          {stats.verspaetungen_unentsch} ({verspaetungenComparedToAverage > 0 ? '+' : ''}{verspaetungenComparedToAverage}% ggü. Durchschnitt)
-                        </span>
+                    <div className="p-2 bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600 rounded-md">
+                      <div className="font-medium text-gray-600 dark:text-gray-400 text-xs">Vergleich zum Durchschnitt</div>
+                      <div className="text-xs text-gray-700 dark:text-gray-300">
+                        <div className="flex justify-between">
+                          <span>Fehltage:</span>
+                          <span className={fehlzeitenComparedToAverage > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}>
+                            {fehlzeitenComparedToAverage > 0 ? '+' : ''}{fehlzeitenComparedToAverage}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between mt-1">
+                          <span>Verspätungen:</span>
+                          <span className={verspaetungenComparedToAverage > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}>
+                            {verspaetungenComparedToAverage > 0 ? '+' : ''}{verspaetungenComparedToAverage}%
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
                 </div>
               );
             })()}
           </div>
-        ) : (
-          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400 p-2">
-            Diese Kachel ist nur für einzelne Schüler relevant.
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -240,12 +227,12 @@ const StatBox: React.FC<{
 }> = ({ label, value, color = "bg-transparent dark:bg-transparent", tooltip, onClick, isClickable = false }) => {
   return (
     <div 
-      className={`p-2 rounded border border-gray-200 dark:border-gray-700 ${color} flex flex-col justify-center items-center ${isClickable ? 'cursor-pointer hover:opacity-80' : ''} min-w-[75px]`}
+      className={`p-2 rounded border border-gray-200 dark:border-gray-700 ${color} flex flex-col justify-center items-center ${isClickable ? 'cursor-pointer hover:opacity-80' : ''} min-w-[80px]`}
       title={tooltip}
       onClick={isClickable ? onClick : undefined}
     >
       <div className="text-xs font-medium opacity-80">{label}</div>
-      <div className="text-base font-bold">{value}</div>
+      <div className="text-sm font-medium">{value}</div>
     </div>
   );
 };

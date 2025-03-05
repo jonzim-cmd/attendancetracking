@@ -224,11 +224,10 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       
       {viewMode === 'dashboard' ? (
         <>
-          {/* Stats cards in a flexible layout */}
-          <div className="grid grid-cols-1 gap-4">
-            {/* Top section: Overview and Rankings side by side */}
-            <div className="flex flex-wrap gap-4 justify-start">
-              {/* StatCards Component - Übersicht */}
+          {/* Neues Layout: StatCards und StudentRanking nebeneinander */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* StatCards - Kombinierte Kachel für Übersicht und Kritische Muster */}
+            <div className="lg:col-span-7">
               <StatCards 
                 absenceTypes={absenceTypes}
                 dayOfWeekData={dayOfWeekData}
@@ -240,8 +239,10 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
                 onShowCriticalPatterns={() => setShowCriticalPatternsModal(true)}
                 weeklyStats={weeklyStats}
               />
-              
-              {/* Student Ranking - narrower and adaptable width */}
+            </div>
+            
+            {/* Student Ranking - Flexibler Bereich auf der rechten Seite */}
+            <div className="lg:col-span-5">
               <StudentRanking
                 filteredStudents={filteredStudentStats}
                 selectedClasses={selectedClasses}
@@ -250,7 +251,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
             </div>
           </div>
           
-          {/* Trend Charts */}
+          {/* Trend Charts - Volle Breite */}
           <TrendCharts 
             weeklyTrends={weeklyTrends}
             attendanceOverTime={attendanceOverTime}
@@ -280,7 +281,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         />
       )}
       
-      {/* Modal for Critical Students */}
+      {/* Modal für kritische Schüler */}
       {showCriticalStudentsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowCriticalStudentsModal(false)}>
           <div 
@@ -349,7 +350,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         </div>
       )}
       
-      {/* Modal for Critical Days */}
+      {/* Modal für kritische Tage */}
       {showCriticalDaysModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowCriticalDaysModal(false)}>
           <div 
@@ -428,7 +429,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         </div>
       )}
       
-      {/* Modal for Critical Patterns */}
+      {/* Modal für kritische Muster */}
       {showCriticalPatternsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowCriticalPatternsModal(false)}>
           <div 
@@ -452,7 +453,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow">
+              <div className="bg-transparent dark:bg-transparent p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
                 <h4 className="text-gray-800 dark:text-gray-100 font-medium mb-2">Wochentagsmuster</h4>
                 <ul className="space-y-1 text-sm">
                   {dayOfWeekData
@@ -477,7 +478,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
                 </ul>
               </div>
               
-              <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow">
+              <div className="bg-transparent dark:bg-transparent p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
                 <h4 className="text-gray-800 dark:text-gray-100 font-medium mb-2">Entschuldigungsquote</h4>
                 <div className="space-y-2">
                   {absenceTypes.length > 0 && (
@@ -526,7 +527,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
               </div>
             </div>
             
-            <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow">
+            <div className="bg-transparent dark:bg-transparent p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
               <h4 className="text-gray-800 dark:text-gray-100 font-medium mb-2">Trend-Analyse</h4>
               <div className="space-y-2 text-sm">
                 <p className="text-gray-600 dark:text-gray-300">

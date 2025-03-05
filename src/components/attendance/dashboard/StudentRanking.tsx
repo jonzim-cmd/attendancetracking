@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CARD_CLASSES, CARD_TITLE_CLASSES } from './styles';
+import { CARD_CLASSES } from './styles';
 import { StudentStats } from '@/types';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 
@@ -21,16 +21,26 @@ const StudentRanking: React.FC<StudentRankingProps> = ({
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   
   if (filteredStudents.length === 0) {
-    return null;
+    return (
+      <div className={`${CARD_CLASSES} h-full`}>
+        <h3 className="text-base font-semibold mb-4 text-gray-800 dark:text-gray-100">
+          Schüler-Rangliste
+        </h3>
+        <div className="flex items-center justify-center h-32 text-gray-500 dark:text-gray-400">
+          Keine Schüler verfügbar
+        </div>
+      </div>
+    );
   }
   
   const getTitle = () => {
+    const topLabel = "Top 10 ";
     if (selectedStudents.length > 0) {
-      return `Schüler-Rangliste (${selectedStudents.length} ausgewählte Schüler)`;
+      return `${topLabel}Schüler-Rangliste (${selectedStudents.length} ausgewählte)`;
     } else if (selectedClasses.length > 0) {
-      return `Schüler-Rangliste (${selectedClasses.join(', ')})`;
+      return `${topLabel}Schüler-Rangliste (${selectedClasses.join(', ')})`;
     } else {
-      return 'Schüler-Rangliste (Alle Klassen)';
+      return `${topLabel}Schüler-Rangliste (Alle Klassen)`;
     }
   };
   
@@ -91,9 +101,9 @@ const StudentRanking: React.FC<StudentRankingProps> = ({
   };
   
   return (
-    <div className={`${CARD_CLASSES} w-auto`}>
-      <div className="mb-2">
-        <h3 className={CARD_TITLE_CLASSES.replace('mb-4', 'mb-1')}>
+    <div className={`${CARD_CLASSES} h-full overflow-auto`}>
+      <div className="mb-3">
+        <h3 className="text-sm font-semibold mb-2 text-gray-800 dark:text-gray-100">
           {getTitle()}
         </h3>
         <div className="flex space-x-2 justify-start">

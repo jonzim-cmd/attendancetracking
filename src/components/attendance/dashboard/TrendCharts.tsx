@@ -6,7 +6,6 @@ import {
 import { 
   AttendanceLineChart, 
   AttendanceBarChart, 
-  AttendancePieChart,
   InfoTile 
 } from './ChartComponents';
 
@@ -215,13 +214,13 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
       {/* Zeitlicher Trend - Full width chart */}
       <div className={CARD_CLASSES}>
         <div className="flex justify-between items-center mb-4">
-          <h3 className={CARD_TITLE_CLASSES.replace('mb-4', '')}>
+          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
             Zeitlicher Verlauf
-            <span className="text-sm font-normal ml-2 text-gray-500 dark:text-gray-400">
+            <span className="text-xs font-normal ml-2 text-gray-500 dark:text-gray-400">
               ({groupingTitle})
             </span>
           </h3>
-          <div className="flex space-x-2 text-sm">
+          <div className="flex flex-wrap space-x-2 text-xs">
             <label className="inline-flex items-center cursor-pointer" title="Verspätungen im Trend anzeigen">
               <input 
                 type="checkbox" 
@@ -229,7 +228,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
                 onChange={() => setChartVisibility(prev => ({...prev, verspaetungen: !prev.verspaetungen}))}
                 className="mr-1 w-3 h-3"
               />
-              <span className="text-purple-600 dark:text-purple-400">Verspätungen</span>
+              <span className="text-purple-600 dark:text-purple-400">Versp.</span>
             </label>
             <label className="inline-flex items-center cursor-pointer" title="Entschuldigte Fehltage im Trend anzeigen">
               <input 
@@ -262,7 +261,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
         </div>
         <div className="overflow-x-auto">
           <div style={{ 
-            width: attendanceOverTime.length > 8 ? `${Math.max(attendanceOverTime.length * 80, 1200)}px` : '100%', 
+            width: attendanceOverTime.length > 8 ? `${Math.max(attendanceOverTime.length * 80, 800)}px` : '100%', 
             minWidth: '100%',
             height: '300px' 
           }}>
@@ -285,13 +284,13 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
       {/* Wochentagsanalyse - Jetzt auch full width */}
       <div className={CARD_CLASSES}>
         <div className="flex justify-between items-center mb-4">
-          <h3 className={CARD_TITLE_CLASSES.replace('mb-4', '')}>
+          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
             Wochentagsanalyse
-            <span className="text-sm font-normal ml-2 text-gray-500 dark:text-gray-400">
+            <span className="text-xs font-normal ml-2 text-gray-500 dark:text-gray-400">
               (Mo-Fr)
             </span>
           </h3>
-          <div className="flex space-x-2 text-sm">
+          <div className="flex flex-wrap space-x-2 text-xs">
             <label className="inline-flex items-center cursor-pointer" title="Verspätungen nach Wochentag anzeigen">
               <input 
                 type="checkbox" 
@@ -332,8 +331,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
         </div>
         <div className="overflow-x-auto">
           <div style={{ 
-            width: dayOfWeekData.length > 5 ? `${Math.max(dayOfWeekData.length * 80, 1200)}px` : '100%', 
-            minWidth: '100%',
+            width: '100%',
             height: '300px' 
           }}>
             <AttendanceBarChart 
@@ -349,7 +347,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
                 title="Kritischer Tag (Verspätungen)" 
                 value={`${maxVerspaetungenTag.name} (${maxVerspaetungenTag.verspaetungen})`}
                 className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
-                valueClassName="text-purple-600 dark:text-purple-400"
+                valueClassName="text-purple-600 dark:text-purple-400 text-sm"
               />
             )}
             {maxFehlzeitenUnentschTag && (
@@ -357,7 +355,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
                 title="Kritischer Tag (unentsch. Fehltage)" 
                 value={`${maxFehlzeitenUnentschTag.name} (${maxFehlzeitenUnentschTag.fehlzeitenUnentsch})`}
                 className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
-                valueClassName="text-red-600 dark:text-red-400"
+                valueClassName="text-red-600 dark:text-red-400 text-sm"
               />
             )}
             {dayOfWeekData.length > 0 && (
@@ -369,7 +367,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
                     day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
                     dayOfWeekData[0]).fehlzeitenGesamt})`}
                 className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
-                valueClassName="text-blue-600 dark:text-blue-400"
+                valueClassName="text-blue-600 dark:text-blue-400 text-sm"
               />
             )}
           </div>

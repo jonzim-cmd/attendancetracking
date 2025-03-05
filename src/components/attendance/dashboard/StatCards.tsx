@@ -22,6 +22,9 @@ interface StatCardsProps {
   weeklyStats?: Record<string, any>;
 }
 
+// Deaktivierungs-Flag
+const isEnabled = false;
+
 const StatCards: React.FC<StatCardsProps> = ({
   absenceTypes,
   weeklyTrends,
@@ -33,6 +36,11 @@ const StatCards: React.FC<StatCardsProps> = ({
   onShowCriticalPatterns,
   weeklyStats = {}
 }) => {
+  // Wenn deaktiviert, nichts rendern
+  if (!isEnabled) {
+    return null; // Oder <></> für ein leeres Fragment
+  }
+
   // Berechnung der Gesamtzahlen
   const totalVerspaetungen = weeklyTrends.reduce((sum, week) => sum + week.verspaetungen, 0);
   const totalFehlzeitenGesamt = weeklyTrends.reduce((sum, week) => sum + week.fehlzeitenTotal, 0);
@@ -53,13 +61,13 @@ const StatCards: React.FC<StatCardsProps> = ({
   const isSingleStudentSelected = getFilteredStudents().length === 1;
 
   return (
-    <div className={`${CARD_CLASSES} h-full overflow-auto`}>
+    <div className={`${CARD_CLASSES} h-full overflow-auto max-w-fit`}>
       {/* Überschrift */}
-      <h3 className="text-sm font-semibold mb-3 text-gray-800 dark:text-gray-100">Dashboard Übersicht</h3>
+      <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-100">Dashboard Übersicht</h3>
       
       {/* Übersichtskachel - Kompakt mit Flex statt Grid */}
       <div className="mb-4">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 justify-start">
           <StatBox
             label="Schüler"
             value={getFilteredStudents().length.toString()}
@@ -96,7 +104,7 @@ const StatCards: React.FC<StatCardsProps> = ({
       {/* Kachel für kritische Muster (nur wenn ein Schüler ausgewählt ist) */}
       {isSingleStudentSelected && (
         <div className="mt-4">
-          <h3 className="text-sm font-semibold mb-3 text-gray-800 dark:text-gray-100">Kritische Muster</h3>
+          <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-100">Kritische Muster</h3>
           <div className="space-y-2">
             {(() => {
               // Einzelner Schüler - Daten extrahieren
@@ -149,12 +157,12 @@ const StatCards: React.FC<StatCardsProps> = ({
                 : 0;
               
               return (
-                <div className="grid grid-cols-1 gap-2">
+                <div className="grid grid-cols-1 gap-2 max-w-md">
                   {/* 2.1 Alert bei unentschuldigten Fehltagen */}
                   {hasUnexcusedAbsences && (
                     <div className="p-2 bg-transparent dark:bg-transparent border border-red-200 dark:border-red-700 rounded-md">
-                      <div className="font-medium text-red-600 dark:text-red-400 text-xs">Unentschuldigte Fehltage</div>
-                      <div className="text-xs text-gray-700 dark:text-gray-300">
+                      <div className="font-medium text-red-600 dark:text-red-400 text-base">Unentschuldigte Fehltage</div>
+                      <div className="text-base text-gray-700 dark:text-gray-300">
                         <span className="font-bold">{stats.fehlzeiten_unentsch}</span> unentsch. Fehltage im Zeitraum
                       </div>
                     </div>
@@ -163,8 +171,8 @@ const StatCards: React.FC<StatCardsProps> = ({
                   {/* 2.2 Alert bei hoher Anzahl von Verspätungen */}
                   {hasLateAlert && (
                     <div className="p-2 bg-transparent dark:bg-transparent border border-yellow-200 dark:border-yellow-700 rounded-md">
-                      <div className="font-medium text-yellow-600 dark:text-yellow-400 text-xs">Verspätungen</div>
-                      <div className="text-xs text-gray-700 dark:text-gray-300">
+                      <div className="font-medium text-yellow-600 dark:text-yellow-400 text-base">Verspätungen</div>
+                      <div className="text-base text-gray-700 dark:text-gray-300">
                         <span className="font-bold">{stats.verspaetungen_unentsch}</span> Versp. (Schwelle: {lateThreshold})
                       </div>
                     </div>
@@ -172,8 +180,8 @@ const StatCards: React.FC<StatCardsProps> = ({
                   
                   {/* 2.3 Fehltage-Ratio */}
                   <div className="p-2 bg-transparent dark:bg-transparent border border-blue-200 dark:border-blue-700 rounded-md">
-                    <div className="font-medium text-blue-600 dark:text-blue-400 text-xs">Fehltage-Ratio</div>
-                    <div className="text-xs text-gray-700 dark:text-gray-300">
+                    <div className="font-medium text-blue-600 dark:text-blue-400 text-base">Fehltage-Ratio</div>
+                    <div className="text-base text-gray-700 dark:text-gray-300">
                       <span className="font-bold">{absenceRatio.toFixed(1)}%</span> ({totalAbsences} von ca. {schoolDays} Tagen)
                     </div>
                   </div>
@@ -181,8 +189,8 @@ const StatCards: React.FC<StatCardsProps> = ({
                   {/* 2.5 Quote der unentschuldigten Fehltage */}
                   {totalAbsences > 0 && (
                     <div className="p-2 bg-transparent dark:bg-transparent border border-purple-200 dark:border-purple-700 rounded-md">
-                      <div className="font-medium text-purple-600 dark:text-purple-400 text-xs">Unentsch. Quote</div>
-                      <div className="text-xs text-gray-700 dark:text-gray-300">
+                      <div className="font-medium text-purple-600 dark:text-purple-400 text-base">Unentsch. Quote</div>
+                      <div className="text-base text-gray-700 dark:text-gray-300">
                         <span className="font-bold">{unexcusedRate.toFixed(1)}%</span> ({stats.fehlzeiten_unentsch} von {totalAbsences})
                       </div>
                     </div>
@@ -190,16 +198,16 @@ const StatCards: React.FC<StatCardsProps> = ({
                   
                   {/* 2.6 Vergleich mit Klassendurchschnitt */}
                     <div className="p-2 bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600 rounded-md">
-                      <div className="font-medium text-gray-600 dark:text-gray-400 text-xs">Vergleich zum Durchschnitt</div>
-                      <div className="text-xs text-gray-700 dark:text-gray-300">
-                        <div className="flex justify-between">
-                          <span>Fehltage:</span>
+                      <div className="font-medium text-gray-600 dark:text-gray-400 text-base">Vergleich zum Durchschnitt</div>
+                      <div className="text-base text-gray-700 dark:text-gray-300">
+                        <div className="flex">
+                          <span className="w-28">Fehltage:</span>
                           <span className={fehlzeitenComparedToAverage > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}>
                             {fehlzeitenComparedToAverage > 0 ? '+' : ''}{fehlzeitenComparedToAverage}%
                           </span>
                         </div>
-                        <div className="flex justify-between mt-1">
-                          <span>Verspätungen:</span>
+                        <div className="flex mt-1">
+                          <span className="w-28">Verspätungen:</span>
                           <span className={verspaetungenComparedToAverage > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}>
                             {verspaetungenComparedToAverage > 0 ? '+' : ''}{verspaetungenComparedToAverage}%
                           </span>
@@ -227,12 +235,12 @@ const StatBox: React.FC<{
 }> = ({ label, value, color = "bg-transparent dark:bg-transparent", tooltip, onClick, isClickable = false }) => {
   return (
     <div 
-      className={`p-2 rounded border border-gray-200 dark:border-gray-700 ${color} flex flex-col justify-center items-center ${isClickable ? 'cursor-pointer hover:opacity-80' : ''} min-w-[80px]`}
+      className={`p-2 rounded border border-gray-200 dark:border-gray-700 ${color} flex flex-col justify-center items-center ${isClickable ? 'cursor-pointer hover:opacity-80' : ''} min-w-[80px] max-w-[100px]`}
       title={tooltip}
       onClick={isClickable ? onClick : undefined}
     >
-      <div className="text-xs font-medium opacity-80">{label}</div>
-      <div className="text-sm font-medium">{value}</div>
+      <div className="text-base font-medium opacity-80">{label}</div>
+      <div className="text-base font-medium">{value}</div>
     </div>
   );
 };

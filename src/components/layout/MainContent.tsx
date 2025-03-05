@@ -2,6 +2,7 @@ import React from 'react';
 import NormalView from '@/components/attendance/NormalView';
 import DashboardView from '@/components/attendance/DashboardView';
 import { StudentStats } from '@/types';
+import { useFilters } from '@/contexts/FilterContext'; // NEU: useFilters importieren
 
 interface MainContentProps {
   getFilteredStudents: () => [string, StudentStats][];
@@ -46,10 +47,16 @@ const MainContent: React.FC<MainContentProps> = ({
   setActiveFilters,
   visibleColumns,
   
-  // Neue Props mit Standardwerten
-  viewMode = 'table',
+  // Prop für Abwärtskompatibilität
+  viewMode: propViewMode = 'table',
   rawData = null
 }) => {
+  // NEU: Context für viewMode verwenden
+  const { viewMode: contextViewMode } = useFilters();
+  
+  // Für sanfte Migration nutzen wir die Prop mit Priorität
+  const effectiveViewMode = propViewMode !== 'table' ? propViewMode : contextViewMode;
+  
   return (
     <main
       className="overflow-hidden bg-chatGray-light dark:bg-chatGray-dark min-h-screen transition-all duration-300"
@@ -60,7 +67,7 @@ const MainContent: React.FC<MainContentProps> = ({
       }}
     >
       <div className="p-6">
-        {viewMode === 'table' ? (
+        {effectiveViewMode === 'table' ? (
           <NormalView
             getFilteredStudents={getFilteredStudents}
             detailedData={detailedData}
@@ -89,7 +96,7 @@ const MainContent: React.FC<MainContentProps> = ({
             selectedWeeks={selectedWeeks}
             availableClasses={availableClasses}
             selectedClasses={selectedClasses}
-            weeklyStats={weeklyStats} // weeklyStats an DashboardView übergeben
+            weeklyStats={weeklyStats}
           />
         )}
       </div>

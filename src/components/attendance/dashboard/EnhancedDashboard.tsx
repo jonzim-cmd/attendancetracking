@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import FilterPanel from './FilterPanel';
+import { useFilters } from '@/contexts/FilterContext'; // NEU: useFilters importieren
+// FilterPanel wird nicht mehr importiert
 import StatCards from './StatCards';
 import TrendCharts from './TrendCharts';
 import ComparisonView from './ComparisonView';
@@ -35,11 +36,14 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   selectedClasses: propSelectedClasses,
   weeklyStats = {}, // Default-Wert für weeklyStats
 }) => {
-  // Internal state for selected classes and students
-  const [selectedClasses, setSelectedClasses] = useState<string[]>(propSelectedClasses);
-  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  // NEU: Zugriff auf Filter über Context statt lokale Zustände
+  const {
+    selectedDashboardClasses,
+    selectedStudents,
+    groupingOption
+  } = useFilters();
   
-  // States for various data preparations
+  // States für verschiedene Datenaufbereitungen
   const [weeklyTrends, setWeeklyTrends] = useState<any[]>([]);
   const [absenceTypes, setAbsenceTypes] = useState<any[]>([]);
   const [dayOfWeekData, setDayOfWeekData] = useState<any[]>([]);
@@ -56,7 +60,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   const [showCriticalPatternsModal, setShowCriticalPatternsModal] = useState(false);
   
   // Chart settings
-  const [groupingOption, setGroupingOption] = useState<'weekly' | 'monthly'>('weekly');
   const [viewMode, setViewMode] = useState<'dashboard' | 'comparison'>('dashboard');
   
   // Chart visibility options
@@ -80,9 +83,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     
     // Filter by selected classes if any
     let result = allStudents;
-    if (selectedClasses.length > 0) {
+    if (selectedDashboardClasses.length > 0) {
       result = result.filter(([_, stats]) => 
-        selectedClasses.includes(stats.klasse)
+        selectedDashboardClasses.includes(stats.klasse)
       );
     }
     
@@ -94,17 +97,12 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     }
     
     return result;
-  }, [getFilteredStudents, selectedClasses, selectedStudents]);
+  }, [getFilteredStudents, selectedDashboardClasses, selectedStudents]);
   
   // Effect to prepare filtered students list based on current filters
   useEffect(() => {
     setFilteredStudentStats(getFilteredStudentsWithFilters());
   }, [getFilteredStudentsWithFilters]);
-  
-  // Effect to update selected classes when props change
-  useEffect(() => {
-    setSelectedClasses(propSelectedClasses);
-  }, [propSelectedClasses]);
   
   // Calculate critical students
   const calculateCriticalStudents = useCallback(() => {
@@ -124,39 +122,39 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   const memoizedWeeklyTrends = useCallback(() => {
     if (!rawData || !startDate || !endDate) return [];
     const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
-    return prepareWeeklyTrends(rawData, selectedWeeks, selectedClasses, selectedStudents, entityType);
-  }, [rawData, startDate, endDate, selectedWeeks, selectedClasses, selectedStudents]);
+    return prepareWeeklyTrends(rawData, selectedWeeks, selectedDashboardClasses, selectedStudents, entityType);
+  }, [rawData, startDate, endDate, selectedWeeks, selectedDashboardClasses, selectedStudents]);
   
   const memoizedAbsenceTypes = useCallback(() => {
     if (!rawData || !startDate || !endDate) return [];
     const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
-    return prepareAbsenceTypes(rawData, startDate, endDate, selectedClasses, selectedStudents, entityType);
-  }, [rawData, startDate, endDate, selectedClasses, selectedStudents]);
+    return prepareAbsenceTypes(rawData, startDate, endDate, selectedDashboardClasses, selectedStudents, entityType);
+  }, [rawData, startDate, endDate, selectedDashboardClasses, selectedStudents]);
   
   const memoizedDayOfWeekData = useCallback(() => {
     if (!rawData || !startDate || !endDate) return [];
     const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
-    return prepareDayOfWeekAnalysis(rawData, startDate, endDate, selectedClasses, selectedStudents, entityType);
-  }, [rawData, startDate, endDate, selectedClasses, selectedStudents]);
+    return prepareDayOfWeekAnalysis(rawData, startDate, endDate, selectedDashboardClasses, selectedStudents, entityType);
+  }, [rawData, startDate, endDate, selectedDashboardClasses, selectedStudents]);
 
   // Separate cached data preparations for weekly and monthly views
   const memoizedAttendanceOverTimeWeekly = useCallback(() => {
     if (!rawData || !startDate || !endDate) return [];
     const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
-    return prepareAttendanceOverTime(rawData, startDate, endDate, 'weekly', selectedClasses, selectedStudents, entityType);
-  }, [rawData, startDate, endDate, selectedClasses, selectedStudents]);
+    return prepareAttendanceOverTime(rawData, startDate, endDate, 'weekly', selectedDashboardClasses, selectedStudents, entityType);
+  }, [rawData, startDate, endDate, selectedDashboardClasses, selectedStudents]);
   
   const memoizedAttendanceOverTimeMonthly = useCallback(() => {
     if (!rawData || !startDate || !endDate) return [];
     const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
-    return prepareAttendanceOverTime(rawData, startDate, endDate, 'monthly', selectedClasses, selectedStudents, entityType);
-  }, [rawData, startDate, endDate, selectedClasses, selectedStudents]);
+    return prepareAttendanceOverTime(rawData, startDate, endDate, 'monthly', selectedDashboardClasses, selectedStudents, entityType);
+  }, [rawData, startDate, endDate, selectedDashboardClasses, selectedStudents]);
   
   const memoizedEntschuldigungsverhalten = useCallback(() => {
     if (!rawData || !startDate || !endDate) return [];
     const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
-    return prepareEntschuldigungsverhalten(rawData, startDate, endDate, selectedClasses, selectedStudents, groupingOption, entityType);
-  }, [rawData, startDate, endDate, selectedClasses, selectedStudents, groupingOption]);
+    return prepareEntschuldigungsverhalten(rawData, startDate, endDate, selectedDashboardClasses, selectedStudents, groupingOption, entityType);
+  }, [rawData, startDate, endDate, selectedDashboardClasses, selectedStudents, groupingOption]);
 
   // Effect to prepare all data when filters change
   useEffect(() => {
@@ -181,7 +179,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     startDate, 
     endDate, 
     selectedWeeks, 
-    selectedClasses, 
+    selectedDashboardClasses, 
     selectedStudents,
     groupingOption,
     calculateCriticalStudents,
@@ -193,13 +191,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     memoizedEntschuldigungsverhalten
   ]);
   
-  // Handler to update classes
-  const handleClassesChange = (classes: string[]) => {
-    setSelectedClasses(classes);
-    // Reset student selection when classes change
-    setSelectedStudents([]);
-  };
-  
   if (!rawData) {
     return (
       <div className="p-4 text-center text-gray-500 dark:text-gray-400">
@@ -210,17 +201,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   
   return (
     <div className="space-y-4">
-      {/* Filter Panel */}
-      <FilterPanel 
-        availableClasses={availableClasses}
-        selectedClasses={selectedClasses}
-        onClassesChange={handleClassesChange}
-        getFilteredStudents={getFilteredStudents}
-        selectedStudents={selectedStudents}
-        onStudentsChange={setSelectedStudents}
-        groupingOption={groupingOption}
-        onGroupingChange={setGroupingOption}
-      />
+      {/* FilterPanel wurde entfernt - Filter kommen jetzt aus der HeaderBar via Context */}
       
       {viewMode === 'dashboard' ? (
         <>
@@ -237,7 +218,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
                 onShowCriticalStudents={() => setShowCriticalStudentsModal(true)}
                 onShowCriticalDays={() => setShowCriticalDaysModal(true)}
                 onShowCriticalPatterns={() => setShowCriticalPatternsModal(true)}
-                weeklyStats={weeklyStats}
+                weeklyStats={weeklyStats} // weeklyStats an StatCards übergeben
               />
             </div>
             
@@ -245,7 +226,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
             <div className="lg:col-span-5">
               <StudentRanking
                 filteredStudents={filteredStudentStats}
-                selectedClasses={selectedClasses}
+                selectedClasses={selectedDashboardClasses}
                 selectedStudents={selectedStudents}
               />
             </div>
@@ -270,10 +251,10 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
             rawData, 
             startDate, 
             endDate, 
-            selectedStudents.length > 0 ? selectedStudents : selectedClasses,
+            selectedStudents.length > 0 ? selectedStudents : selectedDashboardClasses,
             selectedStudents.length > 0 ? 'students' : 'classes'
           )}
-          selectedEntities={selectedStudents.length > 0 ? selectedStudents : selectedClasses}
+          selectedEntities={selectedStudents.length > 0 ? selectedStudents : selectedDashboardClasses}
           entityType={selectedStudents.length > 0 ? 'students' : 'classes'}
           onReturnToDashboard={() => setViewMode('dashboard')}
           startDate={startDate}

@@ -5,6 +5,7 @@ import MainContent from '@/components/layout/MainContent';
 import { exportToExcel, exportToCSV, exportToPDF } from '@/components/attendance/ExportButtons';
 import { processData, calculateSchoolYearStats, calculateWeeklyStats } from '@/lib/attendance-utils';
 import { ProcessedData, StudentStats } from '@/types';
+import { FilterProvider } from '@/contexts/FilterContext'; // NEU: FilterProvider importieren
 
 const AttendanceAnalyzer: React.FC = () => {
   const [rawData, setRawData] = useState<any>(null);
@@ -371,74 +372,82 @@ const AttendanceAnalyzer: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-chatGray-light dark:bg-chatGray-dark ${isDarkMode ? 'dark' : ''}`}>
-      <HeaderBar
-        filterUnexcusedLate={filterUnexcusedLate}
-        filterUnexcusedAbsent={filterUnexcusedAbsent}
-        onFilterUnexcusedLateChange={setFilterUnexcusedLate}
-        onFilterUnexcusedAbsentChange={setFilterUnexcusedAbsent}
-        minUnexcusedLates={minUnexcusedLates}
-        minUnexcusedAbsences={minUnexcusedAbsences}
-        onMinUnexcusedLatesChange={setMinUnexcusedLates}
-        onMinUnexcusedAbsencesChange={setMinUnexcusedAbsences}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        availableClasses={availableClasses}
-        selectedClasses={selectedClasses}
-        onClassesChange={setSelectedClasses}
-        isDarkMode={isDarkMode}
-        toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
-        onReset={resetAll}
-        visibleColumns={visibleColumns}
-        onToggleColumnGroup={toggleColumnGroup}
-        expandedStudents={expandedStudents}
-        onCloseAllDetails={closeAllDetails}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-      />
-      <Sidebar
-        startDate={startDate}
-        endDate={endDate}
-        onStartDateChange={setStartDate}
-        onEndDateChange={setEndDate}
-        onQuickSelect={handleQuickSelect}
-        selectedWeeks={selectedWeeks}
-        onSelectedWeeksChange={setSelectedWeeks}
-        onFileUpload={handleFileProcessed}
-        onExportExcel={handleExportExcel}
-        onExportCSV={handleExportCSV}
-        onExportPDF={handleExportPDF}
-        uploadTrigger={uploadTrigger}
-        hasFileUploaded={hasFileUploaded}
-      />
-      <MainContent
-        getFilteredStudents={getFilteredStudents}
-        detailedData={detailedData}
-        schoolYearDetailedData={schoolYearDetailedData}
-        weeklyDetailedData={weeklyDetailedData}
-        startDate={startDate}
-        endDate={endDate}
-        schoolYearStats={schoolYearStats}
-        weeklyStats={weeklyStats}
-        selectedWeeks={selectedWeeks}
-        availableClasses={availableClasses}
-        selectedClasses={selectedClasses}
-        onClassesChange={setSelectedClasses}
-        expandedStudents={expandedStudents}
-        setExpandedStudents={setExpandedStudents}
-        activeFilters={activeFilters}
-        setActiveFilters={setActiveFilters}
-        visibleColumns={visibleColumns}
-        viewMode={viewMode}
-        rawData={rawData}
-      />
-      
-      {error && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
-      )}
-    </div>
+    // NEU: Wir umschließen alles mit dem FilterProvider
+    <FilterProvider 
+      propSelectedClasses={selectedClasses} 
+      propViewMode={viewMode}
+      onViewModeChange={setViewMode}
+      getFilteredStudents={getFilteredStudents}
+    >
+      <div className={`min-h-screen bg-chatGray-light dark:bg-chatGray-dark ${isDarkMode ? 'dark' : ''}`}>
+        <HeaderBar
+          filterUnexcusedLate={filterUnexcusedLate}
+          filterUnexcusedAbsent={filterUnexcusedAbsent}
+          onFilterUnexcusedLateChange={setFilterUnexcusedLate}
+          onFilterUnexcusedAbsentChange={setFilterUnexcusedAbsent}
+          minUnexcusedLates={minUnexcusedLates}
+          minUnexcusedAbsences={minUnexcusedAbsences}
+          onMinUnexcusedLatesChange={setMinUnexcusedLates}
+          onMinUnexcusedAbsencesChange={setMinUnexcusedAbsences}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          availableClasses={availableClasses}
+          selectedClasses={selectedClasses}
+          onClassesChange={setSelectedClasses}
+          isDarkMode={isDarkMode}
+          toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+          onReset={resetAll}
+          visibleColumns={visibleColumns}
+          onToggleColumnGroup={toggleColumnGroup}
+          expandedStudents={expandedStudents}
+          onCloseAllDetails={closeAllDetails}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
+        <Sidebar
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+          onQuickSelect={handleQuickSelect}
+          selectedWeeks={selectedWeeks}
+          onSelectedWeeksChange={setSelectedWeeks}
+          onFileUpload={handleFileProcessed}
+          onExportExcel={handleExportExcel}
+          onExportCSV={handleExportCSV}
+          onExportPDF={handleExportPDF}
+          uploadTrigger={uploadTrigger}
+          hasFileUploaded={hasFileUploaded}
+        />
+        <MainContent
+          getFilteredStudents={getFilteredStudents}
+          detailedData={detailedData}
+          schoolYearDetailedData={schoolYearDetailedData}
+          weeklyDetailedData={weeklyDetailedData}
+          startDate={startDate}
+          endDate={endDate}
+          schoolYearStats={schoolYearStats}
+          weeklyStats={weeklyStats}
+          selectedWeeks={selectedWeeks}
+          availableClasses={availableClasses}
+          selectedClasses={selectedClasses}
+          onClassesChange={setSelectedClasses}
+          expandedStudents={expandedStudents}
+          setExpandedStudents={setExpandedStudents}
+          activeFilters={activeFilters}
+          setActiveFilters={setActiveFilters}
+          visibleColumns={visibleColumns}
+          viewMode={viewMode}
+          rawData={rawData}
+        />
+        
+        {error && (
+          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+      </div>
+    </FilterProvider>
   );
 };
 

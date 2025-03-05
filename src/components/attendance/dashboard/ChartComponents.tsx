@@ -44,7 +44,7 @@ export const AttendanceLineChart: React.FC<LineChartProps> = ({
           dy={16} 
           textAnchor="middle" 
           fill="currentColor" 
-          fontSize={11}
+          fontSize={14}
         >
           {value}
         </text>
@@ -58,12 +58,12 @@ export const AttendanceLineChart: React.FC<LineChartProps> = ({
       
       return (
         <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
-          <p className="text-gray-700 dark:text-gray-300 font-medium mb-1">{formattedLabel}</p>
+          <p className="text-gray-700 dark:text-gray-300 font-medium mb-1 text-base">{formattedLabel}</p>
           <div className="flex flex-col space-y-1">
             {payload.map((entry: any, index: number) => (
               <div key={`item-${index}`} className="flex items-center">
                 <div className="w-3 h-3 mr-2" style={{ backgroundColor: entry.color }}></div>
-                <span className="text-gray-700 dark:text-gray-300">
+                <span className="text-gray-700 dark:text-gray-300 text-base">
                   {entry.name}: {entry.value}
                 </span>
               </div>
@@ -83,22 +83,24 @@ export const AttendanceLineChart: React.FC<LineChartProps> = ({
           <CartesianGrid strokeDasharray="3 3" stroke="#777" opacity={0.2} />
           <XAxis 
             dataKey="name" 
-            tick={formatXAxis ? <CustomizedXAxisTick /> : { fill: 'currentColor' }} 
+            tick={formatXAxis ? <CustomizedXAxisTick /> : { fill: 'currentColor', fontSize: 14 }} 
             axisLine={{ stroke: '#777' }}
             tickLine={{ stroke: '#777' }}
             height={30}
           />
           <YAxis 
-            tick={{ fill: 'currentColor' }} 
+            tick={{ fill: 'currentColor', fontSize: 14 }} 
             axisLine={{ stroke: '#777' }}
             tickLine={{ stroke: '#777' }}
             domain={yAxisMax ? [0, yAxisMax] : [0, 'auto']}
+            allowDecimals={false}
+            tickFormatter={(value) => Math.round(value).toString()}
           />
           <Tooltip content={customTooltip || <DefaultCustomTooltip />} />
           <Legend 
             verticalAlign="bottom" 
             height={36} 
-            wrapperStyle={{ paddingTop: '10px' }}
+            wrapperStyle={{ paddingTop: '10px', fontSize: '14px' }}
           />
           {lines.map((line, index) => (
             <Line 
@@ -133,12 +135,12 @@ export const AttendanceBarChart: React.FC<BarChartProps> = ({ data, bars, averag
     if (active && payload && payload.length) {
       return (
         <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
-          <p className="text-gray-700 dark:text-gray-300 font-medium mb-1">{label}</p>
+          <p className="text-gray-700 dark:text-gray-300 font-medium mb-1 text-base">{label}</p>
           <div className="flex flex-col space-y-1">
             {payload.map((entry: any, index: number) => (
               <div key={`item-${index}`} className="flex items-center">
                 <div className="w-3 h-3 mr-2" style={{ backgroundColor: entry.color }}></div>
-                <span className="text-gray-700 dark:text-gray-300">
+                <span className="text-gray-700 dark:text-gray-300 text-base">
                   {entry.name}: {entry.value}
                 </span>
               </div>
@@ -158,17 +160,19 @@ export const AttendanceBarChart: React.FC<BarChartProps> = ({ data, bars, averag
           <CartesianGrid strokeDasharray="3 3" stroke="#777" opacity={0.2} />
           <XAxis 
             dataKey="name" 
-            tick={{ fill: 'currentColor' }} 
+            tick={{ fill: 'currentColor', fontSize: 14 }} 
             axisLine={{ stroke: '#777' }}
             tickLine={{ stroke: '#777' }}
           />
           <YAxis 
-            tick={{ fill: 'currentColor' }} 
+            tick={{ fill: 'currentColor', fontSize: 14 }} 
             axisLine={{ stroke: '#777' }}
             tickLine={{ stroke: '#777' }}
+            allowDecimals={false}
+            tickFormatter={(value) => Math.round(value).toString()}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Legend />
+          <Legend wrapperStyle={{ fontSize: '14px' }} />
           {bars.map((bar, index) => (
             <Bar 
               key={index}
@@ -179,7 +183,7 @@ export const AttendanceBarChart: React.FC<BarChartProps> = ({ data, bars, averag
           ))}
           {average !== undefined && (
             <ReferenceLine y={average} stroke="#999" strokeDasharray="3 3">
-              <Label value="Durchschnitt" position="top" fill="currentColor" />
+              <Label value="Durchschnitt" position="top" fill="currentColor" fontSize={14} />
             </ReferenceLine>
           )}
         </BarChart>
@@ -205,7 +209,7 @@ export const AttendancePieChart: React.FC<PieChartProps> = ({
     if (active && payload && payload.length) {
       return (
         <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
-          <p className="text-gray-700 dark:text-gray-300 font-medium">
+          <p className="text-gray-700 dark:text-gray-300 font-medium text-base">
             {payload[0].name}: {payload[0].value} ({(payload[0].percent * 100).toFixed(0)}%)
           </p>
         </div>
@@ -230,7 +234,7 @@ export const AttendancePieChart: React.FC<PieChartProps> = ({
         fill="currentColor" 
         textAnchor={x > cx ? 'start' : 'end'} 
         dominantBaseline="central"
-        fontSize={12}
+        fontSize={14}
       >
         {`${name}: ${(percent * 100).toFixed(0)}%`}
       </text>
@@ -284,8 +288,8 @@ export const InfoTile: React.FC<InfoTileProps> = ({ title, value, className = ""
 export const InsightTile: React.FC<{ title: string; content: string }> = ({ title, content }) => {
   return (
     <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800" title={content}>
-      <p className="font-medium mb-1 text-gray-800 dark:text-gray-100">{title}</p>
-      <p className="text-gray-700 dark:text-gray-300">{content}</p>
+      <p className="font-medium mb-1 text-gray-800 dark:text-gray-100 text-base">{title}</p>
+      <p className="text-gray-700 dark:text-gray-300 text-base">{content}</p>
     </div>
   );
 };

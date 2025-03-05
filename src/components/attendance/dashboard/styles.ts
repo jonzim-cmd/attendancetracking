@@ -39,7 +39,7 @@ export const DASHBOARD_CONTAINER_CLASSES = "grid grid-cols-1 md:grid-cols-2 gap-
 export const INFO_TILE_CLASSES = "p-4 bg-transparent dark:bg-transparent rounded-lg border border-gray-200 dark:border-gray-600";
 
 // Text-Styling für normale Beschreibungen
-export const TEXT_DESCRIPTION_CLASSES = "text-sm text-gray-600 dark:text-gray-300";
+export const TEXT_DESCRIPTION_CLASSES = "text-base text-gray-600 dark:text-gray-300";
 
 // Text-Styling für Werte in Info-Kacheln
 export const TEXT_VALUE_CLASSES = "text-2xl font-bold text-gray-800 dark:text-gray-100";

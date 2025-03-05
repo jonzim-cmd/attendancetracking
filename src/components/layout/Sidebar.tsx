@@ -16,6 +16,7 @@ interface SidebarProps {
   onExportPDF: () => void;
   uploadTrigger: number;
   hasFileUploaded: boolean;
+  quickSelectValue: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -32,6 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onExportPDF,
   uploadTrigger,
   hasFileUploaded,
+  quickSelectValue,
 }) => {
   const quickSelectOptions = [
     { value: 'thisWeek', label: 'Diese Woche' },
@@ -251,6 +253,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           />
           <label className="block text-xs text-gray-600 dark:text-gray-400 mt-2">Schnellauswahl</label>
           <select
+            value={quickSelectValue}
             onChange={(e) => onQuickSelect(e.target.value)}
             className="mt-1 w-full rounded px-2 py-1 bg-sidebar-btn-dropdown dark:bg-sidebar-btn-dropdown-dark hover:bg-sidebar-btn-dropdown-hover dark:hover:bg-sidebar-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
             title="Vordefinierte Zeiträume für schnelle Auswahl"

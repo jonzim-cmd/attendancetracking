@@ -32,6 +32,8 @@ const AttendanceAnalyzer: React.FC = () => {
   const [uploadTrigger, setUploadTrigger] = useState<number>(0);
   // Neue State-Variable für Datei-Upload-Status
   const [hasFileUploaded, setHasFileUploaded] = useState(false);
+  // Neuer State für Schnellauswahl
+  const [quickSelectValue, setQuickSelectValue] = useState('');
   
   // Aktualisierte visibleColumns-Struktur für feingranularere Kontrolle
   const [visibleColumns, setVisibleColumns] = useState<string[]>(['basic', 'verspaetungen', 'fehlzeiten', 'stats']);
@@ -106,6 +108,8 @@ const AttendanceAnalyzer: React.FC = () => {
     setActiveFilters(new Map());
     setVisibleColumns(['basic', 'verspaetungen', 'fehlzeiten', 'stats']);
     setViewMode('table'); // Zurück zur Tabellenansicht
+    // Schnellauswahl zurücksetzen
+    setQuickSelectValue('');
     // Trigger hochzählen um einen neuen Upload-Zyklus zu starten
     setUploadTrigger(prev => prev + 1);
   };
@@ -204,6 +208,9 @@ const AttendanceAnalyzer: React.FC = () => {
   };
 
   const handleQuickSelect = (value: string) => {
+    // Update des quickSelectValue
+    setQuickSelectValue(value);
+    
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
@@ -418,6 +425,7 @@ const AttendanceAnalyzer: React.FC = () => {
           onExportPDF={handleExportPDF}
           uploadTrigger={uploadTrigger}
           hasFileUploaded={hasFileUploaded}
+          quickSelectValue={quickSelectValue}
         />
         <MainContent
           getFilteredStudents={getFilteredStudents}

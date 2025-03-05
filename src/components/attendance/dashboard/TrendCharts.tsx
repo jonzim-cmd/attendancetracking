@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useRef, useEffect } from 'react';
 import { 
   CARD_CLASSES, 
   CARD_TITLE_CLASSES
@@ -52,6 +52,20 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   weekdayChartVisibility,
   setWeekdayChartVisibility
 }) => {
+  // Referenz für den scrollbaren Container
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Effect für initiales Scrollen zum Ende
+  useEffect(() => {
+    if (scrollContainerRef.current && attendanceOverTime.length > 0) {
+      const container = scrollContainerRef.current;
+      // Scrollen zum Ende des Containers
+      setTimeout(() => {
+        container.scrollLeft = container.scrollWidth - container.clientWidth;
+      }, 0);
+    }
+  }, [attendanceOverTime]);
+
   // Ermittle den geeigneten Gruppierungstitel basierend auf groupingOption
   const groupingTitle = {
     'weekly': 'Wöchentliche Gruppierung',
@@ -259,7 +273,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
             </label>
           </div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" ref={scrollContainerRef}>
           <div style={{ 
             width: attendanceOverTime.length > 8 ? `${Math.max(attendanceOverTime.length * 80, 800)}px` : '100%', 
             minWidth: '100%',

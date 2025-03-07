@@ -6,6 +6,8 @@ import { exportToExcel, exportToCSV, exportToPDF } from '@/components/attendance
 import { processData, calculateSchoolYearStats, calculateWeeklyStats } from '@/lib/attendance-utils';
 import { ProcessedData, StudentStats } from '@/types';
 import { FilterProvider, useFilters } from '@/contexts/FilterContext';
+import { getCurrentSchoolYear } from '@/lib/attendance-utils';
+
 
 const AttendanceAnalyzer: React.FC = () => {
   const [rawData, setRawData] = useState<any>(null);
@@ -34,6 +36,7 @@ const AttendanceAnalyzer: React.FC = () => {
   const [hasFileUploaded, setHasFileUploaded] = useState(false);
   // Neuer State für Schnellauswahl
   const [quickSelectValue, setQuickSelectValue] = useState('');
+  const schoolYear = getCurrentSchoolYear();
   
   // Aktualisierte visibleColumns-Struktur für feingranularere Kontrolle
   const [visibleColumns, setVisibleColumns] = useState<string[]>(['basic', 'verspaetungen', 'fehlzeiten', 'stats']);
@@ -322,10 +325,10 @@ const AttendanceAnalyzer: React.FC = () => {
         );
         break;
       }
-      case 'schoolYear': {
-        const schoolYear = { start: `${currentYear - 1}`, end: `${currentYear}` };
-        start = new Date(schoolYear.start + '-09-01T00:00:00');
-        end = new Date(schoolYear.end + '-07-31T23:59:59');
+      case 'schoolYear': {    
+        // Setze Start und Ende auf die berechneten Daten
+        start = schoolYear.startDate;
+        end = schoolYear.endDate;
         break;
       }
       default:

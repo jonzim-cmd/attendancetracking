@@ -118,8 +118,8 @@ export const processData = (
   const schoolYearDetails: Record<string, any> = {};
   const weeklyDetails: Record<string, DetailedStats> = {};
   const schoolYear = getCurrentSchoolYear();
-  const sjStartDate = new Date(schoolYear.start + '-09-01T00:00:00');
-  const sjEndDate = new Date(schoolYear.end + '-07-31T23:59:59');
+  const sjStartDate = schoolYear.startDate;
+  const sjEndDate = schoolYear.endDate;
 
   data.forEach((row) => {
     if (!row.Beginndatum || !row.Langname || !row.Vorname) return;
@@ -259,8 +259,8 @@ export const processData = (
 
 export const calculateSchoolYearStats = (data: any[]): Record<string, any> => {
   const schoolYear = getCurrentSchoolYear();
-  const sjStartDate = new Date(schoolYear.start + '-09-01T00:00:00');
-  const sjEndDate = new Date(schoolYear.end + '-07-31T23:59:59');
+  const sjStartDate = schoolYear.startDate;
+  const sjEndDate = schoolYear.endDate;
   const today = new Date();
 
   const stats: Record<string, { verspaetungen_unentsch: number; fehlzeiten_unentsch: number; fehlzeiten_gesamt: number }> = {};
@@ -357,8 +357,40 @@ export const calculateWeeklyStats = (data: any[], selectedWeeks: string): Record
   return stats;
 };
 
-const getCurrentSchoolYear = (): { start: string; end: string } => {
+// Neues Interface für das erweiterte SchoolYear-Objekt
+interface SchoolYear {
+  start: string;       // Startjahr als String (für Kompatibilität)
+  end: string;         // Endjahr als String (für Kompatibilität)
+  startDate: Date;     // Tatsächliches Startdatum (2. Montag im September)
+  endDate: Date;       // Tatsächliches Enddatum (letzter Freitag im Juli)
+}
+
+export const getCurrentSchoolYear = (): SchoolYear => {
   const today = new Date();
+  // Bestimme das relevante Startjahr basierend auf aktuellem Monat
   const year = today.getMonth() < 8 ? today.getFullYear() - 1 : today.getFullYear();
-  return { start: `${year}`, end: `${year + 1}` };
+  
+  // Berechne den zweiten Montag im September
+  let septemberFirst = new Date(year, 8, 1); // September (0-basierter Index)
+  let dayOfWeek = septemberFirst.getDay(); // 0 = Sonntag, 1 = Montag, ...
+  let daysToFirstMonday = dayOfWeek === 1 ? 0 : (dayOfWeek === 0 ? 1 : 8 - dayOfWeek);
+  let firstMonday = new Date(year, 8, 1 + daysToFirstMonday);
+  let secondMonday = new Date(year, 8, 1 + daysToFirstMonday + 7);
+  
+  // Berechne den letzten Freitag im Juli des Folgejahres
+  let julyLastDay = new Date(year + 1, 6, 31); // Juli (0-basierter Index)
+  let lastDayOfWeek = julyLastDay.getDay(); // 0 = Sonntag, 1 = Montag, ...
+  let daysFromFriday = lastDayOfWeek < 5 ? lastDayOfWeek + 2 : lastDayOfWeek - 5;
+  let lastFriday = new Date(year + 1, 6, 31 - daysFromFriday);
+  
+  // Korrekte Zeiteinstellungen
+  secondMonday.setHours(0, 0, 0, 0);
+  lastFriday.setHours(23, 59, 59, 999);
+  
+  return {
+    start: `${year}`,
+    end: `${year + 1}`,
+    startDate: secondMonday,
+    endDate: lastFriday
+  };
 };

@@ -208,7 +208,7 @@ export const AttendanceBarChart: React.FC<BarChartProps> = ({
         height={height} 
         fill={isCritical ? fill : fill} // Füllung bleibt gleich
         style={style}
-        // hier war die animate-pulse Klasse
+        // hier war die animate-pulse Klasse, so war es: className={isCritical ? "animate-pulse" : ""}
       />
     );
   };

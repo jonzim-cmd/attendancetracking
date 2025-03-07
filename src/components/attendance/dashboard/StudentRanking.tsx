@@ -7,6 +7,7 @@ interface StudentRankingProps {
   filteredStudents: [string, StudentStats][];
   selectedClasses: string[];
   selectedStudents: string[];
+  schoolYearStats?: Record<string, any>; // Added schoolYearStats prop
 }
 
 type SortColumn = 'name' | 'klasse' | 'fehlzeiten_unentsch' | 'fehlzeiten_gesamt' | 'verspaetungen';
@@ -18,14 +19,15 @@ const isEnabled = false;
 const StudentRanking: React.FC<StudentRankingProps> = ({
   filteredStudents,
   selectedClasses,
-  selectedStudents
+  selectedStudents,
+  schoolYearStats = {} // Default value
 }) => {
   const [sortColumn, setSortColumn] = useState<SortColumn>('fehlzeiten_unentsch');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   
   // Wenn deaktiviert, nichts rendern
   if (!isEnabled) {
-    return null; // Oder <></> für ein leeres Fragment
+    return null;
   }
 
   if (filteredStudents.length === 0) {
@@ -53,6 +55,13 @@ const StudentRanking: React.FC<StudentRankingProps> = ({
   };
   
   const studentsWithTotals = filteredStudents.map(([student, stats]) => {
+    // Get school year data if available, otherwise use default values
+    const schoolYearData = schoolYearStats[student] || { 
+      verspaetungen_unentsch: 0, 
+      fehlzeiten_unentsch: 0, 
+      fehlzeiten_gesamt: 0 
+    };
+    
     const fehlzeitenGesamt = stats.fehlzeiten_entsch + stats.fehlzeiten_unentsch + stats.fehlzeiten_offen;
     const verspaetungenGesamt = stats.verspaetungen_entsch + stats.verspaetungen_unentsch + stats.verspaetungen_offen;
     
@@ -62,7 +71,11 @@ const StudentRanking: React.FC<StudentRankingProps> = ({
       klasse: stats.klasse,
       fehlzeiten_unentsch: stats.fehlzeiten_unentsch,
       fehlzeitenGesamt,
-      verspaetungenGesamt
+      verspaetungenGesamt,
+      // Add school year stats for consistency
+      sj_verspaetungen_unentsch: schoolYearData.verspaetungen_unentsch,
+      sj_fehlzeiten_unentsch: schoolYearData.fehlzeiten_unentsch,
+      sj_fehlzeiten_gesamt: schoolYearData.fehlzeiten_gesamt
     };
   });
   

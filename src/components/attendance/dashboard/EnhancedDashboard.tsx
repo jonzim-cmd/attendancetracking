@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useFilters } from '@/contexts/FilterContext'; // NEU: useFilters importieren
-// FilterPanel wird nicht mehr importiert
+import { useFilters } from '@/contexts/FilterContext';
 import StatCards from './StatCards';
 import TrendCharts from './TrendCharts';
 import ComparisonView from './ComparisonView';
@@ -23,7 +22,8 @@ interface EnhancedDashboardProps {
   selectedWeeks: string;
   availableClasses: string[];
   selectedClasses: string[];
-  weeklyStats?: Record<string, any>; // Optional prop für weeklyStats
+  weeklyStats?: Record<string, any>;
+  schoolYearStats?: Record<string, any>; // Added schoolYearStats prop
 }
 
 const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
@@ -34,16 +34,16 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   selectedWeeks,
   availableClasses,
   selectedClasses: propSelectedClasses,
-  weeklyStats = {}, // Default-Wert für weeklyStats
+  weeklyStats = {},
+  schoolYearStats = {}, // Added with default value
 }) => {
-  // NEU: Zugriff auf Filter über Context statt lokale Zustände
   const {
     selectedDashboardClasses,
     selectedStudents,
     groupingOption
   } = useFilters();
   
-  // States für verschiedene Datenaufbereitungen
+  // States for various data preparations
   const [weeklyTrends, setWeeklyTrends] = useState<any[]>([]);
   const [absenceTypes, setAbsenceTypes] = useState<any[]>([]);
   const [dayOfWeekData, setDayOfWeekData] = useState<any[]>([]);
@@ -77,11 +77,10 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     fehlzeitenGesamt: true
   });
   
-  // Custom getter for filtered students based on our internal filters
+  // Custom getter for filtered students based on internal filters
   const getFilteredStudentsWithFilters = useCallback((): [string, StudentStats][] => {
     const allStudents = getFilteredStudents();
     
-    // Filter by selected classes if any
     let result = allStudents;
     if (selectedDashboardClasses.length > 0) {
       result = result.filter(([_, stats]) => 
@@ -89,7 +88,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       );
     }
     
-    // Filter by selected students if any
     if (selectedStudents.length > 0) {
       result = result.filter(([student]) => 
         selectedStudents.includes(student)
@@ -118,43 +116,96 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       }));
   }, [getFilteredStudentsWithFilters, rawData]);
   
-  // Memoized data preparation for different charts to improve performance
+  // Modified to use schoolYearStats for calculations
   const memoizedWeeklyTrends = useCallback(() => {
     if (!rawData || !startDate || !endDate) return [];
     const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
-    return prepareWeeklyTrends(rawData, selectedWeeks, selectedDashboardClasses, selectedStudents, entityType);
-  }, [rawData, startDate, endDate, selectedWeeks, selectedDashboardClasses, selectedStudents]);
+    return prepareWeeklyTrends(
+      rawData, 
+      selectedWeeks, 
+      selectedDashboardClasses, 
+      selectedStudents, 
+      entityType,
+      weeklyStats,    // Passing weeklyStats
+      schoolYearStats // Passing schoolYearStats
+    );
+  }, [rawData, startDate, endDate, selectedWeeks, selectedDashboardClasses, selectedStudents, weeklyStats, schoolYearStats]);
   
+  // Modified to use schoolYearStats for calculations
   const memoizedAbsenceTypes = useCallback(() => {
     if (!rawData || !startDate || !endDate) return [];
     const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
-    return prepareAbsenceTypes(rawData, startDate, endDate, selectedDashboardClasses, selectedStudents, entityType);
-  }, [rawData, startDate, endDate, selectedDashboardClasses, selectedStudents]);
+    return prepareAbsenceTypes(
+      rawData, 
+      startDate, 
+      endDate, 
+      selectedDashboardClasses, 
+      selectedStudents, 
+      entityType, 
+      schoolYearStats
+    );
+  }, [rawData, startDate, endDate, selectedDashboardClasses, selectedStudents, schoolYearStats]);
   
+  // Modified to use schoolYearStats for calculations
   const memoizedDayOfWeekData = useCallback(() => {
     if (!rawData || !startDate || !endDate) return [];
     const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
-    return prepareDayOfWeekAnalysis(rawData, startDate, endDate, selectedDashboardClasses, selectedStudents, entityType);
-  }, [rawData, startDate, endDate, selectedDashboardClasses, selectedStudents]);
+    return prepareDayOfWeekAnalysis(
+      rawData, 
+      startDate, 
+      endDate, 
+      selectedDashboardClasses, 
+      selectedStudents, 
+      entityType,
+      schoolYearStats
+    );
+  }, [rawData, startDate, endDate, selectedDashboardClasses, selectedStudents, schoolYearStats]);
 
   // Separate cached data preparations for weekly and monthly views
   const memoizedAttendanceOverTimeWeekly = useCallback(() => {
     if (!rawData || !startDate || !endDate) return [];
     const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
-    return prepareAttendanceOverTime(rawData, startDate, endDate, 'weekly', selectedDashboardClasses, selectedStudents, entityType);
-  }, [rawData, startDate, endDate, selectedDashboardClasses, selectedStudents]);
+    return prepareAttendanceOverTime(
+      rawData, 
+      startDate, 
+      endDate, 
+      'weekly', 
+      selectedDashboardClasses, 
+      selectedStudents, 
+      entityType,
+      schoolYearStats
+    );
+  }, [rawData, startDate, endDate, selectedDashboardClasses, selectedStudents, schoolYearStats]);
   
   const memoizedAttendanceOverTimeMonthly = useCallback(() => {
     if (!rawData || !startDate || !endDate) return [];
     const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
-    return prepareAttendanceOverTime(rawData, startDate, endDate, 'monthly', selectedDashboardClasses, selectedStudents, entityType);
-  }, [rawData, startDate, endDate, selectedDashboardClasses, selectedStudents]);
+    return prepareAttendanceOverTime(
+      rawData, 
+      startDate, 
+      endDate, 
+      'monthly', 
+      selectedDashboardClasses, 
+      selectedStudents, 
+      entityType,
+      schoolYearStats
+    );
+  }, [rawData, startDate, endDate, selectedDashboardClasses, selectedStudents, schoolYearStats]);
   
   const memoizedEntschuldigungsverhalten = useCallback(() => {
     if (!rawData || !startDate || !endDate) return [];
     const entityType = selectedStudents.length > 0 ? 'students' : 'classes';
-    return prepareEntschuldigungsverhalten(rawData, startDate, endDate, selectedDashboardClasses, selectedStudents, groupingOption, entityType);
-  }, [rawData, startDate, endDate, selectedDashboardClasses, selectedStudents, groupingOption]);
+    return prepareEntschuldigungsverhalten(
+      rawData, 
+      startDate, 
+      endDate, 
+      selectedDashboardClasses, 
+      selectedStudents, 
+      groupingOption, 
+      entityType,
+      schoolYearStats
+    );
+  }, [rawData, startDate, endDate, selectedDashboardClasses, selectedStudents, groupingOption, schoolYearStats]);
 
   // Effect to prepare all data when filters change
   useEffect(() => {
@@ -201,13 +252,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   
   return (
     <div className="space-y-4">
-      {/* FilterPanel wurde entfernt - Filter kommen jetzt aus der HeaderBar via Context */}
-      
       {viewMode === 'dashboard' ? (
         <>
-          {/* Neues Layout: StatCards und StudentRanking nebeneinander */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            {/* StatCards - Kombinierte Kachel für Übersicht und Kritische Muster */}
             <div className="lg:col-span-7">
               <StatCards 
                 absenceTypes={absenceTypes}
@@ -218,21 +265,21 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
                 onShowCriticalStudents={() => setShowCriticalStudentsModal(true)}
                 onShowCriticalDays={() => setShowCriticalDaysModal(true)}
                 onShowCriticalPatterns={() => setShowCriticalPatternsModal(true)}
-                weeklyStats={weeklyStats} // weeklyStats an StatCards übergeben
+                weeklyStats={weeklyStats}
+                schoolYearStats={schoolYearStats} // Added schoolYearStats
               />
             </div>
             
-            {/* Student Ranking - Flexibler Bereich auf der rechten Seite */}
             <div className="lg:col-span-5">
               <StudentRanking
                 filteredStudents={filteredStudentStats}
                 selectedClasses={selectedDashboardClasses}
                 selectedStudents={selectedStudents}
+                schoolYearStats={schoolYearStats} // Added schoolYearStats
               />
             </div>
           </div>
           
-          {/* Trend Charts - Volle Breite */}
           <TrendCharts 
             weeklyTrends={weeklyTrends}
             attendanceOverTime={attendanceOverTime}
@@ -252,7 +299,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
             startDate, 
             endDate, 
             selectedStudents.length > 0 ? selectedStudents : selectedDashboardClasses,
-            selectedStudents.length > 0 ? 'students' : 'classes'
+            selectedStudents.length > 0 ? 'students' : 'classes',
+            schoolYearStats // Added schoolYearStats
           )}
           selectedEntities={selectedStudents.length > 0 ? selectedStudents : selectedDashboardClasses}
           entityType={selectedStudents.length > 0 ? 'students' : 'classes'}
@@ -262,9 +310,10 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         />
       )}
       
-      {/* Modal für kritische Schüler */}
+      {/* Modals remain unchanged */}
       {showCriticalStudentsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowCriticalStudentsModal(false)}>
+          {/* Modal content unchanged */}
           <div 
             className="bg-table-light-base dark:bg-table-dark-base rounded-lg p-6 max-w-2xl w-full"
             onClick={e => e.stopPropagation()}
@@ -331,9 +380,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         </div>
       )}
       
-      {/* Modal für kritische Tage */}
       {showCriticalDaysModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowCriticalDaysModal(false)}>
+          {/* Modal content unchanged */}
           <div 
             className="bg-table-light-base dark:bg-table-dark-base rounded-lg p-6 max-w-2xl w-full"
             onClick={e => e.stopPropagation()}
@@ -410,9 +459,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         </div>
       )}
       
-      {/* Modal für kritische Muster */}
       {showCriticalPatternsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowCriticalPatternsModal(false)}>
+          {/* Modal content unchanged */}
           <div 
             className="bg-table-light-base dark:bg-table-dark-base rounded-lg p-6 max-w-2xl w-full"
             onClick={e => e.stopPropagation()}

@@ -20,6 +20,7 @@ interface StatCardsProps {
   onShowCriticalDays: () => void;
   onShowCriticalPatterns: () => void;
   weeklyStats?: Record<string, any>;
+  schoolYearStats?: Record<string, any>; // Added schoolYearStats prop
 }
 
 // Deaktivierungs-Flag
@@ -34,11 +35,13 @@ const StatCards: React.FC<StatCardsProps> = ({
   onShowCriticalStudents,
   onShowCriticalDays,
   onShowCriticalPatterns,
-  weeklyStats = {}
+  weeklyStats = {},
+  schoolYearStats = {} // Default value
 }) => {
-  // Wenn deaktiviert, nichts rendern
+  // Rest of the component remains unchanged
+  // If deactivated, return nothing
   if (!isEnabled) {
-    return null; // Oder <></> für ein leeres Fragment
+    return null;
   }
 
   // Berechnung der Gesamtzahlen

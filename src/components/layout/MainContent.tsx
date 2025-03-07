@@ -2,7 +2,7 @@ import React from 'react';
 import NormalView from '@/components/attendance/NormalView';
 import DashboardView from '@/components/attendance/DashboardView';
 import { StudentStats } from '@/types';
-import { useFilters } from '@/contexts/FilterContext'; // NEU: useFilters importieren
+import { useFilters } from '@/contexts/FilterContext';
 
 interface MainContentProps {
   getFilteredStudents: () => [string, StudentStats][];
@@ -23,11 +23,9 @@ interface MainContentProps {
   setActiveFilters: React.Dispatch<React.SetStateAction<Map<string, string>>>;
   visibleColumns: string[];
   
-  // Props für Summenzeile
   enableSummaryRow?: boolean;
   summaryRowSticky?: boolean;
   
-  // Props - als optional deklariert für Abwärtskompatibilität
   viewMode?: 'table' | 'dashboard';
   rawData?: any[] | null;
 }
@@ -51,18 +49,14 @@ const MainContent: React.FC<MainContentProps> = ({
   setActiveFilters,
   visibleColumns,
   
-  // Neue Props für Summenzeile mit Default-Werten
   enableSummaryRow = true,
   summaryRowSticky = true,
   
-  // Prop für Abwärtskompatibilität
   viewMode: propViewMode = 'table',
   rawData = null
 }) => {
-  // NEU: Context für viewMode verwenden
   const { viewMode: contextViewMode } = useFilters();
   
-  // Für sanfte Migration nutzen wir die Prop mit Priorität
   const effectiveViewMode = propViewMode !== 'table' ? propViewMode : contextViewMode;
   
   return (
@@ -70,8 +64,8 @@ const MainContent: React.FC<MainContentProps> = ({
       className="overflow-hidden bg-chatGray-light dark:bg-chatGray-dark min-h-screen transition-all duration-300"
       style={{
         marginLeft: 'var(--sidebar-width)',
-        paddingTop: '48px', // Feste Höhe statt pt-20 für konsistente Berechnung
-        paddingLeft: 'calc(var(--header-padding-left) + 0px)' // erhöhter Puffer von 8px auf 16px
+        paddingTop: '48px',
+        paddingLeft: 'calc(var(--header-padding-left) + 0px)'
       }}
     >
       <div className="p-6">
@@ -107,6 +101,7 @@ const MainContent: React.FC<MainContentProps> = ({
             availableClasses={availableClasses}
             selectedClasses={selectedClasses}
             weeklyStats={weeklyStats}
+            schoolYearStats={schoolYearStats} // Added schoolYearStats here
           />
         )}
       </div>

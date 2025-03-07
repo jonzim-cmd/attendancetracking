@@ -102,6 +102,7 @@ const MainContent: React.FC<MainContentProps> = ({
             selectedClasses={selectedClasses}
             weeklyStats={weeklyStats}
             schoolYearStats={schoolYearStats} // Added schoolYearStats here
+            weeklyDetailedData={weeklyDetailedData} 
           />
         )}
       </div>

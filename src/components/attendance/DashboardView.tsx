@@ -12,7 +12,8 @@ interface DashboardViewProps {
   availableClasses: string[];
   selectedClasses: string[];
   weeklyStats?: Record<string, any>;
-  schoolYearStats?: Record<string, any>; // Added schoolYearStats prop
+  schoolYearStats?: Record<string, any>;
+  weeklyDetailedData?: Record<string, any>; // Added weeklyDetailedData prop
 }
 
 const DashboardView: React.FC<DashboardViewProps> = ({
@@ -24,7 +25,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   availableClasses,
   selectedClasses,
   weeklyStats = {},
-  schoolYearStats = {}, // Added with default value
+  schoolYearStats = {},
+  weeklyDetailedData = {} // Added with default value
 }) => {
   if (!rawData) {
     return (
@@ -33,6 +35,14 @@ const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
     );
   }
+  
+  // Log for debugging purposes
+  console.log("DashboardView - Rendering with:", {
+    rawDataLength: rawData.length,
+    weeklyStatsKeys: Object.keys(weeklyStats).length,
+    schoolYearStatsKeys: Object.keys(schoolYearStats).length,
+    weeklyDetailedDataKeys: Object.keys(weeklyDetailedData).length
+  });
   
   return (
     <div className="space-y-2 pb-6 relative">
@@ -55,7 +65,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           availableClasses={availableClasses}
           selectedClasses={selectedClasses}
           weeklyStats={weeklyStats}
-          schoolYearStats={schoolYearStats} // Pass schoolYearStats to EnhancedDashboard
+          schoolYearStats={schoolYearStats}
+          weeklyDetailedData={weeklyDetailedData} // Pass weeklyDetailedData to EnhancedDashboard
         />
       </div>
     </div>

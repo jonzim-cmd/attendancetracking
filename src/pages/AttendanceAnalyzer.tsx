@@ -5,7 +5,7 @@ import MainContent from '@/components/layout/MainContent';
 import { exportToExcel, exportToCSV, exportToPDF } from '@/components/attendance/ExportButtons';
 import { processData, calculateSchoolYearStats, calculateWeeklyStats } from '@/lib/attendance-utils';
 import { ProcessedData, StudentStats } from '@/types';
-import { FilterProvider } from '@/contexts/FilterContext';
+import { FilterProvider, useFilters } from '@/contexts/FilterContext';
 
 const AttendanceAnalyzer: React.FC = () => {
   const [rawData, setRawData] = useState<any>(null);
@@ -180,6 +180,7 @@ const AttendanceAnalyzer: React.FC = () => {
     // spezifisch bei Klassenänderungen notwendig sind
   }, [selectedClasses]);
 
+  // Diese Funktion sollte für die Integration mit dem neuen AttendanceAnalyzerContent als Wrapper dienen
   const getFilteredStudents = (): [string, StudentStats][] => {
     if (!results) return [];
     return Object.entries(results)
@@ -378,8 +379,8 @@ const AttendanceAnalyzer: React.FC = () => {
     });
   };
 
+  // Die ursprüngliche AttendanceAnalyzer-Komponente bleibt als Container-Komponente
   return (
-    // Erweiterte Props für FilterProvider hinzufügen, um den searchQuery zu synchronisieren
     <FilterProvider 
       propSelectedClasses={selectedClasses} 
       propViewMode={viewMode}
@@ -388,76 +389,248 @@ const AttendanceAnalyzer: React.FC = () => {
       propSearchQuery={searchQuery}
       onSearchChange={setSearchQuery}
     >
-      <div className={`min-h-screen bg-chatGray-light dark:bg-chatGray-dark ${isDarkMode ? 'dark' : ''}`}>
-        <HeaderBar
-          filterUnexcusedLate={filterUnexcusedLate}
-          filterUnexcusedAbsent={filterUnexcusedAbsent}
-          onFilterUnexcusedLateChange={setFilterUnexcusedLate}
-          onFilterUnexcusedAbsentChange={setFilterUnexcusedAbsent}
-          minUnexcusedLates={minUnexcusedLates}
-          minUnexcusedAbsences={minUnexcusedAbsences}
-          onMinUnexcusedLatesChange={setMinUnexcusedLates}
-          onMinUnexcusedAbsencesChange={setMinUnexcusedAbsences}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          availableClasses={availableClasses}
-          selectedClasses={selectedClasses}
-          onClassesChange={setSelectedClasses}
-          isDarkMode={isDarkMode}
-          toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
-          onReset={resetAll}
-          visibleColumns={visibleColumns}
-          onToggleColumnGroup={toggleColumnGroup}
-          expandedStudents={expandedStudents}
-          onCloseAllDetails={closeAllDetails}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-        />
-        <Sidebar
-          startDate={startDate}
-          endDate={endDate}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
-          onQuickSelect={handleQuickSelect}
-          selectedWeeks={selectedWeeks}
-          onSelectedWeeksChange={setSelectedWeeks}
-          onFileUpload={handleFileProcessed}
-          onExportExcel={handleExportExcel}
-          onExportCSV={handleExportCSV}
-          onExportPDF={handleExportPDF}
-          uploadTrigger={uploadTrigger}
-          hasFileUploaded={hasFileUploaded}
-          quickSelectValue={quickSelectValue}
-        />
-        <MainContent
-          getFilteredStudents={getFilteredStudents}
-          detailedData={detailedData}
-          schoolYearDetailedData={schoolYearDetailedData}
-          weeklyDetailedData={weeklyDetailedData}
-          startDate={startDate}
-          endDate={endDate}
-          schoolYearStats={schoolYearStats}
-          weeklyStats={weeklyStats}
-          selectedWeeks={selectedWeeks}
-          availableClasses={availableClasses}
-          selectedClasses={selectedClasses}
-          onClassesChange={setSelectedClasses}
-          expandedStudents={expandedStudents}
-          setExpandedStudents={setExpandedStudents}
-          activeFilters={activeFilters}
-          setActiveFilters={setActiveFilters}
-          visibleColumns={visibleColumns}
-          viewMode={viewMode}
-          rawData={rawData}
-        />
-        
-        {error && (
-          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
-      </div>
+      <AttendanceAnalyzerContent
+        rawData={rawData}
+        results={results}
+        startDate={startDate}
+        endDate={endDate}
+        searchQuery={searchQuery}
+        error={error}
+        detailedData={detailedData}
+        schoolYearDetailedData={schoolYearDetailedData}
+        filterUnexcusedLate={filterUnexcusedLate}
+        filterUnexcusedAbsent={filterUnexcusedAbsent}
+        minUnexcusedLates={minUnexcusedLates}
+        minUnexcusedAbsences={minUnexcusedAbsences}
+        availableClasses={availableClasses}
+        selectedClasses={selectedClasses}
+        selectedWeeks={selectedWeeks}
+        schoolYearStats={schoolYearStats}
+        weeklyStats={weeklyStats}
+        weeklyDetailedData={weeklyDetailedData}
+        expandedStudents={expandedStudents}
+        setExpandedStudents={setExpandedStudents}
+        activeFilters={activeFilters}
+        setActiveFilters={setActiveFilters}
+        uploadTrigger={uploadTrigger}
+        hasFileUploaded={hasFileUploaded}
+        quickSelectValue={quickSelectValue}
+        visibleColumns={visibleColumns}
+        isDarkMode={isDarkMode}
+        viewMode={viewMode}
+        setSearchQuery={setSearchQuery}
+        setFilterUnexcusedLate={setFilterUnexcusedLate}
+        setFilterUnexcusedAbsent={setFilterUnexcusedAbsent}
+        setMinUnexcusedLates={setMinUnexcusedLates}
+        setMinUnexcusedAbsences={setMinUnexcusedAbsences}
+        setSelectedClasses={setSelectedClasses}
+        setIsDarkMode={setIsDarkMode}
+        resetAll={resetAll}
+        toggleColumnGroup={toggleColumnGroup}
+        closeAllDetails={closeAllDetails}
+        setViewMode={setViewMode}
+        setStartDate={setStartDate}
+        setEndDate={setEndDate}
+        handleQuickSelect={handleQuickSelect}
+        setSelectedWeeks={setSelectedWeeks}
+        handleFileProcessed={handleFileProcessed}
+        handleExportExcel={handleExportExcel}
+        handleExportCSV={handleExportCSV}
+        handleExportPDF={handleExportPDF}
+      />
     </FilterProvider>
+  );
+};
+
+// Neue Komponente, die den Hook useFilters verwenden kann, 
+// da sie innerhalb des FilterProvider-Kontexts verwendet wird
+const AttendanceAnalyzerContent: React.FC<{
+  rawData: any;
+  results: Record<string, StudentStats> | null;
+  startDate: string;
+  endDate: string;
+  searchQuery: string;
+  error: string;
+  detailedData: Record<string, any>;
+  schoolYearDetailedData: Record<string, any>;
+  filterUnexcusedLate: boolean;
+  filterUnexcusedAbsent: boolean;
+  minUnexcusedLates: string;
+  minUnexcusedAbsences: string;
+  availableClasses: string[];
+  selectedClasses: string[];
+  selectedWeeks: string;
+  schoolYearStats: Record<string, any>;
+  weeklyStats: Record<string, any>;
+  weeklyDetailedData: Record<string, any>;
+  expandedStudents: Set<string>;
+  setExpandedStudents: (value: Set<string>) => void;
+  activeFilters: Map<string, string>;
+  setActiveFilters: React.Dispatch<React.SetStateAction<Map<string, string>>>;
+  uploadTrigger: number;
+  hasFileUploaded: boolean;
+  quickSelectValue: string;
+  visibleColumns: string[];
+  isDarkMode: boolean;
+  viewMode: 'table' | 'dashboard';
+  
+  // Setter und Handler Funktionen
+  setSearchQuery: (value: string) => void;
+  setFilterUnexcusedLate: (value: boolean) => void;
+  setFilterUnexcusedAbsent: (value: boolean) => void;
+  setMinUnexcusedLates: (value: string) => void;
+  setMinUnexcusedAbsences: (value: string) => void;
+  setSelectedClasses: (classes: string[]) => void;
+  setIsDarkMode: (value: boolean) => void;
+  resetAll: () => void;
+  toggleColumnGroup: (columnGroup: string) => void;
+  closeAllDetails: () => void;
+  setViewMode: (mode: 'table' | 'dashboard') => void;
+  setStartDate: (value: string) => void;
+  setEndDate: (value: string) => void;
+  handleQuickSelect: (value: string) => void;
+  setSelectedWeeks: (value: string) => void;
+  handleFileProcessed: (data: any) => void;
+  handleExportExcel: () => void;
+  handleExportCSV: () => void;
+  handleExportPDF: () => void;
+}> = (props) => {
+  const {
+    rawData, results, startDate, endDate, error, detailedData, schoolYearDetailedData,
+    filterUnexcusedLate, filterUnexcusedAbsent, minUnexcusedLates, minUnexcusedAbsences,
+    availableClasses, selectedClasses, selectedWeeks, schoolYearStats, weeklyStats,
+    weeklyDetailedData, expandedStudents, setExpandedStudents, activeFilters, setActiveFilters,
+    uploadTrigger, hasFileUploaded, quickSelectValue, visibleColumns, isDarkMode, viewMode,
+    setSearchQuery, setFilterUnexcusedLate, setFilterUnexcusedAbsent, setMinUnexcusedLates,
+    setMinUnexcusedAbsences, setSelectedClasses, setIsDarkMode, resetAll, toggleColumnGroup,
+    closeAllDetails, setViewMode, setStartDate, setEndDate, handleQuickSelect, setSelectedWeeks,
+    handleFileProcessed, handleExportExcel, handleExportCSV, handleExportPDF
+  } = props;
+
+  // Hier können wir nun den FilterContext verwenden
+  const { selectedStudents } = useFilters();
+
+  // Diese neue Version von getFilteredStudents berücksichtigt auch die ausgewählten Schüler
+  const getFilteredStudentsWithSelectedStudents = (): [string, StudentStats][] => {
+    if (!results) return [];
+    
+    // Funktion für bessere Lesbarkeit: Prüft, ob ein Schüler den allgemeinen Filterkriterien entspricht
+    const matchesBaseFilters = (student: string, stats: StudentStats): boolean => {
+      const matchesClass = selectedClasses.length === 0 || selectedClasses.includes(stats.klasse);
+      let meetsUnexcusedCriteria = true;
+      if (filterUnexcusedLate || filterUnexcusedAbsent) {
+        meetsUnexcusedCriteria = false;
+        if (filterUnexcusedLate && stats.verspaetungen_unentsch > 0) meetsUnexcusedCriteria = true;
+        if (filterUnexcusedAbsent && stats.fehlzeiten_unentsch > 0) meetsUnexcusedCriteria = true;
+      }
+      const meetsMinUnexcusedLates =
+        minUnexcusedLates === '' || stats.verspaetungen_unentsch >= parseInt(minUnexcusedLates);
+      const meetsMinUnexcusedAbsences =
+        minUnexcusedAbsences === '' || stats.fehlzeiten_unentsch >= parseInt(minUnexcusedAbsences);
+      
+      return (
+        matchesClass &&
+        meetsUnexcusedCriteria &&
+        meetsMinUnexcusedLates &&
+        meetsMinUnexcusedAbsences
+      );
+    };
+    
+    return Object.entries(results)
+      .filter(([student, stats]: [string, StudentStats]) => {
+        // ODER-Logik für die Gesamtanzeige:
+        
+        // 1. Wenn der Schüler über Dropdown ausgewählt wurde: immer anzeigen
+        const isSelected = selectedStudents.length > 0 && selectedStudents.includes(student);
+        
+        // 2. Wenn eine Suche aktiv ist und der Schüler dem Suchtext entspricht
+        const matchesSearch = props.searchQuery.length > 0 && 
+                             student.toLowerCase().includes(props.searchQuery.toLowerCase());
+        
+        // 3. Immer noch die anderen Filter berücksichtigen
+        const matchesOtherFilters = matchesBaseFilters(student, stats);
+        
+        // Wenn keine spezifische Filterung aktiv ist, zeige alle Schüler, die grundsätzlichen Filtern entsprechen
+        if (selectedStudents.length === 0 && props.searchQuery.length === 0) {
+          return matchesOtherFilters;
+        }
+        
+        // Sonst: ODER-Logik zwischen Auswahl und Suche
+        return (isSelected || (matchesSearch && matchesOtherFilters));
+      })
+      .sort(([a], [b]) => a.localeCompare(b));
+  };
+
+  return (
+    <div className={`min-h-screen bg-chatGray-light dark:bg-chatGray-dark ${isDarkMode ? 'dark' : ''}`}>
+      <HeaderBar
+        filterUnexcusedLate={filterUnexcusedLate}
+        filterUnexcusedAbsent={filterUnexcusedAbsent}
+        onFilterUnexcusedLateChange={setFilterUnexcusedLate}
+        onFilterUnexcusedAbsentChange={setFilterUnexcusedAbsent}
+        minUnexcusedLates={minUnexcusedLates}
+        minUnexcusedAbsences={minUnexcusedAbsences}
+        onMinUnexcusedLatesChange={setMinUnexcusedLates}
+        onMinUnexcusedAbsencesChange={setMinUnexcusedAbsences}
+        searchQuery={props.searchQuery}
+        onSearchChange={setSearchQuery}
+        availableClasses={availableClasses}
+        selectedClasses={selectedClasses}
+        onClassesChange={setSelectedClasses}
+        isDarkMode={isDarkMode}
+        toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+        onReset={resetAll}
+        visibleColumns={visibleColumns}
+        onToggleColumnGroup={toggleColumnGroup}
+        expandedStudents={expandedStudents}
+        onCloseAllDetails={closeAllDetails}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+      />
+      <Sidebar
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={setStartDate}
+        onEndDateChange={setEndDate}
+        onQuickSelect={handleQuickSelect}
+        selectedWeeks={selectedWeeks}
+        onSelectedWeeksChange={setSelectedWeeks}
+        onFileUpload={handleFileProcessed}
+        onExportExcel={handleExportExcel}
+        onExportCSV={handleExportCSV}
+        onExportPDF={handleExportPDF}
+        uploadTrigger={uploadTrigger}
+        hasFileUploaded={hasFileUploaded}
+        quickSelectValue={quickSelectValue}
+      />
+      <MainContent
+        getFilteredStudents={getFilteredStudentsWithSelectedStudents}
+        detailedData={detailedData}
+        schoolYearDetailedData={schoolYearDetailedData}
+        weeklyDetailedData={weeklyDetailedData}
+        startDate={startDate}
+        endDate={endDate}
+        schoolYearStats={schoolYearStats}
+        weeklyStats={weeklyStats}
+        selectedWeeks={selectedWeeks}
+        availableClasses={availableClasses}
+        selectedClasses={selectedClasses}
+        onClassesChange={setSelectedClasses}
+        expandedStudents={expandedStudents}
+        setExpandedStudents={setExpandedStudents}
+        activeFilters={activeFilters}
+        setActiveFilters={setActiveFilters}
+        visibleColumns={visibleColumns}
+        viewMode={viewMode}
+        rawData={rawData}
+      />
+      
+      {error && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
+    </div>
   );
 };
 

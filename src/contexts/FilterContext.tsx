@@ -98,7 +98,35 @@ export const FilterProvider: React.FC<{
     searchQuery: internalSearchQuery,
     setSearchQuery,
     isDashboardMode: viewMode === 'dashboard',
-    getContextFilteredStudents: getFilteredStudents
+    getContextFilteredStudents: () => {
+      // Rufe die ursprüngliche getFilteredStudents-Funktion auf, um die Basis-Filterung zu erhalten
+      const initialFiltered = getFilteredStudents();
+      
+      // Wenn Schüler ausgewählt sind und keine Suche aktiv ist, zeige nur die ausgewählten Schüler an
+      if (selectedStudents.length > 0 && !internalSearchQuery) {
+        return initialFiltered.filter(([student]) => selectedStudents.includes(student));
+      }
+      
+      // Wenn Schüler ausgewählt sind und eine Suche aktiv ist, zeige Schüler an, die entweder 
+      // ausgewählt wurden oder dem Suchtext entsprechen
+      if (selectedStudents.length > 0 && internalSearchQuery) {
+        return initialFiltered.filter(([student]) => {
+          // Wenn der Schüler ausgewählt wurde, zeige ihn an
+          if (selectedStudents.includes(student)) return true;
+          
+          // Wenn der Schüler dem Suchtext entspricht, zeige ihn auch an
+          if (student.toLowerCase().includes(internalSearchQuery.toLowerCase())) {
+            return true;
+          }
+          
+          // Andernfalls zeige den Schüler nicht an
+          return false;
+        });
+      }
+      
+      // Wenn keine Schüler ausgewählt sind, zeige alle ursprünglich gefilterten Schüler an
+      return initialFiltered;
+    }
   };
   
   return (

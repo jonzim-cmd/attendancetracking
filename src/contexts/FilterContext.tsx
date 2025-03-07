@@ -25,6 +25,9 @@ interface FilterContextType {
   
   // Zugriff auf die gefilterten Schülerdaten
   getContextFilteredStudents: () => [string, StudentStats][];
+  
+  // NEUE FUNKTION: Zugriff auf alle Schüler, ohne nach selectedStudents zu filtern
+  getAllStudents: () => [string, StudentStats][];
 }
 
 // Context erstellen
@@ -98,6 +101,8 @@ export const FilterProvider: React.FC<{
     searchQuery: internalSearchQuery,
     setSearchQuery,
     isDashboardMode: viewMode === 'dashboard',
+    
+    // Die ursprüngliche getContextFilteredStudents-Funktion
     getContextFilteredStudents: () => {
       // Rufe die ursprüngliche getFilteredStudents-Funktion auf, um die Basis-Filterung zu erhalten
       const initialFiltered = getFilteredStudents();
@@ -125,6 +130,16 @@ export const FilterProvider: React.FC<{
       }
       
       // Wenn keine Schüler ausgewählt sind, zeige alle ursprünglich gefilterten Schüler an
+      return initialFiltered;
+    },
+    
+    // NEUE FUNKTION: Diese Funktion gibt alle Schüler zurück, ohne nach selectedStudents zu filtern
+    getAllStudents: () => {
+      // Rufe die ursprüngliche getFilteredStudents-Funktion auf, um die Basis-Filterung zu erhalten
+      const initialFiltered = getFilteredStudents();
+      
+      // Gib alle Schüler zurück, die den grundlegenden Filtern entsprechen,
+      // aber ohne nach selectedStudents zu filtern
       return initialFiltered;
     }
   };

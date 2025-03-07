@@ -70,7 +70,8 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
     groupingOption,
     setGroupingOption,
     // NEU: getContextFilteredStudents aus dem Context holen
-    getContextFilteredStudents
+    getContextFilteredStudents,
+    getAllStudents // <-- Neue Funktion verwenden
   } = useFilters();
   
   // NEU: State für Dashboard-Filter Dropdowns
@@ -181,22 +182,22 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
     }
   };
   
-  // NEU: Überarbeitete getAvailableStudents Funktion, die echte Daten verwendet
+  // WICHTIG: Verwende getAllStudents statt getContextFilteredStudents
   const getAvailableStudents = (): string[] => {
-    // Echte Schülerdaten aus dem Context verwenden
-    const studentsWithStats = getContextFilteredStudents();
+    // Alle Schülerdaten abrufen, ohne nach selectedStudents zu filtern
+    const allStudentsWithStats = getAllStudents();
     
-    // Nach Klassen filtern, falls Klassenfilter aktiv ist
-    const filteredStudents = (viewMode === 'dashboard' && selectedDashboardClasses.length > 0)
-      ? studentsWithStats.filter(([_, stats]) => 
+    // Nur nach Klassen filtern
+    const classFilteredStudents = (viewMode === 'dashboard' && selectedDashboardClasses.length > 0)
+      ? allStudentsWithStats.filter(([_, stats]) => 
           selectedDashboardClasses.includes(stats.klasse))
       : viewMode === 'table' && selectedClasses.length > 0
-        ? studentsWithStats.filter(([_, stats]) => 
+        ? allStudentsWithStats.filter(([_, stats]) => 
             selectedClasses.includes(stats.klasse))
-        : studentsWithStats;
+        : allStudentsWithStats;
     
-    // Nur die Namen zurückgeben (ohne die Stats)
-    return filteredStudents.map(([name]) => name);
+    // Nur die Namen zurückgeben
+    return classFilteredStudents.map(([name]) => name);
   };
 
   return (

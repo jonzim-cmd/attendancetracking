@@ -72,10 +72,14 @@ const StudentSearchSelect: React.FC<StudentSearchSelectProps> = ({
     } else {
       setSelectedStudents([...selectedStudents, student]);
     }
+    // Dropdown bleibt geöffnet für Mehrfachauswahl
   };
   
-  // Filtere die verfügbaren Schüler basierend auf dem Suchbegriff
-  const filteredStudents = getAvailableStudents().filter(student => 
+  // Hole alle verfügbaren Schüler - unabhängig von der aktuellen Auswahl
+  const allAvailableStudents = getAvailableStudents();
+  
+  // Filtere die Schüler basierend auf dem Suchbegriff
+  const filteredStudents = allAvailableStudents.filter(student => 
     student.toLowerCase().includes(localSearchQuery.toLowerCase())
   );
   
@@ -126,11 +130,6 @@ const StudentSearchSelect: React.FC<StudentSearchSelectProps> = ({
 
   // Generiere eine eindeutige ID für jede Instanz
   const instanceId = useRef(`student-search-${Math.random().toString(36).substring(2, 9)}`);
-
-  // Hilfsfunktionen für den Dashboard-Modus
-  const allAvailableStudents = getAvailableStudents();
-  const shouldShowAllStudents = mode === 'dashboard' && (localSearchQuery === '' || allAvailableStudents.length === 0);
-  const effectiveFilteredStudents = shouldShowAllStudents ? allAvailableStudents : filteredStudents;
 
   return (
     <div 
@@ -206,15 +205,18 @@ const StudentSearchSelect: React.FC<StudentSearchSelectProps> = ({
               {/* "Alle auswählen" Option */}
               <div
                 className="flex items-center px-2 py-1 hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark rounded cursor-pointer"
-                onClick={() => handleStudentToggle('')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleStudentToggle('');
+                }}
               >
                 <input
                   type="checkbox"
                   id={`${instanceId.current}-student-all`}
                   name={`${instanceId.current}-student-all`}
                   checked={selectedStudents.length === 0}
-                  onChange={() => {}}
-                  className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
+                  onChange={() => handleStudentToggle('')}
+                  className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark cursor-pointer"
                 />
                 <label 
                   htmlFor={`${instanceId.current}-student-all`} 
@@ -225,8 +227,8 @@ const StudentSearchSelect: React.FC<StudentSearchSelectProps> = ({
               </div>
               
               {/* Gefilterte Schülerliste */}
-              {effectiveFilteredStudents.length > 0 ? (
-                effectiveFilteredStudents.map((student) => {
+              {filteredStudents.length > 0 ? (
+                filteredStudents.map((student) => {
                   const safeStudentId = student.replace(/[,\s.]/g, '-');
                   const checkboxId = `${instanceId.current}-student-${safeStudentId}`;
                   
@@ -244,8 +246,8 @@ const StudentSearchSelect: React.FC<StudentSearchSelectProps> = ({
                         id={checkboxId}
                         name={checkboxId}
                         checked={selectedStudents.includes(student)}
-                        onChange={() => {}}
-                        className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
+                        onChange={() => handleStudentToggle(student)}
+                        className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark cursor-pointer"
                       />
                       <label 
                         htmlFor={checkboxId}

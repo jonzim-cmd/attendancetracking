@@ -109,7 +109,7 @@ export const AttendanceLineChart: React.FC<LineChartProps> = ({
               dataKey={line.dataKey} 
               name={line.name} 
               stroke={line.color} 
-              activeDot={line.activeDot ? { r: 8 } : undefined} 
+              activeDot={line.activeDot !== undefined ? { r: 8 } : { r: 8 }} 
               strokeWidth={2}
               dot={{ r: 3 }}
             />
@@ -128,9 +128,20 @@ interface BarChartProps {
     color: string;
   }[];
   average?: number;
+  // Neue Props für kritische Tage
+  criticalDays?: {
+    verspaetungen?: string;
+    fehlzeitenUnentsch?: string;
+    fehlzeitenGesamt?: string;
+  };
 }
 
-export const AttendanceBarChart: React.FC<BarChartProps> = ({ data, bars, average }) => {
+export const AttendanceBarChart: React.FC<BarChartProps> = ({ 
+  data, 
+  bars, 
+  average,
+  criticalDays = {} // Standard ist ein leeres Objekt
+}) => {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -151,6 +162,55 @@ export const AttendanceBarChart: React.FC<BarChartProps> = ({ data, bars, averag
     }
     
     return null;
+  };
+  
+  // Funktion, um zu prüfen, ob ein Balken kritisch ist
+  const isCriticalBar = (day: string, dataKey: string) => {
+    if (dataKey === 'verspaetungen' && criticalDays.verspaetungen === day) {
+      return true;
+    }
+    if (dataKey === 'fehlzeitenUnentsch' && criticalDays.fehlzeitenUnentsch === day) {
+      return true;
+    }
+    if (dataKey === 'fehlzeitenGesamt' && criticalDays.fehlzeitenGesamt === day) {
+      return true;
+    }
+    return false;
+  };
+  
+  // Benutzerdefinierte Balkenkomponente
+  const CustomBar = (props: any) => {
+    const { x, y, width, height, fill, dataKey, name } = props;
+    
+    // Prüfe, ob dieser Balken ein kritischer Tag ist
+    const isCritical = isCriticalBar(name, dataKey);
+    
+    // Farbe für den Neon-Rand basierend auf dem Datentyp
+    const glowColor = 
+      dataKey === 'verspaetungen' ? '#b366ff' : // Helles Lila für Neon-Effekt
+      dataKey === 'fehlzeitenUnentsch' ? '#ff4d4d' : // Helles Rot für Neon-Effekt
+      dataKey === 'fehlzeitenGesamt' ? '#66b3ff' : // Helles Blau für Neon-Effekt
+      fill;
+      
+    // Neon-Stil nur anwenden, wenn es sich um einen kritischen Tag handelt
+    const style = isCritical ? {
+      filter: `drop-shadow(0 0 4px ${glowColor}) drop-shadow(0 0 8px ${glowColor})`,
+      strokeWidth: 4,
+      stroke: glowColor,
+      strokeOpacity: 1,
+    } : {};
+    
+    return (
+      <rect 
+        x={x} 
+        y={y} 
+        width={width} 
+        height={height} 
+        fill={isCritical ? fill : fill} // Füllung bleibt gleich
+        style={style}
+        // hier war die animate-pulse Klasse
+      />
+    );
   };
   
   return (
@@ -178,7 +238,8 @@ export const AttendanceBarChart: React.FC<BarChartProps> = ({ data, bars, averag
               key={index}
               dataKey={bar.dataKey} 
               name={bar.name} 
-              fill={bar.color} 
+              fill={bar.color}
+              shape={<CustomBar />}
             />
           ))}
           {average !== undefined && (

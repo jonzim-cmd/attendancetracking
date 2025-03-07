@@ -652,6 +652,23 @@ export const prepareAttendanceOverTime = (
     });
   }
   
-  console.log("Debug - attendanceOverTime result:", result);
-  return result;
+  // Filter out future time frames without data - NEU
+  const today = new Date();
+  const filteredResult = result.filter(point => {
+    // Prüfe, ob der Punkt Daten hat (mind. 1 Wert > 0)
+    const hasData = 
+      point.verspaetungen > 0 || 
+      point.fehlzeiten > 0 || 
+      point.fehlzeitenEntsch > 0 || 
+      point.fehlzeitenUnentsch > 0;
+      
+    // Finde den zugehörigen Zeitrahmen
+    const timeFrame = timeFrames.find(frame => frame.label === point.name);
+    
+    // Wenn der Zeitrahmen in der Vergangenheit liegt oder Daten hat, behalten
+    return hasData || (timeFrame && timeFrame.end < today);
+  });
+  
+  console.log("Debug - filtered attendanceOverTime result:", filteredResult);
+  return filteredResult;
 };

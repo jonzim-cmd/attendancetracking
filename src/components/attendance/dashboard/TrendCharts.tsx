@@ -137,7 +137,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
       dataKey: "fehlzeitenEntsch", 
       name: "Fehltage (entsch.)", 
       color: "#16a34a", // Green
-      activeDot: false 
+      activeDot: true 
     });
   }
   
@@ -146,7 +146,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
       dataKey: "fehlzeitenUnentsch", 
       name: "Fehltage (unentsch.)", 
       color: "#dc2626", // Red
-      activeDot: false 
+      activeDot: true
     });
   }
   
@@ -351,6 +351,13 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
             <AttendanceBarChart 
               data={dayOfWeekData}
               bars={dayOfWeekBars}
+              criticalDays={{
+                verspaetungen: maxVerspaetungenTag?.name,
+                fehlzeitenUnentsch: maxFehlzeitenUnentschTag?.name,
+                fehlzeitenGesamt: dayOfWeekData.reduce((max, day) => 
+                  day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
+                  dayOfWeekData[0])?.name
+              }}
             />
           </div>
         </div>

@@ -21,6 +21,8 @@ interface NormalViewProps {
   activeFilters: Map<string, string>;
   setActiveFilters: React.Dispatch<React.SetStateAction<Map<string, string>>>;
   visibleColumns: string[];
+  enableSummaryRow?: boolean;
+  summaryRowSticky?: boolean;
 }
 
 type SortField =
@@ -64,6 +66,8 @@ const NormalView: React.FC<NormalViewProps> = ({
   activeFilters,
   setActiveFilters,
   visibleColumns,
+  enableSummaryRow = true,
+  summaryRowSticky = true,
 }) => {
   const [sortStates, setSortStates] = useState<Map<SortField, SortState>>(new Map());
   const [checkedStudents, setCheckedStudents] = useState<Set<string>>(new Set());
@@ -353,6 +357,8 @@ const NormalView: React.FC<NormalViewProps> = ({
           onToggleChecked={toggleCheckedStudent}
           onResetSelection={resetCheckedStudents}
           getFilteredDetailData={getFilteredDetailData}
+          enableSummaryRow={enableSummaryRow}
+          summaryRowSticky={summaryRowSticky}
         />
       </div>
     </div>

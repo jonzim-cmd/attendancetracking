@@ -2,6 +2,7 @@ import React from 'react';
 import StudentTableHeader from './table/StudentTableHeader';
 import StudentTableRow from './table/StudentTableRow';
 import StudentDetailsRow from './table/StudentDetailsRow';
+import SummaryRow from './table/SummaryRow';
 import { AbsenceEntry, StudentStats } from '@/types';
 
 type SortField =
@@ -44,6 +45,8 @@ interface StudentTableProps {
   onToggleChecked: (student: string) => void;
   onResetSelection: () => void;
   getFilteredDetailData: (student: string) => AbsenceEntry[];
+  enableSummaryRow?: boolean;
+  summaryRowSticky?: boolean;
 }
 
 const StudentTable: React.FC<StudentTableProps> = ({
@@ -63,6 +66,8 @@ const StudentTable: React.FC<StudentTableProps> = ({
   onToggleChecked,
   onResetSelection,
   getFilteredDetailData,
+  enableSummaryRow = true,
+  summaryRowSticky = true,
 }) => {
   return (
     <table className="min-w-full border-collapse bg-table-light-base dark:bg-table-dark-base">
@@ -150,6 +155,20 @@ const StudentTable: React.FC<StudentTableProps> = ({
           );
         })}
       </tbody>
+      
+      {/* Summenzeile hinzufügen falls aktiviert */}
+      {enableSummaryRow && students.length > 0 && (
+        <tfoot>
+          <SummaryRow
+            students={students}
+            schoolYearStats={schoolYearStats}
+            weeklyStats={weeklyStats}
+            selectedWeeks={selectedWeeks}
+            visibleColumns={visibleColumns}
+            isSticky={summaryRowSticky}
+          />
+        </tfoot>
+      )}
     </table>
   );
 };

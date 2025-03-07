@@ -23,6 +23,10 @@ interface MainContentProps {
   setActiveFilters: React.Dispatch<React.SetStateAction<Map<string, string>>>;
   visibleColumns: string[];
   
+  // Props für Summenzeile
+  enableSummaryRow?: boolean;
+  summaryRowSticky?: boolean;
+  
   // Props - als optional deklariert für Abwärtskompatibilität
   viewMode?: 'table' | 'dashboard';
   rawData?: any[] | null;
@@ -46,6 +50,10 @@ const MainContent: React.FC<MainContentProps> = ({
   activeFilters,
   setActiveFilters,
   visibleColumns,
+  
+  // Neue Props für Summenzeile mit Default-Werten
+  enableSummaryRow = true,
+  summaryRowSticky = true,
   
   // Prop für Abwärtskompatibilität
   viewMode: propViewMode = 'table',
@@ -86,6 +94,8 @@ const MainContent: React.FC<MainContentProps> = ({
             activeFilters={activeFilters}
             setActiveFilters={setActiveFilters}
             visibleColumns={visibleColumns}
+            enableSummaryRow={enableSummaryRow}
+            summaryRowSticky={summaryRowSticky}
           />
         ) : (
           <DashboardView

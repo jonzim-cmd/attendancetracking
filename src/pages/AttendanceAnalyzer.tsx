@@ -43,6 +43,10 @@ const AttendanceAnalyzer: React.FC = () => {
   // Neuer State für Dashboard-Ansicht
   const [viewMode, setViewMode] = useState<'table' | 'dashboard'>('table');
 
+  // Neue State-Variablen für Summenzeile
+  const [enableSummaryRow, setEnableSummaryRow] = useState(true);
+  const [summaryRowSticky, setSummaryRowSticky] = useState(true);
+
   // Neuer useEffect für document-level dark mode
   useEffect(() => {
     if (isDarkMode) {
@@ -437,6 +441,10 @@ const AttendanceAnalyzer: React.FC = () => {
         handleExportExcel={handleExportExcel}
         handleExportCSV={handleExportCSV}
         handleExportPDF={handleExportPDF}
+        enableSummaryRow={enableSummaryRow}
+        setEnableSummaryRow={setEnableSummaryRow}
+        summaryRowSticky={summaryRowSticky}
+        setSummaryRowSticky={setSummaryRowSticky}
       />
     </FilterProvider>
   );
@@ -474,6 +482,12 @@ const AttendanceAnalyzerContent: React.FC<{
   isDarkMode: boolean;
   viewMode: 'table' | 'dashboard';
   
+  // Neue Props für die Summenzeile
+  enableSummaryRow?: boolean;
+  setEnableSummaryRow?: (value: boolean) => void;
+  summaryRowSticky?: boolean;
+  setSummaryRowSticky?: (value: boolean) => void;
+  
   // Setter und Handler Funktionen
   setSearchQuery: (value: string) => void;
   setFilterUnexcusedLate: (value: boolean) => void;
@@ -504,7 +518,12 @@ const AttendanceAnalyzerContent: React.FC<{
     setSearchQuery, setFilterUnexcusedLate, setFilterUnexcusedAbsent, setMinUnexcusedLates,
     setMinUnexcusedAbsences, setSelectedClasses, setIsDarkMode, resetAll, toggleColumnGroup,
     closeAllDetails, setViewMode, setStartDate, setEndDate, handleQuickSelect, setSelectedWeeks,
-    handleFileProcessed, handleExportExcel, handleExportCSV, handleExportPDF
+    handleFileProcessed, handleExportExcel, handleExportCSV, handleExportPDF,
+    // Neue Props für die Summenzeile mit Default-Werten
+    enableSummaryRow = true,
+    setEnableSummaryRow = () => {},
+    summaryRowSticky = true,
+    setSummaryRowSticky = () => {},
   } = props;
 
   // Hier können wir nun den FilterContext verwenden
@@ -623,6 +642,8 @@ const AttendanceAnalyzerContent: React.FC<{
         visibleColumns={visibleColumns}
         viewMode={viewMode}
         rawData={rawData}
+        enableSummaryRow={enableSummaryRow}
+        summaryRowSticky={summaryRowSticky}
       />
       
       {error && (

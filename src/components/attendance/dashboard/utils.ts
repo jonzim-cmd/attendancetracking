@@ -32,7 +32,7 @@ export const getStudentsInClass = (rawData: any[] | null, selectedClasses: strin
   return Array.from(studentsSet).sort();
 };
 
-// Modified: Added weeklyStats and schoolYearStats parameters
+// MODIFIZIERT: Stärkere Nutzung von weeklyStats und schoolYearStats
 export const prepareWeeklyTrends = (
   rawData: any[] | null, 
   selectedWeeks: string,
@@ -45,102 +45,73 @@ export const prepareWeeklyTrends = (
   if (!rawData) return [];
   
   const weeks = getLastNWeeks(parseInt(selectedWeeks));
-  const weeklyData = weeks.map(week => {
+  const weeklyData = weeks.map((week, weekIndex) => {
     // Startdatum der Woche im Format "DD.MM." formatieren
     const startDay = week.startDate.getDate().toString().padStart(2, '0');
     const startMonth = (week.startDate.getMonth() + 1).toString().padStart(2, '0');
     const weekLabel = `${startDay}.${startMonth}.`;
     
-    // Filtern der Daten für diese Woche
-    const weekEntries = rawData.filter(entry => {
-      if (!entry.Beginndatum) return false;
-      
-      const entryDate = parseDate(entry.Beginndatum);
-      
-      // Zeitfilter
-      if (!(entryDate >= week.startDate && entryDate <= week.endDate)) return false;
-      
-      // Klassenfilter
-      if (selectedClasses.length > 0 && !selectedClasses.includes(entry.Klasse)) return false;
-      
-      // Entitätsfilter
-      if (selectedEntities.length > 0) {
-        if (entityType === 'classes') {
-          if (!selectedEntities.includes(entry.Klasse)) return false;
-        } else { // students
-          const studentName = `${entry.Langname}, ${entry.Vorname}`;
-          if (!selectedEntities.includes(studentName)) return false;
-        }
-      }
-      
-      return true;
-    });
-    
-    // Count absences using pre-calculated stats if available
-    // This is more efficient and ensures consistency with table view
+    // Verwende weeklyStats direkt statt Neuberechnung
+    // Zähler für diese Woche initialisieren
     let verspaetungen = 0;
     let fehlzeitenTotal = 0;
     let fehlzeitenEntsch = 0;
     let fehlzeitenUnentsch = 0;
     
-    // If we have weekly stats, use them for the specific week
-    if (Object.keys(weeklyStats).length > 0) {
-      // Use a consistent approach to index weeks
-      const weekIndex = weeks.findIndex(w => 
-        w.startDate.getTime() === week.startDate.getTime() && 
-        w.endDate.getTime() === week.endDate.getTime()
-      );
+    // Bestimme die zu zählenden Entitäten basierend auf den Filtern
+    const entitiesToCount = selectedEntities.length > 0 ? 
+      selectedEntities : 
+      Object.keys(weeklyStats);
+    
+    // Filtere Entitäten basierend auf Klassenfilter bei Bedarf
+    const filteredEntities = entitiesToCount.filter(entity => {
+      // Wenn es ein Klassensfilter ist, prüfe direkt den Klassennamen
+      if (entityType === 'classes') {
+        return selectedClasses.length === 0 || selectedClasses.includes(entity);
+      }
       
-      // For each entity, add their weekly stats
-      const entitiesToCount = selectedEntities.length > 0 ? 
-        selectedEntities : 
-        Object.keys(weeklyStats);
-      
-      entitiesToCount.forEach(entity => {
-        const entityStats = weeklyStats[entity];
-        if (entityStats && entityStats.verspaetungen && entityStats.fehlzeiten) {
-          // Check if this week is within the stored weekly data array
-          if (weekIndex >= 0 && weekIndex < entityStats.verspaetungen.weekly.length) {
-            verspaetungen += entityStats.verspaetungen.weekly[weekIndex] || 0;
-            fehlzeitenUnentsch += entityStats.fehlzeiten.weekly[weekIndex] || 0;
-            fehlzeitenTotal += entityStats.fehlzeiten.weekly[weekIndex] || 0; // In weekly stats, only unexcused are tracked
-          }
+      // Andernfalls (für Schüler), prüfe die Klasse des Schülers aus den Rohdaten
+      if (selectedClasses.length > 0) {
+        // Suche nach Einträgen für diesen Schüler, um die Klasse zu ermitteln
+        const studentEntries = rawData.filter(row => 
+          `${row.Langname}, ${row.Vorname}` === entity
+        );
+        
+        if (studentEntries.length > 0) {
+          return selectedClasses.includes(studentEntries[0].Klasse);
         }
-      });
-      
-      // The calculation logic needs adjustment for consistency - this is a simplified approach
-      fehlzeitenEntsch = 0; // Weekly stats don't track excused separately
-    } else {
-      // Fallback to original calculation if weekly stats aren't available
-      // Zählen der verschiedenen Arten von Fehlzeiten/Verspätungen
-      verspaetungen = weekEntries.filter(entry => isVerspaetungFunc(entry)).length;
-      fehlzeitenTotal = weekEntries.filter(entry => !isVerspaetungFunc(entry)).length;
-      
-      // Entschuldigte vs. unentschuldigte Fehltage
-      const today = new Date();
-      
-      fehlzeitenEntsch = weekEntries.filter(entry => {
-        if (isVerspaetungFunc(entry)) return false;
-        const status = entry.Status ? entry.Status.trim() : '';
-        return status === 'entsch.' || status === 'Attest' || status === 'Attest Amtsarzt';
-      }).length;
-      
-      fehlzeitenUnentsch = weekEntries.filter(entry => {
-        if (isVerspaetungFunc(entry)) return false;
-        const status = entry.Status ? entry.Status.trim() : '';
-        const isUnentschuldigt = status === 'nicht entsch.' || status === 'nicht akzep.';
-        
-        if (isUnentschuldigt) return true;
-        
-        if (!status || status.trim() === '') {
-          const entryDate = parseDate(entry.Beginndatum);
-          const deadlineDate = new Date(entryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-          if (today > deadlineDate) return true;
-        }
-        
         return false;
-      }).length;
+      }
+      
+      return true;
+    });
+    
+    // Für jede gefilterte Entität, füge ihre wöchentlichen Stats hinzu
+    filteredEntities.forEach(entity => {
+      const entityStats = weeklyStats[entity];
+      if (entityStats && entityStats.verspaetungen && entityStats.fehlzeiten) {
+        // Prüfe, ob diese Woche innerhalb der gespeicherten weekly-Array-Daten liegt
+        if (weekIndex >= 0 && weekIndex < entityStats.verspaetungen.weekly.length) {
+          verspaetungen += entityStats.verspaetungen.weekly[weekIndex] || 0;
+          fehlzeitenUnentsch += entityStats.fehlzeiten.weekly[weekIndex] || 0;
+        }
+      }
+    });
+    
+    // Da weekly Stats nur unentschuldigte Fehltage verfolgen, müssen wir für entschuldigte Fehltage 
+    // weiterhin die Rohdaten durchsuchen, aber deutlich vereinfacht
+    if (filteredEntities.length > 0) {
+      fehlzeitenEntsch = countExcusedAbsencesForWeek(
+        rawData, 
+        week, 
+        filteredEntities, 
+        entityType, 
+        selectedClasses
+      );
     }
+    
+    // Gesamtsumme
+    fehlzeitenTotal = fehlzeitenEntsch + fehlzeitenUnentsch;
     
     return {
       name: weekLabel,
@@ -154,7 +125,48 @@ export const prepareWeeklyTrends = (
   return weeklyData;
 };
 
-// Modified: Added schoolYearStats parameter
+// Hilfsfunktion, um entschuldigte Fehltage für eine Woche zu zählen
+function countExcusedAbsencesForWeek(
+  rawData: any[], 
+  week: {startDate: Date, endDate: Date}, 
+  entities: string[], 
+  entityType: 'classes' | 'students',
+  selectedClasses: string[]
+): number {
+  let excusedCount = 0;
+  
+  rawData.forEach(entry => {
+    if (!entry.Beginndatum) return;
+    
+    const entryDate = parseDate(entry.Beginndatum);
+    
+    // Prüfe Zeitfilter
+    if (entryDate < week.startDate || entryDate > week.endDate) return;
+    
+    // Prüfe, ob die Entität ausgewählt ist
+    const matchesEntity = entityType === 'classes' 
+      ? entities.includes(entry.Klasse)
+      : entities.includes(`${entry.Langname}, ${entry.Vorname}`);
+      
+    if (!matchesEntity) return;
+    
+    // Klassenfilter
+    if (selectedClasses.length > 0 && !selectedClasses.includes(entry.Klasse)) return;
+    
+    // Nur Fehltage, keine Verspätungen
+    if (isVerspaetungFunc(entry)) return;
+    
+    // Prüfe Status für "entschuldigt"
+    const status = entry.Status ? entry.Status.trim() : '';
+    if (status === 'entsch.' || status === 'Attest' || status === 'Attest Amtsarzt') {
+      excusedCount++;
+    }
+  });
+  
+  return excusedCount;
+}
+
+// MODIFIZIERT: Verwendet schoolYearStats für Schuljahrdaten
 export const prepareAbsenceTypes = (
   rawData: any[] | null, 
   startDate: string, 
@@ -173,61 +185,74 @@ export const prepareAbsenceTypes = (
   const startDateTime = new Date(startDate + 'T00:00:00');
   const endDateTime = new Date(endDate + 'T23:59:59');
   
-  // If we have schoolYearStats and we're looking at school year data, use it for consistency
-  if (Object.keys(schoolYearStats).length > 0) {
-    // Determine if we're looking at the school year time frame
-    const isSchoolYear = isSchoolYearPeriod(startDateTime, endDateTime);
+  // Prüfe, ob wir Schuljahreszahlen verwenden sollen
+  const isSchoolYear = checkIfSchoolYearPeriod(startDateTime, endDateTime);
+  
+  if (isSchoolYear && Object.keys(schoolYearStats).length > 0) {
+    // Bestimme die zu zählenden Entitäten basierend auf den Filtern
+    const entitiesToCount = selectedEntities.length > 0 ? 
+      selectedEntities : 
+      Object.keys(schoolYearStats);
     
-    if (isSchoolYear) {
-      // For each entity, add their school year stats
-      const entitiesToCount = selectedEntities.length > 0 ? 
-        selectedEntities : 
-        Object.keys(schoolYearStats);
-        
-      entitiesToCount.forEach(entity => {
-        const stats = schoolYearStats[entity];
-        
-        // Skip entities that don't match class filter if one is applied
-        if (entityType === 'classes') {
-          // Skip if not in selected classes
-          if (selectedClasses.length > 0 && !selectedClasses.includes(entity)) {
-            return;
-          }
-        } else {
-          // For students, we need to check if they're in selected classes
-          // This is a simplification - would need student-class mapping
-          if (selectedClasses.length > 0) {
-            // If we don't have a way to check, skip the filter
-            // In a complete implementation, we would check if student is in selected classes
-          }
-        }
-        
-        if (stats) {
-          // Assuming fehlzeiten_gesamt includes all absence types
-          // and fehlzeiten_unentsch is specifically unexcused
-          
-          // Calculate entschuldigt as gesamt - unentschuldigt - offen
-          // This is a simplification since we don't have exact excused counts
-          const total = stats.fehlzeiten_gesamt || 0;
-          const unexcused = stats.fehlzeiten_unentsch || 0;
-          
-          // For demo, assuming no "open" entries in school year stats
-          entschuldigt += (total - unexcused);
-          unentschuldigt += unexcused;
-          // offen stays 0 for this simplified approach
-        }
-      });
+    // Filtere Entitäten basierend auf Klassenfilter bei Bedarf
+    const filteredEntities = entitiesToCount.filter(entity => {
+      // Wenn es ein Klassenfilter ist, prüfe direkt den Klassennamen
+      if (entityType === 'classes') {
+        return selectedClasses.length === 0 || selectedClasses.includes(entity);
+      }
       
-      // Return early with the calculated values
-      return [
-        { name: 'Entschuldigt', value: entschuldigt, color: '#22c55e' },
-        { name: 'Unentschuldigt', value: unentschuldigt, color: '#dc2626' },
-        { name: 'Offen', value: offen, color: '#f59e0b' }
-      ];
-    }
+      // Für Schüler, prüfe die Klasse des Schülers aus den Rohdaten
+      if (selectedClasses.length > 0) {
+        // Suche nach Einträgen für diesen Schüler, um die Klasse zu ermitteln
+        const studentEntries = rawData.filter(row => 
+          `${row.Langname}, ${row.Vorname}` === entity
+        );
+        
+        if (studentEntries.length > 0) {
+          return selectedClasses.includes(studentEntries[0].Klasse);
+        }
+        return false;
+      }
+      
+      return true;
+    });
+    
+    // Zähle entschuldigte und unentschuldigte von schoolYearStats
+    filteredEntities.forEach(entity => {
+      const stats = schoolYearStats[entity];
+      if (stats) {
+        // Verwende die Werte direkt aus schoolYearStats
+        unentschuldigt += stats.fehlzeiten_unentsch || 0;
+        
+        // Berechne entschuldigt korrekt, anstatt Annäherung
+        // gesamte Fehltage - unentschuldigte Fehltage = entschuldigte Fehltage
+        const total = stats.fehlzeiten_gesamt || 0;
+        const unentschuldigteFehltage = stats.fehlzeiten_unentsch || 0;
+        
+        // Das ist besser als die vorherige Annäherung, da es direkt die Daten aus schoolYearStats verwendet
+        entschuldigt += (total - unentschuldigteFehltage);
+      }
+    });
+    
+    // Füge offene Fehltage aus dem Rohdaten für den Schuljahrzeitraum hinzu
+    // (da schoolYearStats diese nicht separat zählt)
+    offen = countOpenAbsences(
+      rawData, 
+      startDateTime, 
+      endDateTime, 
+      filteredEntities, 
+      entityType, 
+      selectedClasses
+    );
+    
+    return [
+      { name: 'Entschuldigt', value: entschuldigt, color: '#22c55e' },
+      { name: 'Unentschuldigt', value: unentschuldigt, color: '#dc2626' },
+      { name: 'Offen', value: offen, color: '#f59e0b' }
+    ];
   }
   
-  // Fallback to original logic for non-school year periods or when schoolYearStats not available
+  // Fallback zu Original-Logik für nicht-Schuljahr-Perioden oder wenn schoolYearStats nicht verfügbar
   rawData.forEach(entry => {
     if (!entry.Beginndatum) return;
     
@@ -248,6 +273,9 @@ export const prepareAbsenceTypes = (
         if (!selectedEntities.includes(studentName)) return;
       }
     }
+    
+    // Ignoriere Verspätungen für diese Zählung
+    if (isVerspaetungFunc(entry)) return;
     
     const status = entry.Status ? entry.Status.trim() : '';
     
@@ -275,24 +303,54 @@ export const prepareAbsenceTypes = (
   ];
 };
 
-// Helper to check if a date range is the school year
-function isSchoolYearPeriod(startDate: Date, endDate: Date): boolean {
+// Hilfsfunktion, um offene Abwesenheiten zu zählen
+function countOpenAbsences(
+  rawData: any[],
+  startDateTime: Date,
+  endDateTime: Date,
+  entities: string[],
+  entityType: 'classes' | 'students',
+  selectedClasses: string[]
+): number {
+  let openCount = 0;
   const today = new Date();
-  const currentYear = today.getFullYear();
   
-  // School year is typically Sep 1 to Jul 31
-  const schoolYearStart = new Date(`${currentYear-1}-09-01`);
-  const schoolYearEnd = new Date(`${currentYear}-07-31`);
+  rawData.forEach(entry => {
+    if (!entry.Beginndatum) return;
+    
+    const entryDate = parseDate(entry.Beginndatum);
+    
+    // Zeitfilter
+    if (entryDate < startDateTime || entryDate > endDateTime) return;
+    
+    // Prüfe, ob die Entität ausgewählt ist
+    const matchesEntity = entityType === 'classes' 
+      ? entities.includes(entry.Klasse)
+      : entities.includes(`${entry.Langname}, ${entry.Vorname}`);
+      
+    if (!matchesEntity) return;
+    
+    // Klassenfilter
+    if (selectedClasses.length > 0 && !selectedClasses.includes(entry.Klasse)) return;
+    
+    // Nur Fehltage, keine Verspätungen
+    if (isVerspaetungFunc(entry)) return;
+    
+    // Prüfe auf "offenen" Status
+    const status = entry.Status ? entry.Status.trim() : '';
+    
+    if (!status || status.trim() === '') {
+      const deadlineDate = new Date(entryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+      if (today <= deadlineDate) {
+        openCount++;
+      }
+    }
+  });
   
-  // Check if dates are close to school year boundaries
-  // This is a simplified approach - would need more precise logic in production
-  const startClose = Math.abs(startDate.getTime() - schoolYearStart.getTime()) < 1000 * 60 * 60 * 24 * 7; // Within a week
-  const endClose = Math.abs(endDate.getTime() - schoolYearEnd.getTime()) < 1000 * 60 * 60 * 24 * 7; // Within a week
-  
-  return startClose && endClose;
+  return openCount;
 }
 
-// Modified to use schoolYearStats
+// MODIFIZIERT: Bessere Unterstützung für schoolYearStats
 export const prepareDayOfWeekAnalysis = (
   rawData: any[] | null, 
   startDate: string, 
@@ -318,29 +376,34 @@ export const prepareDayOfWeekAnalysis = (
   const endDateTime = new Date(endDate + 'T23:59:59');
   const today = new Date();
   
-  // Continue using the raw data processing approach as day-of-week analysis 
-  // doesn't have an equivalent in the table view statistics
-  rawData.forEach(entry => {
-    if (!entry.Beginndatum) return;
+  // Filtere relevante Einträge
+  const relevantEntries = rawData.filter(entry => {
+    if (!entry.Beginndatum) return false;
     
     const entryDate = parseDate(entry.Beginndatum);
     
     // Zeitfilter
-    if (entryDate < startDateTime || entryDate > endDateTime) return;
+    if (entryDate < startDateTime || entryDate > endDateTime) return false;
     
     // Klassenfilter
-    if (selectedClasses.length > 0 && !selectedClasses.includes(entry.Klasse)) return;
+    if (selectedClasses.length > 0 && !selectedClasses.includes(entry.Klasse)) return false;
     
     // Entitätsfilter
     if (selectedEntities.length > 0) {
       if (entityType === 'classes') {
-        if (!selectedEntities.includes(entry.Klasse)) return;
+        if (!selectedEntities.includes(entry.Klasse)) return false;
       } else { // students
         const studentName = `${entry.Langname}, ${entry.Vorname}`;
-        if (!selectedEntities.includes(studentName)) return;
+        if (!selectedEntities.includes(studentName)) return false;
       }
     }
     
+    return true;
+  });
+  
+  // Zähle Verspätungen und Fehltage nach Wochentag
+  relevantEntries.forEach(entry => {
+    const entryDate = parseDate(entry.Beginndatum);
     const dayOfWeek = entryDate.getDay(); // 0 = Sonntag, 1 = Montag, ..., 6 = Samstag
     
     // Überspringen des Wochenendes
@@ -370,7 +433,7 @@ export const prepareDayOfWeekAnalysis = (
   return dayStats;
 };
 
-// Modified: Added schoolYearStats parameter
+// MODIFIZIERT: Optimierte Verwendung von schoolYearStats
 export const prepareStudentComparisonData = (
   rawData: any[] | null,
   startDate: string,
@@ -384,18 +447,22 @@ export const prepareStudentComparisonData = (
   const startDateTime = new Date(startDate + 'T00:00:00');
   const endDateTime = new Date(endDate + 'T23:59:59');
   const resultData: any[] = [];
-  const today = new Date();
   
-  // If we have schoolYearStats and we're comparing school year data, use it
-  const isSchoolYear = isSchoolYearPeriod(startDateTime, endDateTime);
+  // Prüfe, ob wir Schuljahrdaten vergleichen
+  const isSchoolYear = checkIfSchoolYearPeriod(startDateTime, endDateTime);
   
   if (isSchoolYear && Object.keys(schoolYearStats).length > 0) {
-    // Use schoolYearStats for more accurate statistics when comparing school year data
+    // Verwende schoolYearStats für genauere Schuljahrdaten
     entities.forEach(entity => {
       const stats = schoolYearStats[entity];
       if (!stats) return;
       
-      // Use the schoolYearStats values directly
+      // Holen der totalEntschuldigt-Werte: gesamte_fehlzeiten - unentschuldigte_fehlzeiten
+      const totalFehlzeiten = stats.fehlzeiten_gesamt || 0;
+      const unentschuldigteFehlzeiten = stats.fehlzeiten_unentsch || 0;
+      const entschuldigteFehlzeiten = totalFehlzeiten - unentschuldigteFehlzeiten;
+      
+      // Füge Vergleichsdaten basierend auf schoolYearStats hinzu
       resultData.push(
         { 
           type: 'verspaetungen', 
@@ -406,28 +473,26 @@ export const prepareStudentComparisonData = (
           type: 'fehlzeiten', 
           entity, 
           fehlzeiten: stats.fehlzeiten_gesamt || 0,
-          fehlzeitenEntsch: stats.fehlzeiten_gesamt - stats.fehlzeiten_unentsch || 0,
+          fehlzeitenEntsch: entschuldigteFehlzeiten,
           fehlzeitenUnentsch: stats.fehlzeiten_unentsch || 0
         },
         { 
           type: 'entschuldigung', 
           entity, 
-          entschuldigt: stats.fehlzeiten_gesamt - stats.fehlzeiten_unentsch || 0, 
+          entschuldigt: entschuldigteFehlzeiten, 
           unentschuldigt: stats.fehlzeiten_unentsch || 0, 
-          offen: 0 // Assuming offen is not tracked in schoolYearStats
+          offen: 0 // Diese Werte werden in schoolYearStats nicht separat gespeichert
         }
       );
     });
     
-    // Process trend data separately as we don't have it pre-calculated
-    // This could be enhanced with pre-calculated trend data in the future
-    // For now, keeping the raw processing for trends:
+    // Verarbeite Trend-Daten separat
     prepareTrendData(rawData, startDateTime, endDateTime, entities, entityType, resultData);
     
     return resultData;
   }
   
-  // Fallback to original implementation for non-school year periods
+  // Fallback zur ursprünglichen Implementierung für nicht-Schuljahrzeitraum
   // Processing functions for each entity - this is the original implementation
   entities.forEach(entity => {
     // Filtern der Daten nach Entity
@@ -459,7 +524,12 @@ export const prepareStudentComparisonData = (
     let unentschuldigt = 0;
     let offen = 0;
     
+    const today = new Date();
+    
     entityEntries.forEach(entry => {
+      // Überspringe Verspätungen für diese Zählung
+      if (isVerspaetungFunc(entry)) return;
+      
       const status = entry.Status ? entry.Status.trim() : '';
       
       if (status === 'entsch.' || status === 'Attest' || status === 'Attest Amtsarzt') {
@@ -646,7 +716,7 @@ function prepareTrendData(
   }
 }
 
-// Modified: Added schoolYearStats parameter
+// MODIFIZIERT: Keine größeren Änderungen notwendig, da diese Funktion bereits zeitbasiert ist
 export const prepareAttendanceOverTime = (
   rawData: any[] | null,
   startDate: string,
@@ -800,34 +870,7 @@ export const prepareAttendanceOverTime = (
     .sort((a, b) => (a.sortKey || 0) - (b.sortKey || 0));
 };
 
-// Helper function to get German calendar week (ISO 8601) with year context
-const getGermanCalendarWeekWithYear = (date: Date): { week: number; year: number } => {
-  // Copy the date to avoid modifying the original
-  const targetDate = new Date(date);
-  
-  // ISO 8601 week starts on Monday and ends on Sunday
-  // Find Thursday in the current week for proper ISO week number determination
-  targetDate.setDate(targetDate.getDate() + (4 - (targetDate.getDay() || 7)));
-  
-  // January 1st of the current year
-  const yearStart = new Date(targetDate.getFullYear(), 0, 1);
-  
-  // Calculate week number
-  const weekNum = Math.ceil((((targetDate.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-  
-  // Use the year of the Thursday in the target week for proper year context
-  const weekYear = targetDate.getFullYear();
-  
-  return { week: weekNum, year: weekYear };
-};
-
-// Generate a unique sort key for week+year combination
-const generateWeekSortKey = (week: number, year: number): number => {
-  // Return a value that can be sorted numerically (year*100 + week)
-  return year * 100 + week;
-};
-
-// Modified: Added schoolYearStats parameter
+// MODIFIZIERT: Verbesserte Verwendung von schoolYearStats
 export const prepareEntschuldigungsverhalten = (
   rawData: any[] | null,
   startDate: string,
@@ -840,12 +883,13 @@ export const prepareEntschuldigungsverhalten = (
 ) => {
   if (!rawData) return [];
   
-  // For this function, we'll continue using the raw data approach as entschuldigungsverhalten 
-  // statistics aren't directly available in the pre-calculated stats
-  
+  // Zeiträume vorbereiten
   const startDateTime = new Date(startDate + 'T00:00:00');
   const endDateTime = new Date(endDate + 'T23:59:59');
   const today = new Date();
+  
+  // Prüfe, ob wir mit Schuljahrdaten arbeiten
+  const isSchoolYear = checkIfSchoolYearPeriod(startDateTime, endDateTime);
   
   // Filtere relevante Einträge
   const relevantEntries = rawData.filter(entry => {
@@ -896,7 +940,8 @@ export const prepareEntschuldigungsverhalten = (
   if (groupingOption === 'monthly') {
     const monthlyData: { [key: string]: { entschuldigt: number, unentschuldigt: number, total: number } } = {};
     
-    relevantEntries.forEach(entry => {
+    // Nur Fehltage berücksichtigen (keine Verspätungen)
+    relevantEntries.filter(entry => !isVerspaetungFunc(entry)).forEach(entry => {
       const entryDate = parseDate(entry.Beginndatum);
       const monthKey = entryDate.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' });
       
@@ -949,25 +994,51 @@ export const prepareEntschuldigungsverhalten = (
     let unentschuldigt = 0;
     let offen = 0;
     
-    entries.forEach(entry => {
-      const status = entry.Status ? entry.Status.trim() : '';
-      
-      if (status === 'entsch.' || status === 'Attest' || status === 'Attest Amtsarzt') {
-        entschuldigt++;
-      } else if (status === 'nicht entsch.' || status === 'nicht akzep.') {
-        unentschuldigt++;
-      } else {
-        // Prüfen, ob die Entschuldigungsfrist abgelaufen ist
-        const entryDate = parseDate(entry.Beginndatum);
-        const deadlineDate = new Date(entryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    // Falls wir mit Schuljahrdaten arbeiten und eine Klasse betrachten, nutze schoolYearStats
+    if (isSchoolYear && entityType === 'classes' && Object.keys(schoolYearStats).length > 0) {
+      if (schoolYearStats[className]) {
+        const stats = schoolYearStats[className];
         
-        if (today > deadlineDate) {
+        // Bestimme unentschuldigte direkt
+        unentschuldigt = stats.fehlzeiten_unentsch || 0;
+        
+        // Entschuldigte = Gesamt - Unentschuldigte
+        const gesamt = stats.fehlzeiten_gesamt || 0;
+        entschuldigt = gesamt - unentschuldigt;
+        
+        // Offene Fehltage müssen noch aus den Rohdaten berechnet werden
+        offen = countOpenAbsences(
+          rawData,
+          startDateTime,
+          endDateTime,
+          [className],
+          'classes',
+          []
+        );
+      }
+    } else {
+      // Fallback zur ursprünglichen Berechnung aus den gefilterten Einträgen
+      // Nur Fehltage berücksichtigen (keine Verspätungen)
+      entries.filter(entry => !isVerspaetungFunc(entry)).forEach(entry => {
+        const status = entry.Status ? entry.Status.trim() : '';
+        
+        if (status === 'entsch.' || status === 'Attest' || status === 'Attest Amtsarzt') {
+          entschuldigt++;
+        } else if (status === 'nicht entsch.' || status === 'nicht akzep.') {
           unentschuldigt++;
         } else {
-          offen++;
+          // Prüfen, ob die Entschuldigungsfrist abgelaufen ist
+          const entryDate = parseDate(entry.Beginndatum);
+          const deadlineDate = new Date(entryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+          
+          if (today > deadlineDate) {
+            unentschuldigt++;
+          } else {
+            offen++;
+          }
         }
-      }
-    });
+      });
+    }
     
     const total = entschuldigt + unentschuldigt + offen;
     const entschuldigtRate = total > 0 ? (entschuldigt / total) * 100 : 0;
@@ -985,3 +1056,58 @@ export const prepareEntschuldigungsverhalten = (
     };
   }).sort((a, b) => a.klasse.localeCompare(b.klasse));
 };
+
+// Helper to get German calendar week (ISO 8601) with year context
+const getGermanCalendarWeekWithYear = (date: Date): { week: number; year: number } => {
+  // Copy the date to avoid modifying the original
+  const targetDate = new Date(date);
+  
+  // ISO 8601 week starts on Monday and ends on Sunday
+  // Find Thursday in the current week for proper ISO week number determination
+  targetDate.setDate(targetDate.getDate() + (4 - (targetDate.getDay() || 7)));
+  
+  // January 1st of the current year
+  const yearStart = new Date(targetDate.getFullYear(), 0, 1);
+  
+  // Calculate week number
+  const weekNum = Math.ceil((((targetDate.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  
+  // Use the year of the Thursday in the target week for proper year context
+  const weekYear = targetDate.getFullYear();
+  
+  return { week: weekNum, year: weekYear };
+};
+
+// Generate a unique sort key for week+year combination
+const generateWeekSortKey = (week: number, year: number): number => {
+  // Return a value that can be sorted numerically (year*100 + week)
+  return year * 100 + week;
+};
+
+// MODIFIZIERT: Verbesserte und exaktere Prüfung auf Schuljahrzeitraum
+function checkIfSchoolYearPeriod(startDate: Date, endDate: Date): boolean {
+  // Bestimme das aktuelle Schuljahr
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth(); // 0-11
+  
+  // Schuljahr beginnt im September und endet im Juli des nächsten Jahres
+  const schoolYearStartYear = currentMonth < 8 ? currentYear - 1 : currentYear;
+  const schoolYearEndYear = schoolYearStartYear + 1;
+  
+  // Schuljahresgrenzen
+  const schoolYearStart = new Date(schoolYearStartYear, 8, 1); // 1. September
+  const schoolYearEnd = new Date(schoolYearEndYear, 6, 31);    // 31. Juli
+  
+  // Prüfe, ob das Startdatum innerhalb von 14 Tagen vom Schuljahresstart liegt
+  const startClose = Math.abs(startDate.getTime() - schoolYearStart.getTime()) < 14 * 24 * 60 * 60 * 1000;
+  
+  // Prüfe, ob das Enddatum innerhalb von 14 Tagen vom Schuljahresende liegt
+  const endClose = Math.abs(endDate.getTime() - schoolYearEnd.getTime()) < 14 * 24 * 60 * 60 * 1000;
+  
+  // Alternative Prüfung: Daten umfassen das komplette oder nahezu komplette Schuljahr
+  const coversFullYear = startDate <= new Date(schoolYearStartYear, 8, 15) && // bis 15. September
+                         endDate >= new Date(schoolYearEndYear, 6, 15);      // ab 15. Juli
+  
+  return (startClose && endClose) || coversFullYear;
+}

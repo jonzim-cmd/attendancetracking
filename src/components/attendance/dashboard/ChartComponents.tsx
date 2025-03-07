@@ -188,13 +188,13 @@ export const AttendanceBarChart: React.FC<BarChartProps> = ({
     // Farbe für den Neon-Rand basierend auf dem Datentyp
     const glowColor = 
       dataKey === 'verspaetungen' ? '#b366ff' : // Helles Lila für Neon-Effekt
-      dataKey === 'fehlzeitenUnentsch' ? '#ff4d4d' : // Helles Rot für Neon-Effekt
+      dataKey === 'fehlzeitenUnentsch' ? '#fa8484' : // Helles Rot für Neon-Effekt #ff4d4d
       dataKey === 'fehlzeitenGesamt' ? '#66b3ff' : // Helles Blau für Neon-Effekt
       fill;
       
     // Neon-Stil nur anwenden, wenn es sich um einen kritischen Tag handelt
     const style = isCritical ? {
-      filter: `drop-shadow(0 0 4px ${glowColor}) drop-shadow(0 0 8px ${glowColor})`,
+      filter: `drop-shadow(0 0 8px ${glowColor}) drop-shadow(0 0 12px ${glowColor})`,
       strokeWidth: 4,
       stroke: glowColor,
       strokeOpacity: 1,

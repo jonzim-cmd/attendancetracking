@@ -37,7 +37,10 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   const {
     selectedDashboardClasses,
     selectedStudents,
-    groupingOption
+    groupingOption,
+    // Verwende Dashboard-spezifische Datumsfilter
+    dashboardStartDate,
+    dashboardEndDate
   } = useFilters();
   
   // States for chart data
@@ -115,19 +118,23 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     );
   }, [weeklyDetailedData, studentStats, selectedDashboardClasses, selectedStudents]);
   
-  // Memoized function for attendance over time data
+  // Memoized function for attendance over time data - Use dashboard dates if available
   const memoizedAttendanceOverTime = useCallback(() => {
+    // Use dashboard dates if available, otherwise fall back to props
+    const effectiveStartDate = dashboardStartDate || startDate;
+    const effectiveEndDate = dashboardEndDate || endDate;
+    
     // Use the updated function signature from the new utils.ts
     return prepareAttendanceOverTime(
-      startDate,
-      endDate,
+      effectiveStartDate,
+      effectiveEndDate,
       groupingOption,
       studentStats,
       weeklyDetailedData,
       selectedDashboardClasses,
       selectedStudents
     );
-  }, [startDate, endDate, groupingOption, studentStats, weeklyDetailedData, selectedDashboardClasses, selectedStudents]);
+  }, [dashboardStartDate, dashboardEndDate, startDate, endDate, groupingOption, studentStats, weeklyDetailedData, selectedDashboardClasses, selectedStudents]);
   
   // Effect to prepare all data when filters change
   useEffect(() => {
@@ -143,6 +150,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     rawData,
     startDate,
     endDate,
+    dashboardStartDate,  // NEU: Reagiere auf Änderungen an den Dashboard-Datumsfiltern
+    dashboardEndDate,    // NEU: Reagiere auf Änderungen an den Dashboard-Datumsfiltern
     selectedWeeks,
     selectedDashboardClasses,
     selectedStudents,
@@ -153,6 +162,10 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     memoizedAttendanceOverTime
   ]);
   
+  // Bestimme den effektiven Zeitraum für die Anzeige des Datums (Dashboard-Daten oder fallback zu props)
+  const effectiveStartDate = dashboardStartDate || startDate;
+  const effectiveEndDate = dashboardEndDate || endDate;
+
   if (!rawData) {
     return (
       <div className="p-4 text-center text-gray-500 dark:text-gray-400">
@@ -163,6 +176,13 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   
   return (
     <div className="space-y-4">
+      {/* Kompakte Überschrift, jetzt mit effektiven Daten */}
+      <div className="sticky top-0 z-10 bg-table-light-base dark:bg-table-dark-base pt-2 pb-0">
+        <h3 className="text-base font-semibold text-chatGray-textLight dark:text-chatGray-textDark mb-2">
+          Dashboard für den Zeitraum {formatDate(effectiveStartDate)} - {formatDate(effectiveEndDate)}
+        </h3>
+      </div>
+      
       {/* Only render TrendCharts, removed other components */}
       <TrendCharts 
         weeklyTrends={weeklyTrends}
@@ -177,6 +197,17 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       />
     </div>
   );
+};
+
+// Helper function to format date
+const formatDate = (dateStr: string): string => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
 };
 
 export default EnhancedDashboard;

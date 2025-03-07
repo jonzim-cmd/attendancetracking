@@ -162,7 +162,7 @@ const StudentSearchSelect: React.FC<StudentSearchSelectProps> = ({
             />
           ) : (
             // Ansonsten: Zeige ausgewählte Schüler oder Platzhalter
-            <span className="truncate mr-2">
+            <span className="truncate whitespace-nowrap mr-2">
               {selectedStudents.length === 0 
                 ? 'Alle Schüler' 
                 : selectedStudents.length === 1 
@@ -220,7 +220,7 @@ const StudentSearchSelect: React.FC<StudentSearchSelectProps> = ({
                 />
                 <label 
                   htmlFor={`${instanceId.current}-student-all`} 
-                  className="text-sm cursor-pointer text-chatGray-textLight dark:text-chatGray-textDark"
+                  className="text-sm cursor-pointer whitespace-nowrap text-chatGray-textLight dark:text-chatGray-textDark"
                 >
                   Alle Schüler
                 </label>
@@ -251,7 +251,7 @@ const StudentSearchSelect: React.FC<StudentSearchSelectProps> = ({
                       />
                       <label 
                         htmlFor={checkboxId}
-                        className="text-sm cursor-pointer text-chatGray-textLight dark:text-chatGray-textDark whitespace-nowrap"
+                        className="text-sm cursor-pointer whitespace-nowrap text-chatGray-textLight dark:text-chatGray-textDark"
                       >
                         {student}
                       </label>

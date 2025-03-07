@@ -30,6 +30,12 @@ interface HeaderBarProps {
   
   viewMode?: 'table' | 'dashboard';
   onViewModeChange?: (mode: 'table' | 'dashboard') => void;
+  
+  // Dashboard-spezifische Datumsfilter
+  dashboardStartDate?: string;
+  dashboardEndDate?: string;
+  onDashboardStartDateChange?: (value: string) => void;
+  onDashboardEndDateChange?: (value: string) => void;
 }
 
 const HeaderBar: React.FC<HeaderBarProps> = ({
@@ -55,6 +61,10 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   onCloseAllDetails,
   viewMode = 'table',
   onViewModeChange = () => {},
+  dashboardStartDate = '',
+  dashboardEndDate = '',
+  onDashboardStartDateChange = () => {},
+  onDashboardEndDateChange = () => {},
 }) => {
   // State für geöffnetes Spalten-Dropdown
   const [isColumnDropdownOpen, setIsColumnDropdownOpen] = useState(false);
@@ -227,14 +237,14 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                 onClick={() => setIsClassDropdownOpen(!isClassDropdownOpen)}
                 title="Klassen filtern - mehrere Klassen können ausgewählt werden"
               >
-                <span>
+                <span className="truncate whitespace-nowrap mr-1">
                   {selectedClasses.length === 0 
                     ? 'Alle Klassen' 
                     : selectedClasses.length === 1 
                       ? selectedClasses[0] 
                       : `${selectedClasses.length} Klassen`}
                 </span>
-                <ChevronDown className="w-4 h-4 ml-1" />
+                <ChevronDown className="w-4 h-4 ml-1 flex-shrink-0" />
               </div>
               
               {isClassDropdownOpen && (
@@ -251,7 +261,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                         onChange={() => {}}
                         className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
                       />
-                      <label htmlFor="class-all" className="text-sm cursor-pointer text-chatGray-textLight dark:text-chatGray-textDark">
+                      <label htmlFor="class-all" className="text-sm cursor-pointer whitespace-nowrap text-chatGray-textLight dark:text-chatGray-textDark">
                         Alle Klassen
                       </label>
                     </div>
@@ -269,7 +279,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                           onChange={() => {}}
                           className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
                         />
-                        <label htmlFor={`class-${className}`} className="text-sm cursor-pointer text-chatGray-textLight dark:text-chatGray-textDark">
+                        <label htmlFor={`class-${className}`} className="text-sm cursor-pointer whitespace-nowrap text-chatGray-textLight dark:text-chatGray-textDark">
                           {className}
                         </label>
                       </div>
@@ -364,7 +374,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                         onChange={() => onToggleColumnGroup('verspaetungen')}
                         className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
                       />
-                      <label htmlFor="spalte-verspaetungen" className="text-sm cursor-pointer text-chatGray-textLight dark:text-chatGray-textDark">
+                      <label htmlFor="spalte-verspaetungen" className="text-sm cursor-pointer whitespace-nowrap text-chatGray-textLight dark:text-chatGray-textDark">
                         Verspätungen
                       </label>
                     </div>
@@ -376,7 +386,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                         onChange={() => onToggleColumnGroup('fehlzeiten')}
                         className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
                       />
-                      <label htmlFor="spalte-fehlzeiten" className="text-sm cursor-pointer text-chatGray-textLight dark:text-chatGray-textDark">
+                      <label htmlFor="spalte-fehlzeiten" className="text-sm cursor-pointer whitespace-nowrap text-chatGray-textLight dark:text-chatGray-textDark">
                         Fehltage
                       </label>
                     </div>
@@ -388,7 +398,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                         onChange={() => onToggleColumnGroup('stats')}
                         className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
                       />
-                      <label htmlFor="spalte-stats" className="text-sm cursor-pointer text-chatGray-textLight dark:text-chatGray-textDark">
+                      <label htmlFor="spalte-stats" className="text-sm cursor-pointer whitespace-nowrap text-chatGray-textLight dark:text-chatGray-textDark">
                         Wochen
                       </label>
                     </div>
@@ -411,14 +421,14 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                 onClick={() => setIsDashboardClassDropdownOpen(!isDashboardClassDropdownOpen)}
                 title="Klassen filtern - mehrere Klassen können ausgewählt werden"
               >
-                <span>
+                <span className="truncate whitespace-nowrap mr-1">
                   {selectedDashboardClasses.length === 0 
                     ? 'Alle Klassen' 
                     : selectedDashboardClasses.length === 1 
                       ? selectedDashboardClasses[0] 
                       : `${selectedDashboardClasses.length} Klassen`}
                 </span>
-                <ChevronDown className="w-4 h-4 ml-1" />
+                <ChevronDown className="w-4 h-4 ml-1 flex-shrink-0" />
               </div>
               
               {isDashboardClassDropdownOpen && (
@@ -435,7 +445,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                         onChange={() => {}}
                         className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
                       />
-                      <label htmlFor="dashboard-class-all" className="text-sm cursor-pointer text-chatGray-textLight dark:text-chatGray-textDark">
+                      <label htmlFor="dashboard-class-all" className="text-sm cursor-pointer whitespace-nowrap text-chatGray-textLight dark:text-chatGray-textDark">
                         Alle Klassen
                       </label>
                     </div>
@@ -453,7 +463,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                           onChange={() => {}}
                           className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
                         />
-                        <label htmlFor={`dashboard-class-${className}`} className="text-sm cursor-pointer text-chatGray-textLight dark:text-chatGray-textDark">
+                        <label htmlFor={`dashboard-class-${className}`} className="text-sm cursor-pointer whitespace-nowrap text-chatGray-textLight dark:text-chatGray-textDark">
                           {className}
                         </label>
                       </div>
@@ -482,6 +492,26 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                 <option value="weekly">Wöchentlich</option>
                 <option value="monthly">Monatlich</option>
               </select>
+            </div>
+            
+            {/* NEU: Dashboard-Datumsbereich-Filter */}
+            <div className="flex items-center gap-1 ml-3 bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark rounded px-2 py-1">
+              <span className="text-xs text-chatGray-textLight dark:text-chatGray-textDark whitespace-nowrap"></span>
+              <input
+                type="date"
+                value={dashboardStartDate}
+                onChange={(e) => onDashboardStartDateChange(e.target.value)}
+                className="w-[120px] bg-transparent border-none text-sm text-chatGray-textLight dark:text-chatGray-textDark"
+                title="Startdatum für Dashboard-Analyse"
+              />
+              <span className="mx-1 text-chatGray-textLight dark:text-chatGray-textDark">-</span>
+              <input
+                type="date"
+                value={dashboardEndDate}
+                onChange={(e) => onDashboardEndDateChange(e.target.value)}
+                className="w-[120px] bg-transparent border-none text-sm text-chatGray-textLight dark:text-chatGray-textDark"
+                title="Enddatum für Dashboard-Analyse"
+              />
             </div>
           </>
         )}

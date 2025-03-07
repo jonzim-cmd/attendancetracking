@@ -8,6 +8,7 @@ import {
   AttendanceBarChart, 
   InfoTile 
 } from './ChartComponents';
+import { useFilters } from '@/contexts/FilterContext';
 
 interface TrendChartsProps {
   weeklyTrends: any[];
@@ -52,6 +53,9 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   weekdayChartVisibility,
   setWeekdayChartVisibility
 }) => {
+  // Zugriff auf den FilterContext
+  const { dashboardStartDate, dashboardEndDate } = useFilters();
+  
   // Referenz für den scrollbaren Container
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 

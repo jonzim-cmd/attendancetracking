@@ -12,6 +12,12 @@ interface FilterContextType {
   groupingOption: 'weekly' | 'monthly';
   setGroupingOption: (option: 'weekly' | 'monthly') => void;
   
+  // Dashboard-spezifische Datumsfilter
+  dashboardStartDate: string;
+  setDashboardStartDate: (date: string) => void;
+  dashboardEndDate: string;
+  setDashboardEndDate: (date: string) => void;
+  
   // Gemeinsame Filter
   viewMode: 'table' | 'dashboard';
   setViewMode: (mode: 'table' | 'dashboard') => void;
@@ -42,6 +48,10 @@ export const FilterProvider: React.FC<{
   getFilteredStudents: () => [string, StudentStats][];
   propSearchQuery?: string; // Neu: searchQuery als optionale Prop
   onSearchChange?: (query: string) => void; // Neu: searchQuery-Handler als optionale Prop
+  dashboardStartDate?: string; // Neu: Dashboard-Datumsfilter als optionale Prop
+  dashboardEndDate?: string; // Neu: Dashboard-Datumsfilter als optionale Prop
+  onDashboardStartDateChange?: (date: string) => void; // Neu: Dashboard-Datumsfilter-Handler
+  onDashboardEndDateChange?: (date: string) => void; // Neu: Dashboard-Datumsfilter-Handler
 }> = ({ 
   children, 
   propSelectedClasses, 
@@ -50,6 +60,10 @@ export const FilterProvider: React.FC<{
   getFilteredStudents,
   propSearchQuery = '', // Default-Wert
   onSearchChange = () => {}, // Leere Funktion als Default
+  dashboardStartDate = '', // Default-Wert
+  dashboardEndDate = '', // Default-Wert
+  onDashboardStartDateChange = () => {}, // Leere Funktion als Default
+  onDashboardEndDateChange = () => {}, // Leere Funktion als Default
 }) => {
   // Dashboard-Filter
   const [selectedDashboardClasses, setSelectedDashboardClasses] = useState<string[]>(propSelectedClasses);
@@ -60,6 +74,11 @@ export const FilterProvider: React.FC<{
   const [internalSearchQuery, setInternalSearchQuery] = useState<string>(propSearchQuery);
   const [isUpdatingFromProp, setIsUpdatingFromProp] = useState(false);
   
+  // Interne Speicherung der Dashboard-Datumsfilter
+  const [internalDashboardStartDate, setInternalDashboardStartDate] = useState<string>(dashboardStartDate);
+  const [internalDashboardEndDate, setInternalDashboardEndDate] = useState<string>(dashboardEndDate);
+  const [isUpdatingDashboardDates, setIsUpdatingDashboardDates] = useState(false);
+  
   // Memoized setSearchQuery um Endlosschleifen zu vermeiden
   const setSearchQuery = useCallback((query: string) => {
     setInternalSearchQuery(query);
@@ -67,6 +86,22 @@ export const FilterProvider: React.FC<{
       onSearchChange(query);
     }
   }, [onSearchChange, isUpdatingFromProp]);
+  
+  // Memoized setDashboardStartDate um Endlosschleifen zu vermeiden
+  const setDashboardStartDate = useCallback((date: string) => {
+    setInternalDashboardStartDate(date);
+    if (!isUpdatingDashboardDates) {
+      onDashboardStartDateChange(date);
+    }
+  }, [onDashboardStartDateChange, isUpdatingDashboardDates]);
+  
+  // Memoized setDashboardEndDate um Endlosschleifen zu vermeiden
+  const setDashboardEndDate = useCallback((date: string) => {
+    setInternalDashboardEndDate(date);
+    if (!isUpdatingDashboardDates) {
+      onDashboardEndDateChange(date);
+    }
+  }, [onDashboardEndDateChange, isUpdatingDashboardDates]);
   
   // Gemeinsame Filter - wir nutzen die Prop für den tatsächlichen Zustand
   const viewMode = propViewMode;
@@ -89,6 +124,19 @@ export const FilterProvider: React.FC<{
     }
   }, [propSearchQuery, internalSearchQuery]);
   
+  // Neuer Effect um die Dashboard-Datumsfilter zu aktualisieren, wenn Props sich ändern
+  useEffect(() => {
+    if (dashboardStartDate !== internalDashboardStartDate || dashboardEndDate !== internalDashboardEndDate) {
+      setIsUpdatingDashboardDates(true);
+      setInternalDashboardStartDate(dashboardStartDate);
+      setInternalDashboardEndDate(dashboardEndDate);
+      // Flag nach kurzer Verzögerung zurücksetzen
+      setTimeout(() => {
+        setIsUpdatingDashboardDates(false);
+      }, 0);
+    }
+  }, [dashboardStartDate, dashboardEndDate, internalDashboardStartDate, internalDashboardEndDate]);
+  
   const contextValue = {
     selectedDashboardClasses,
     setSelectedDashboardClasses,
@@ -100,6 +148,10 @@ export const FilterProvider: React.FC<{
     setViewMode,
     searchQuery: internalSearchQuery,
     setSearchQuery,
+    dashboardStartDate: internalDashboardStartDate,
+    setDashboardStartDate,
+    dashboardEndDate: internalDashboardEndDate,
+    setDashboardEndDate,
     isDashboardMode: viewMode === 'dashboard',
     
     // Die ursprüngliche getContextFilteredStudents-Funktion

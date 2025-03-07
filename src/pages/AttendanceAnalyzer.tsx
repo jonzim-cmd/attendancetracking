@@ -14,6 +14,9 @@ const AttendanceAnalyzer: React.FC = () => {
   const [results, setResults] = useState<Record<string, StudentStats> | null>(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  // Dashboard-spezifische Datumsfilter hinzufügen
+  const [dashboardStartDate, setDashboardStartDate] = useState('');
+  const [dashboardEndDate, setDashboardEndDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState('');
   const [detailedData, setDetailedData] = useState<Record<string, any>>({});
@@ -65,6 +68,14 @@ const AttendanceAnalyzer: React.FC = () => {
     };
   }, [isDarkMode]);
 
+  // Initialisiere Dashboard-Datumsfilter mit Schuljahr, wenn zur Dashboard-Ansicht gewechselt wird
+  useEffect(() => {
+    if (viewMode === 'dashboard' && (!dashboardStartDate || !dashboardEndDate)) {
+      setDashboardStartDate(schoolYear.startDate.toISOString().split('T')[0]);
+      setDashboardEndDate(schoolYear.endDate.toISOString().split('T')[0]);
+    }
+  }, [viewMode, dashboardStartDate, dashboardEndDate, schoolYear]);
+
   // Neue Funktion zum Umschalten der Spaltengruppen
   const toggleColumnGroup = (columnGroup: string) => {
     setVisibleColumns(prev => {
@@ -96,6 +107,8 @@ const AttendanceAnalyzer: React.FC = () => {
     
     setStartDate(start.toISOString().split('T')[0]);
     setEndDate(end.toISOString().split('T')[0]);
+    setDashboardStartDate(''); // Reset dashboard date filters
+    setDashboardEndDate('');
     
     setSearchQuery('');
     setError('');
@@ -395,12 +408,18 @@ const AttendanceAnalyzer: React.FC = () => {
       getFilteredStudents={getFilteredStudents}
       propSearchQuery={searchQuery}
       onSearchChange={setSearchQuery}
+      dashboardStartDate={dashboardStartDate}
+      dashboardEndDate={dashboardEndDate}
+      onDashboardStartDateChange={setDashboardStartDate}
+      onDashboardEndDateChange={setDashboardEndDate}
     >
       <AttendanceAnalyzerContent
         rawData={rawData}
         results={results}
         startDate={startDate}
         endDate={endDate}
+        dashboardStartDate={dashboardStartDate}
+        dashboardEndDate={dashboardEndDate}
         searchQuery={searchQuery}
         error={error}
         detailedData={detailedData}
@@ -438,6 +457,8 @@ const AttendanceAnalyzer: React.FC = () => {
         setViewMode={setViewMode}
         setStartDate={setStartDate}
         setEndDate={setEndDate}
+        setDashboardStartDate={setDashboardStartDate}
+        setDashboardEndDate={setDashboardEndDate}
         handleQuickSelect={handleQuickSelect}
         setSelectedWeeks={setSelectedWeeks}
         handleFileProcessed={handleFileProcessed}
@@ -460,6 +481,8 @@ const AttendanceAnalyzerContent: React.FC<{
   results: Record<string, StudentStats> | null;
   startDate: string;
   endDate: string;
+  dashboardStartDate: string;
+  dashboardEndDate: string;
   searchQuery: string;
   error: string;
   detailedData: Record<string, any>;
@@ -505,6 +528,8 @@ const AttendanceAnalyzerContent: React.FC<{
   setViewMode: (mode: 'table' | 'dashboard') => void;
   setStartDate: (value: string) => void;
   setEndDate: (value: string) => void;
+  setDashboardStartDate: (value: string) => void;
+  setDashboardEndDate: (value: string) => void;
   handleQuickSelect: (value: string) => void;
   setSelectedWeeks: (value: string) => void;
   handleFileProcessed: (data: any) => void;
@@ -513,14 +538,15 @@ const AttendanceAnalyzerContent: React.FC<{
   handleExportPDF: () => void;
 }> = (props) => {
   const {
-    rawData, results, startDate, endDate, error, detailedData, schoolYearDetailedData,
+    rawData, results, startDate, endDate, dashboardStartDate, dashboardEndDate, error, detailedData, schoolYearDetailedData,
     filterUnexcusedLate, filterUnexcusedAbsent, minUnexcusedLates, minUnexcusedAbsences,
     availableClasses, selectedClasses, selectedWeeks, schoolYearStats, weeklyStats,
     weeklyDetailedData, expandedStudents, setExpandedStudents, activeFilters, setActiveFilters,
     uploadTrigger, hasFileUploaded, quickSelectValue, visibleColumns, isDarkMode, viewMode,
     setSearchQuery, setFilterUnexcusedLate, setFilterUnexcusedAbsent, setMinUnexcusedLates,
     setMinUnexcusedAbsences, setSelectedClasses, setIsDarkMode, resetAll, toggleColumnGroup,
-    closeAllDetails, setViewMode, setStartDate, setEndDate, handleQuickSelect, setSelectedWeeks,
+    closeAllDetails, setViewMode, setStartDate, setEndDate, setDashboardStartDate, setDashboardEndDate,
+    handleQuickSelect, setSelectedWeeks,
     handleFileProcessed, handleExportExcel, handleExportCSV, handleExportPDF,
     // Neue Props für die Summenzeile mit Default-Werten
     enableSummaryRow = true,
@@ -608,6 +634,10 @@ const AttendanceAnalyzerContent: React.FC<{
         onCloseAllDetails={closeAllDetails}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        dashboardStartDate={dashboardStartDate}
+        dashboardEndDate={dashboardEndDate}
+        onDashboardStartDateChange={setDashboardStartDate}
+        onDashboardEndDateChange={setDashboardEndDate}
       />
       <Sidebar
         startDate={startDate}

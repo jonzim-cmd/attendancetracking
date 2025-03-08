@@ -376,7 +376,6 @@ export const getCurrentSchoolYear = (): SchoolYear => {
   let septemberFirst = new Date(year, 8, 1); // September (0-basierter Index)
   let dayOfWeek = septemberFirst.getDay(); // 0 = Sonntag, 1 = Montag, ...
   let daysToFirstMonday = dayOfWeek === 1 ? 0 : (dayOfWeek === 0 ? 1 : 8 - dayOfWeek);
-  let firstMonday = new Date(year, 8, 1 + daysToFirstMonday);
   let secondMonday = new Date(year, 8, 1 + daysToFirstMonday + 7);
   
   // Berechne den letzten Tag im Juli des Folgejahres

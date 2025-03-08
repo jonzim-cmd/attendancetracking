@@ -682,9 +682,7 @@ const AttendanceAnalyzerContent: React.FC<{
     handleFileProcessed, handleExportExcel, handleExportCSV, handleExportPDF,
     // Neue Props für die Summenzeile mit Default-Werten
     enableSummaryRow = true,
-    setEnableSummaryRow = () => {},
     summaryRowSticky = true,
-    setSummaryRowSticky = () => {},
   } = props;
 
   // Hier können wir nun den FilterContext verwenden

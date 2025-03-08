@@ -3,11 +3,10 @@
 // um die DateRangeButton-Komponente korrekt zu integrieren
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Sun, Moon, ChevronDown, Calendar } from 'lucide-react';
+import { Sun, Moon, ChevronDown } from 'lucide-react';
 import ResetButton from '@/components/attendance/ResetButton';
 import { useFilters } from '@/contexts/FilterContext';
 import StudentSearchSelect from '@/components/ui/StudentSearchSelect';
-import { StudentStats } from '@/types';
 import DateRangeButton from '@/components/ui/DateRangeButton';
 
 interface HeaderBarProps {
@@ -55,8 +54,6 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   minUnexcusedAbsences,
   onMinUnexcusedLatesChange,
   onMinUnexcusedAbsencesChange,
-  searchQuery,
-  onSearchChange,
   availableClasses,
   selectedClasses,
   onClassesChange,
@@ -82,18 +79,14 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
   
   // NEU: State für Dashboard-Date-Dropdown
-  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
+  const [, setIsDateDropdownOpen] = useState(false);
   
   // NEU: Dashboard-Filter aus dem Context holen
   const {
     selectedDashboardClasses,
     setSelectedDashboardClasses,
-    selectedStudents,
-    setSelectedStudents,
     groupingOption,
     setGroupingOption,
-    // NEU: getContextFilteredStudents aus dem Context holen
-    getContextFilteredStudents,
     getAllStudents // <-- Neue Funktion verwenden
   } = useFilters();
   
@@ -114,17 +107,8 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   
   // NEU: Timer für Dashboard-Filter Dropdowns
   const dashboardClassDropdownTimer = useRef<NodeJS.Timeout | null>(null);
-  const dateDropdownTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Quick select options
-  const quickSelectOptions = [
-    { value: 'thisWeek', label: 'Diese Woche' },
-    { value: 'lastWeek', label: 'Letzte Woche' },
-    { value: 'lastTwoWeeks', label: 'Letzte 2 Wochen' },
-    { value: 'thisMonth', label: 'Dieser Monat' },
-    { value: 'lastMonth', label: 'Letzter Monat' },
-    { value: 'schoolYear', label: 'Schuljahr' },
-  ];
 
   // Click-Outside Handler für die Dropdowns
   useEffect(() => {
@@ -201,34 +185,9 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   };
   
   // NEU: Hilfsfunktionen für Datumsfilter Dropdown
-  const handleMouseEnterDateDropdown = () => {
-    if (dateDropdownTimer.current) {
-      clearTimeout(dateDropdownTimer.current);
-      dateDropdownTimer.current = null;
-    }
-    setIsDateDropdownOpen(true);
-  };
   
-  const handleMouseLeaveDateDropdown = () => {
-    dateDropdownTimer.current = setTimeout(() => {
-      setIsDateDropdownOpen(false);
-    }, 300);
-  };
 
   // Format date for display
-  const formatDate = (dateStr: string): string => {
-    if (!dateStr) return '';
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('de-DE', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (e) {
-      return dateStr;
-    }
-  };
 
   // Handler für Klassen-Auswahl
   const handleClassToggle = (className: string) => {

@@ -3,10 +3,6 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Calendar, ChevronDown } from 'lucide-react';
 import { getCurrentSchoolYear } from '@/lib/attendance-utils';
 
-interface QuickSelectOption {
-  value: string;
-  label: string;
-}
 
 interface Month {
   key: string;
@@ -31,7 +27,6 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
   onDashboardStartDateChange,
   onDashboardEndDateChange,
   handleQuickSelect,
-  quickSelectValue,
   className = ''
 }) => {
   const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
@@ -56,14 +51,6 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
   ], []);
   
   // Die originalen Quick-Select-Optionen behalten wir für Kompatibilität
-  const quickSelectOptions: QuickSelectOption[] = [
-    { value: 'thisWeek', label: 'Diese Woche' },
-    { value: 'lastWeek', label: 'Letzte Woche' },
-    { value: 'lastTwoWeeks', label: 'Letzte 2 Wochen' },
-    { value: 'thisMonth', label: 'Dieser Monat' },
-    { value: 'lastMonth', label: 'Letzter Monat' },
-    { value: 'schoolYear', label: 'Schuljahr' },
-  ];
   
   // Format date for display
   const formatDate = (dateStr: string): string => {
@@ -165,49 +152,6 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
   };
   
   // Funktion, um direkt einen einzelnen Monat zu applizieren
-  const applySingleMonth = (monthKey: string) => {
-    const month = schoolYearMonths.find(m => m.key === monthKey);
-    if (!month) return;
-    
-    const now = new Date();
-    let currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
-    
-    // Bestimme das aktuelle Schuljahr
-    let schoolStartYear = currentYear;
-    if (currentMonth < 8) { // Wenn aktueller Monat vor September
-      schoolStartYear = currentYear - 1;
-    }
-    
-    // Berechne Jahr für diesen Monat im Schuljahr-Kontext
-    const monthYear = month.index < 8 ? schoolStartYear + 1 : schoolStartYear;
-    
-    // Erstelle die Datum-Objekte mit korrekten Werten für deutsche Zeitzone
-    // Immer den 1. des Monats als Startdatum verwenden
-    const startDate = new Date(Date.UTC(monthYear, month.index, 1, 0, 0, 0));
-    
-    // Letzter Tag des Monats - korrekt berechnet für jeden Monat
-    const endDate = new Date(Date.UTC(monthYear, month.index + 1, 0, 23, 59, 59));
-    
-    // Debug-Ausgabe
-    console.log(`Einzelmonat ${month.label}:`, {
-      startDate: startDate.toLocaleDateString('de-DE'),
-      endDate: endDate.toLocaleDateString('de-DE'),
-      startISO: startDate.toISOString(),
-      endISO: endDate.toISOString()
-    });
-    
-    // Format JJJJ-MM-TT für Eingabefelder (ISO-Format ohne Zeitanteil)
-    const startFormatted = startDate.toISOString().split('T')[0];
-    const endFormatted = endDate.toISOString().split('T')[0];
-    
-    // Aktualisiere die Datumsangaben
-    onDashboardStartDateChange(startFormatted);
-    onDashboardEndDateChange(endFormatted);
-    
-    // Schließe das Dropdown
-    setIsDateDropdownOpen(false);
-  };
   
   // Korrigierte toggleAllMonths-Funktion in DateRangeButton.tsx
   const toggleAllMonths = () => {
@@ -250,10 +194,6 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
   };
   
   // Original quick select handler - behalten wir für Kompatibilität
-  const applyQuickSelect = (value: string) => {
-    handleQuickSelect(value);
-    setIsDateDropdownOpen(false);
-  };
   
   // Timer für verzögertes Schließen bei Hover
   const dropdownHoverTimer = useRef<NodeJS.Timeout | null>(null);

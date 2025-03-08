@@ -1,8 +1,6 @@
 import React, { memo, useRef, useEffect } from 'react';
 import { 
-  CARD_CLASSES, 
-  CARD_TITLE_CLASSES
-} from './styles';
+  CARD_CLASSES} from './styles';
 import { 
   AttendanceLineChart, 
   AttendanceBarChart, 
@@ -46,7 +44,6 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   weeklyTrends,
   attendanceOverTime,
   dayOfWeekData,
-  absenceTypes,
   groupingOption,
   chartVisibility,
   setChartVisibility,
@@ -54,7 +51,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   setWeekdayChartVisibility
 }) => {
   // Zugriff auf den FilterContext
-  const { dashboardStartDate, dashboardEndDate } = useFilters();
+  useFilters();
   
   // Referenz für den scrollbaren Container
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -118,11 +115,6 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   };
 
   // Berechnung der Verspätungsquote
-  const totalVerspaetungen = weeklyTrends.reduce((sum, week) => sum + week.verspaetungen, 0);
-  const totalFehlzeitenGesamt = weeklyTrends.reduce((sum, week) => sum + week.fehlzeitenTotal, 0);
-  const verspaetungsQuote = (totalVerspaetungen + totalFehlzeitenGesamt) > 0
-    ? Math.round((totalVerspaetungen / (totalVerspaetungen + totalFehlzeitenGesamt)) * 100)
-    : 0;
   
   // Prepare visible lines for the chart based on user preferences
   const visibleLines = [];

@@ -29,6 +29,10 @@ interface FilterContextType {
   // Hilfsfunktion, um zu prüfen, ob wir im Dashboard-Modus sind
   isDashboardMode: boolean;
   
+  // QuickSelect Werte und Funktionen
+  quickSelectValue: string;
+  handleQuickSelect: (value: string) => void;
+  
   // Zugriff auf die gefilterten Schülerdaten
   getContextFilteredStudents: () => [string, StudentStats][];
   
@@ -53,6 +57,8 @@ export const FilterProvider: React.FC<{
   onDashboardStartDateChange?: (date: string) => void; // Neu: Dashboard-Datumsfilter-Handler
   onDashboardEndDateChange?: (date: string) => void; // Neu: Dashboard-Datumsfilter-Handler
   resetTriggerId?: number; // Neu: Trigger für das Zurücksetzen der Filter
+  quickSelectValue?: string; // Neu: QuickSelect-Value als optionale Prop
+  handleQuickSelect?: (value: string) => void; // Neu: QuickSelect-Handler als optionale Prop
 }> = ({ 
   children, 
   propSelectedClasses, 
@@ -66,6 +72,8 @@ export const FilterProvider: React.FC<{
   onDashboardStartDateChange = () => {}, // Leere Funktion als Default
   onDashboardEndDateChange = () => {}, // Leere Funktion als Default
   resetTriggerId = 0, // Default-Wert für Reset-Trigger
+  quickSelectValue = '', // Default-Wert für QuickSelect
+  handleQuickSelect = () => {}, // Leere Funktion als Default
 }) => {
   // Dashboard-Filter
   const [selectedDashboardClasses, setSelectedDashboardClasses] = useState<string[]>(propSelectedClasses);
@@ -164,6 +172,8 @@ export const FilterProvider: React.FC<{
     dashboardEndDate: internalDashboardEndDate,
     setDashboardEndDate,
     isDashboardMode: viewMode === 'dashboard',
+    quickSelectValue,
+    handleQuickSelect,
     
     // Die ursprüngliche getContextFilteredStudents-Funktion
     getContextFilteredStudents: () => {

@@ -1,6 +1,6 @@
 // src/components/layout/HeaderBar.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Sun, Moon, ChevronDown } from 'lucide-react';
+import { Sun, Moon, ChevronDown, Calendar } from 'lucide-react';
 import ResetButton from '@/components/attendance/ResetButton';
 import { useFilters } from '@/contexts/FilterContext';
 import StudentSearchSelect from '@/components/ui/StudentSearchSelect';
@@ -36,6 +36,10 @@ interface HeaderBarProps {
   dashboardEndDate?: string;
   onDashboardStartDateChange?: (value: string) => void;
   onDashboardEndDateChange?: (value: string) => void;
+  
+  // Add new props for QuickSelect
+  quickSelectValue?: string;
+  handleQuickSelect?: (value: string) => void;
 }
 
 const HeaderBar: React.FC<HeaderBarProps> = ({
@@ -65,11 +69,16 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   dashboardEndDate = '',
   onDashboardStartDateChange = () => {},
   onDashboardEndDateChange = () => {},
+  quickSelectValue = '',
+  handleQuickSelect = () => {},
 }) => {
   // State für geöffnetes Spalten-Dropdown
   const [isColumnDropdownOpen, setIsColumnDropdownOpen] = useState(false);
   // State für Klassen-Dropdown
   const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
+  
+  // NEU: State für Dashboard-Date-Dropdown
+  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
   
   // NEU: Dashboard-Filter aus dem Context holen
   const {
@@ -93,6 +102,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   
   // NEU: Refs für Dashboard-Filter Dropdowns
   const dashboardClassDropdownRef = useRef<HTMLDivElement>(null);
+  const dateDropdownRef = useRef<HTMLDivElement>(null);
   
   // Timer für verzögertes Schließen bei Hover
   const columnDropdownTimer = useRef<NodeJS.Timeout | null>(null);
@@ -100,6 +110,17 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   
   // NEU: Timer für Dashboard-Filter Dropdowns
   const dashboardClassDropdownTimer = useRef<NodeJS.Timeout | null>(null);
+  const dateDropdownTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Quick select options
+  const quickSelectOptions = [
+    { value: 'thisWeek', label: 'Diese Woche' },
+    { value: 'lastWeek', label: 'Letzte Woche' },
+    { value: 'lastTwoWeeks', label: 'Letzte 2 Wochen' },
+    { value: 'thisMonth', label: 'Dieser Monat' },
+    { value: 'lastMonth', label: 'Letzter Monat' },
+    { value: 'schoolYear', label: 'Schuljahr' },
+  ];
 
   // Click-Outside Handler für die Dropdowns
   useEffect(() => {
@@ -118,13 +139,18 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       if (dashboardClassDropdownRef.current && !dashboardClassDropdownRef.current.contains(event.target as Node)) {
         setIsDashboardClassDropdownOpen(false);
       }
+      
+      // NEU: Datumsfilter Dropdown überprüfen
+      if (dateDropdownRef.current && !dateDropdownRef.current.contains(event.target as Node)) {
+        setIsDateDropdownOpen(false);
+      }
     };
     
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [columnDropdownRef, classDropdownRef, dashboardClassDropdownRef]);
+  }, [columnDropdownRef, classDropdownRef, dashboardClassDropdownRef, dateDropdownRef]);
 
   // Hilfsfunktionen für Dropdowns
   const handleMouseEnterColumnDropdown = () => {
@@ -168,6 +194,36 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
     dashboardClassDropdownTimer.current = setTimeout(() => {
       setIsDashboardClassDropdownOpen(false);
     }, 300);
+  };
+  
+  // NEU: Hilfsfunktionen für Datumsfilter Dropdown
+  const handleMouseEnterDateDropdown = () => {
+    if (dateDropdownTimer.current) {
+      clearTimeout(dateDropdownTimer.current);
+      dateDropdownTimer.current = null;
+    }
+    setIsDateDropdownOpen(true);
+  };
+  
+  const handleMouseLeaveDateDropdown = () => {
+    dateDropdownTimer.current = setTimeout(() => {
+      setIsDateDropdownOpen(false);
+    }, 300);
+  };
+
+  // Format date for display
+  const formatDate = (dateStr: string): string => {
+    if (!dateStr) return '';
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (e) {
+      return dateStr;
+    }
   };
 
   // Handler für Klassen-Auswahl
@@ -494,24 +550,74 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
               </select>
             </div>
             
-            {/* NEU: Dashboard-Datumsbereich-Filter */}
-            <div className="flex items-center gap-1 ml-3 bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark rounded px-2 py-1">
-              <span className="text-xs text-chatGray-textLight dark:text-chatGray-textDark whitespace-nowrap"></span>
-              <input
-                type="date"
-                value={dashboardStartDate}
-                onChange={(e) => onDashboardStartDateChange(e.target.value)}
-                className="w-[120px] bg-transparent border-none text-sm text-chatGray-textLight dark:text-chatGray-textDark"
-                title="Startdatum für Dashboard-Analyse"
-              />
-              <span className="mx-1 text-chatGray-textLight dark:text-chatGray-textDark">-</span>
-              <input
-                type="date"
-                value={dashboardEndDate}
-                onChange={(e) => onDashboardEndDateChange(e.target.value)}
-                className="w-[120px] bg-transparent border-none text-sm text-chatGray-textLight dark:text-chatGray-textDark"
-                title="Enddatum für Dashboard-Analyse"
-              />
+            {/* NEU: Kombinierter Datumsbereich-Filter mit Schnellauswahl */}
+            <div className="relative ml-3" ref={dateDropdownRef}>
+              <button
+                onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
+                className="flex items-center gap-1 px-3 py-1.5 bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark rounded text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+                title="Zeitraum auswählen"
+              >
+                <Calendar className="w-4 h-4 mr-1" />
+                <span className="whitespace-nowrap">
+                  {formatDate(dashboardStartDate)} - {formatDate(dashboardEndDate)}
+                </span>
+                <ChevronDown className="w-4 h-4 ml-1" />
+              </button>
+              
+              {isDateDropdownOpen && (
+                <div className="absolute top-full left-0 mt-1 z-50 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark border border-gray-200 dark:border-gray-600 rounded-md shadow-lg w-64">
+                  <div className="p-3 space-y-3">
+                    {/* Quick Selection Options */}
+                    <div className="space-y-1">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Schnellauswahl</div>
+                      <div className="grid grid-cols-2 gap-1">
+                        {quickSelectOptions.map((option) => (
+                          <button
+                            key={option.value}
+                            className={`px-2 py-1 text-xs rounded ${
+                              quickSelectValue === option.value 
+                                ? 'bg-header-btn-selected dark:bg-header-btn-selected-dark' 
+                                : 'bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark'
+                            } text-chatGray-textLight dark:text-chatGray-textDark`}
+                            onClick={() => {
+                              handleQuickSelect(option.value);
+                              setIsDateDropdownOpen(false);
+                            }}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Custom Date Range */}
+                    <div className="space-y-1 pt-2 border-t border-gray-200 dark:border-gray-600">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Benutzerdefiniert</div>
+                      <div className="flex flex-col sm:flex-row items-center gap-2">
+                        <input
+                          type="date"
+                          value={dashboardStartDate}
+                          onChange={(e) => onDashboardStartDateChange(e.target.value)}
+                          className="w-full px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs"
+                        />
+                        <span className="mx-1 text-chatGray-textLight dark:text-chatGray-textDark">-</span>
+                        <input
+                          type="date"
+                          value={dashboardEndDate}
+                          onChange={(e) => onDashboardEndDateChange(e.target.value)}
+                          className="w-full px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs"
+                        />
+                      </div>
+                      <button
+                        className="w-full mt-2 px-2 py-1 bg-header-btn-selected dark:bg-header-btn-selected-dark text-chatGray-textLight dark:text-chatGray-textDark rounded text-xs hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark"
+                        onClick={() => setIsDateDropdownOpen(false)}
+                      >
+                        Anwenden
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}

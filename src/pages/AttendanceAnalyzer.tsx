@@ -378,6 +378,8 @@ const AttendanceAnalyzer: React.FC = () => {
       onDashboardStartDateChange={setDashboardStartDate}
       onDashboardEndDateChange={setDashboardEndDate}
       resetTriggerId={resetTriggerId}
+      quickSelectValue={quickSelectValue}
+      handleQuickSelect={handleQuickSelect}
     >
       <AttendanceAnalyzerContent
         rawData={rawData}
@@ -604,6 +606,8 @@ const AttendanceAnalyzerContent: React.FC<{
         dashboardEndDate={dashboardEndDate}
         onDashboardStartDateChange={setDashboardStartDate}
         onDashboardEndDateChange={setDashboardEndDate}
+        quickSelectValue={quickSelectValue}
+        handleQuickSelect={handleQuickSelect}
       />
       <Sidebar
         startDate={startDate}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useFilters } from '@/contexts/FilterContext';
 import TrendCharts from './TrendCharts';
 import { 
@@ -7,7 +7,179 @@ import {
   prepareDayOfWeekAnalysis,
   prepareAttendanceOverTime
 } from './utils';
+import { parseDate } from '@/lib/attendance-utils'; // Korrekter Import für parseDate
 import { StudentStats } from '@/types';
+
+// Korrigierte Hilfsfunktion für Klassendurchschnitte
+const calculateClassAverages = (
+  timeFrameData: any[],
+  studentStats: Record<string, StudentStats>,
+  weeklyDetailedData: Record<string, any>
+): any[] => {
+  // Frühzeitige Rückgabe bei fehlenden Daten
+  if (!timeFrameData?.length || !studentStats || !weeklyDetailedData) {
+    return [];
+  }
+  
+  // Extrahiere Klasseninformationen
+  const classesByStudent: Record<string, string> = {};
+  const uniqueClasses: Set<string> = new Set();
+  
+  Object.entries(studentStats).forEach(([studentId, stats]) => {
+    if (stats.klasse) {
+      classesByStudent[studentId] = stats.klasse;
+      uniqueClasses.add(stats.klasse);
+    }
+  });
+  
+  // Wenn keine Klassen vorhanden sind, leeres Array zurückgeben
+  if (uniqueClasses.size === 0) {
+    return [];
+  }
+  
+  // Erstelle tiefe Kopie der Zeitreihen-Daten
+  const referenceData = JSON.parse(JSON.stringify(timeFrameData));
+  
+  // Für jeden Zeitpunkt, berechne Durchschnittswerte pro Klasse
+  referenceData.forEach((dataPoint: any) => {
+    // Sammle Summen pro Klasse
+    const classValues: Record<string, {
+      verspaetungen: number,
+      fehlzeiten: number
+    }> = {};
+    
+    // Initialisiere für jede Klasse
+    uniqueClasses.forEach(className => {
+      classValues[className] = {
+        verspaetungen: 0,
+        fehlzeiten: 0
+      };
+    });
+    
+    // WICHTIG: Extrahiere den genauen Zeitbereich für diesen Datenpunkt
+    const timeKey = dataPoint.name;
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+    
+    // Versuche den Zeitraum aus dateRange zu extrahieren
+    if (dataPoint.dateRange) {
+      const dateParts = dataPoint.dateRange.split(' - ');
+      if (dateParts.length === 2) {
+        // Format: dd.mm.yyyy
+        const datePart1 = dateParts[0].trim();
+        const datePart2 = dateParts[1].trim();
+        
+        // Prüfen, ob die Datumsformate gültig sind
+        if (datePart1.match(/\d{2}\.\d{2}\.\d{4}/) && datePart2.match(/\d{2}\.\d{2}\.\d{4}/)) {
+          startDate = parseDate(datePart1);
+          endDate = parseDate(datePart2);
+        }
+      }
+    }
+    
+    // Fallback-Logik für verschiedene Zeitformate
+    if (!startDate || !endDate) {
+      if (timeKey.startsWith('KW ')) {
+        // Kalenderwochenformat: "KW XX"
+        const weekMatch = timeKey.match(/KW (\d+)/);
+        if (weekMatch) {
+          const weekNum = parseInt(weekMatch[1]);
+          // Aus dem ersten Datenpunkt könnten wir das Jahr ableiten
+          // Vereinfachung: Nutze das aktuelle Jahr
+          const currentYear = new Date().getFullYear();
+          
+          // TODO: Bessere KW-zu-Datum Logik implementieren
+          
+          // Stark vereinfachte Berechnung - nur für Demonstration
+          startDate = new Date(currentYear, 0, 1 + (weekNum - 1) * 7);
+          endDate = new Date(startDate);
+          endDate.setDate(startDate.getDate() + 6);
+        }
+      } else if (timeKey.match(/[A-Za-z]{3} \d{4}/)) {
+        // Monatsformat: "MMM YYYY" (z.B. "Jan 2023")
+        const monthYear = timeKey.split(' ');
+        const monthStr = monthYear[0];
+        const year = parseInt(monthYear[1]);
+        
+        const monthIdx = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+                         .findIndex(m => m === monthStr);
+        
+        if (monthIdx >= 0) {
+          startDate = new Date(year, monthIdx, 1);
+          endDate = new Date(year, monthIdx + 1, 0); // Letzter Tag des Monats
+        }
+      }
+    }
+    
+    // Wenn wir keinen gültigen Zeitraum haben, überspringen
+    if (!startDate || !endDate) {
+      console.warn(`Konnte keinen Zeitraum für Datenpunkt ${timeKey} ermitteln`);
+      // Standardwerte für diesen Datenpunkt setzen, damit die Linie trotzdem angezeigt wird
+      dataPoint.ref_verspaetungen = 0;
+      dataPoint.ref_fehlzeiten = 0;
+      return;
+    }
+    
+    // Sichere Referenzen zu den Datumsobjekten
+    const validStartDate = startDate;
+    const validEndDate = endDate;
+    
+    // Suche nach Einträgen für diesen Zeitpunkt
+    Object.entries(weeklyDetailedData).forEach(([studentId, details]) => {
+      if (!details) return;
+      
+      const className = classesByStudent[studentId];
+      if (!className) return;
+      
+      // WICHTIG: Hier zählen wir tatsächlich die Einträge für diesen Zeitraum
+      
+      // Zähle Verspätungen für diesen Zeitraum
+      const verspaetungenEntries = details.verspaetungen_unentsch || [];
+      const matchingVerspaetungen = verspaetungenEntries.filter((entry: any) => {
+        if (!entry.datum) return false;
+        const entryDate = typeof entry.datum === 'string' ? parseDate(entry.datum) : entry.datum;
+        return entryDate >= validStartDate && entryDate <= validEndDate;
+      }).length;
+      
+      // Zähle unentschuldigte Fehlzeiten für diesen Zeitraum
+      const fehlzeitenUnentschEntries = details.fehlzeiten_unentsch || [];
+      const matchingFehlzeitenUnentsch = fehlzeitenUnentschEntries.filter((entry: any) => {
+        if (!entry.datum) return false;
+        const entryDate = typeof entry.datum === 'string' ? parseDate(entry.datum) : entry.datum;
+        return entryDate >= validStartDate && entryDate <= validEndDate;
+      }).length;
+      
+      // Zähle entschuldigte Fehlzeiten für diesen Zeitraum
+      const fehlzeitenEntschEntries = details.fehlzeiten_entsch || [];
+      const matchingFehlzeitenEntsch = fehlzeitenEntschEntries.filter((entry: any) => {
+        if (!entry.datum) return false;
+        const entryDate = typeof entry.datum === 'string' ? parseDate(entry.datum) : entry.datum;
+        return entryDate >= validStartDate && entryDate <= validEndDate;
+      }).length;
+      
+      // Summiere für diese Klasse
+      classValues[className].verspaetungen += matchingVerspaetungen;
+      classValues[className].fehlzeiten += (matchingFehlzeitenUnentsch + matchingFehlzeitenEntsch);
+    });
+    
+    // Berechne Durchschnitt über alle Klassen für diesen spezifischen Zeitpunkt
+    const classCount = uniqueClasses.size;
+    let totalVerspaetungen = 0;
+    let totalFehlzeiten = 0;
+    
+    Object.values(classValues).forEach(sums => {
+      totalVerspaetungen += sums.verspaetungen;
+      totalFehlzeiten += sums.fehlzeiten;
+    });
+    
+    // Füge Referenzfelder hinzu (keine bestehenden Felder überschreiben)
+    dataPoint.ref_verspaetungen = totalVerspaetungen / classCount;
+    dataPoint.ref_fehlzeiten = totalFehlzeiten / classCount;
+  });
+  
+  return referenceData;
+};
 
 interface EnhancedDashboardProps {
   getFilteredStudents: () => [string, StudentStats][];
@@ -28,7 +200,10 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   startDate,
   endDate,
   selectedWeeks,
+  availableClasses,
+  selectedClasses,
   weeklyStats = {},
+  schoolYearStats = {},
   weeklyDetailedData = {},
 }) => {
   const {
@@ -133,6 +308,31 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     );
   }, [dashboardStartDate, dashboardEndDate, startDate, endDate, groupingOption, studentStats, weeklyDetailedData, selectedDashboardClasses, selectedStudents]);
   
+  // NEU: Berechne Referenzlinien für Klassendurchschnitte
+  const classAverageReferenceLines = useMemo(() => {
+    // Use dashboard dates if available, otherwise fall back to props
+    const effectiveStartDate = dashboardStartDate || startDate;
+    const effectiveEndDate = dashboardEndDate || endDate;
+    
+    // Zuerst die Basisdaten abrufen (unverändert)
+    const baseData = prepareAttendanceOverTime(
+      effectiveStartDate,
+      effectiveEndDate,
+      groupingOption,
+      studentStats,
+      weeklyDetailedData,
+      [], // Keine Klassenfilterung für die Referenzlinien
+      []  // Keine Schülerfilterung für die Referenzlinien
+    );
+    
+    // Dann die Durchschnitte berechnen
+    return calculateClassAverages(
+      baseData,
+      studentStats,
+      weeklyDetailedData
+    );
+  }, [dashboardStartDate, dashboardEndDate, startDate, endDate, groupingOption, studentStats, weeklyDetailedData]);
+  
   // Effect to prepare all data when filters change
   useEffect(() => {
     if (!rawData || !startDate || !endDate) return;
@@ -182,11 +382,10 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         setChartVisibility={setTrendChartVisibility}
         weekdayChartVisibility={weekdayChartVisibility}
         setWeekdayChartVisibility={setWeekdayChartVisibility}
+        referenceLines={classAverageReferenceLines} // NEU: Übergebe die Referenzlinien
       />
     </div>
   );
 };
-
-// Helper function to format date
 
 export default EnhancedDashboard;

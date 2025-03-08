@@ -223,110 +223,146 @@ const AttendanceAnalyzer: React.FC = () => {
   };
 
   // Neue Version der handleQuickSelect-Funktion:
-  const handleQuickSelect = (value: string) => {
+   // Korrigierte handleQuickSelect-Funktion für die Sidebar
+   const handleQuickSelect = (value: string) => {
     // Update des quickSelectValue
     setQuickSelectValue(value);
     
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
-    let start: Date, end: Date;
+    let startDate: Date, endDate: Date;
     
     switch (value) {
       case 'thisWeek': {
-        const currentDay = now.getDay();
-        const diff = currentDay === 0 ? 6 : currentDay - 1;
-        const startDate = new Date(now);
-        startDate.setDate(now.getDate() - diff);
-        startDate.setHours(0, 0, 0, 0);
+        // Berechne den aktuellen Montag (Wochenanfang)
+        const currentDay = now.getDay(); // 0 = Sonntag, 1 = Montag, ...
+        const diff = currentDay === 0 ? 6 : currentDay - 1; // Wie viele Tage bis zum letzten Montag
         
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 6);
-        endDate.setHours(23, 59, 59, 999);
+        // Erzeuge UTC-Datum für Montag 00:00:00
+        startDate = new Date(Date.UTC(
+          now.getFullYear(), 
+          now.getMonth(), 
+          now.getDate() - diff, 
+          0, 0, 0
+        ));
         
-        start = startDate;
-        end = endDate;
+        // Erzeuge UTC-Datum für Sonntag 23:59:59 (6 Tage später)
+        endDate = new Date(Date.UTC(
+          startDate.getUTCFullYear(), 
+          startDate.getUTCMonth(), 
+          startDate.getUTCDate() + 6, 
+          23, 59, 59
+        ));
         break;
       }
       case 'lastWeek': {
+        // Montag der letzten Woche = (aktueller Montag - 7 Tage)
         const currentDay = now.getDay();
-        const diff = currentDay === 0 ? 6 : currentDay - 1;
-        const startDate = new Date(now);
-        startDate.setDate(now.getDate() - diff - 7);
-        startDate.setHours(0, 0, 0, 0);
+        const diffToMonday = currentDay === 0 ? 6 : currentDay - 1;
+        const diffToLastMonday = diffToMonday + 7;
         
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 6);
-        endDate.setHours(23, 59, 59, 999);
+        // Erzeuge UTC-Datum für Montag der letzten Woche 00:00:00
+        startDate = new Date(Date.UTC(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - diffToLastMonday,
+          0, 0, 0
+        ));
         
-        start = startDate;
-        end = endDate;
+        // Erzeuge UTC-Datum für Sonntag der letzten Woche 23:59:59
+        endDate = new Date(Date.UTC(
+          startDate.getUTCFullYear(),
+          startDate.getUTCMonth(),
+          startDate.getUTCDate() + 6,
+          23, 59, 59
+        ));
         break;
       }
       case 'lastTwoWeeks': {
+        // Montag der vorletzten Woche = (aktueller Montag - 14 Tage)
         const currentDay = now.getDay();
-        const diff = currentDay === 0 ? 6 : currentDay - 1;
-        const startDate = new Date(now);
-        startDate.setDate(now.getDate() - diff - 14);
-        startDate.setHours(0, 0, 0, 0);
+        const diffToMonday = currentDay === 0 ? 6 : currentDay - 1;
+        const diffToTwoWeeksAgoMonday = diffToMonday + 14;
         
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 13);
-        endDate.setHours(23, 59, 59, 999);
+        // Erzeuge UTC-Datum für Montag vor zwei Wochen 00:00:00
+        startDate = new Date(Date.UTC(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - diffToTwoWeeksAgoMonday,
+          0, 0, 0
+        ));
         
-        start = startDate;
-        end = endDate;
+        // Erzeuge UTC-Datum für Sonntag letzte Woche 23:59:59 (13 Tage später)
+        endDate = new Date(Date.UTC(
+          startDate.getUTCFullYear(),
+          startDate.getUTCMonth(),
+          startDate.getUTCDate() + 13,
+          23, 59, 59
+        ));
         break;
       }
       case 'thisMonth': {
-        // Erster Tag des aktuellen Monats
-        start = new Date(currentYear, currentMonth, 1);
-        start.setHours(0, 0, 0, 0);
+        // Erster Tag des aktuellen Monats mit UTC-Zeit 00:00:00
+        startDate = new Date(Date.UTC(currentYear, currentMonth, 1, 0, 0, 0));
         
-        // Letzter Tag des aktuellen Monats
-        end = new Date(currentYear, currentMonth + 1, 0);
-        end.setHours(23, 59, 59, 999);
+        // Letzter Tag des aktuellen Monats mit UTC-Zeit 23:59:59
+        endDate = new Date(Date.UTC(currentYear, currentMonth + 1, 0, 23, 59, 59));
         break;
       }
       case 'lastMonth': {
         const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
         const yearOfLastMonth = currentMonth === 0 ? currentYear - 1 : currentYear;
         
-        // Erster Tag des letzten Monats
-        start = new Date(yearOfLastMonth, lastMonth, 1);
-        start.setHours(0, 0, 0, 0);
+        // Erster Tag des letzten Monats mit UTC-Zeit 00:00:00
+        startDate = new Date(Date.UTC(yearOfLastMonth, lastMonth, 1, 0, 0, 0));
         
-        // Letzter Tag des letzten Monats
-        end = new Date(yearOfLastMonth, lastMonth + 1, 0);
-        end.setHours(23, 59, 59, 999);
+        // Letzter Tag des letzten Monats mit UTC-Zeit 23:59:59
+        endDate = new Date(Date.UTC(yearOfLastMonth, lastMonth + 1, 0, 23, 59, 59));
         break;
       }
       case 'schoolYear': {    
-        // Setze Start und Ende auf die berechneten Daten
+        // Das Schuljahr holen
         const schoolYear = getCurrentSchoolYear();
-        start = schoolYear.startDate;
-        end = schoolYear.endDate;
+        
+        // Korrektes UTC-Datum für den Schuljahres-Start
+        startDate = new Date(Date.UTC(
+          parseInt(schoolYear.start),
+          8, // September (0-basiert: 8)
+          1, // Erster Tag
+          0, 0, 0 // 00:00:00 Uhr
+        ));
+        
+        // Korrektes UTC-Datum für das Schuljahres-Ende
+        endDate = new Date(Date.UTC(
+          parseInt(schoolYear.end), 
+          6, // Juli (0-basiert: 6) 
+          31, // Letzter Tag im Juli
+          23, 59, 59 // 23:59:59 Uhr
+        ));
         break;
       }
       default:
         return;
     }
     
-    // Konsistente Konvertierung zu String-Daten für die Eingabefelder
-    const startDateString = start.toLocaleDateString('sv');
-    const endDateString = end.toLocaleDateString('sv');
+    // ISO-Strings für die Datumseingabefelder (YYYY-MM-DD)
+    const startDateString = startDate.toISOString().split('T')[0];
+    const endDateString = endDate.toISOString().split('T')[0];
     
-    // Wenn wir im Dashboard-Modus sind, setzen wir NUR die Dashboard-Daten
-    if (viewMode === 'dashboard') {
-      setDashboardStartDate(startDateString);
-      setDashboardEndDate(endDateString);
-    } else {
-      // Sonst setzen wir die Sidebar-Daten
-      setStartDate(startDateString);
-      setEndDate(endDateString);
-    }
+    console.log(`Sidebar Quick Select (${value}):`, {
+      start: startDate.toLocaleDateString('de-DE'),
+      end: endDate.toLocaleDateString('de-DE'),
+      startISO: startDateString,
+      endISO: endDateString
+    });
+    
+    // WICHTIG: IMMER nur das Sidebar-Datum ändern!
+    setStartDate(startDateString);
+    setEndDate(endDateString);
   };
 
+  // Korrigierte handleDashboardQuickSelect-Funktion für das Dashboard
   const handleDashboardQuickSelect = (value: string) => {
     // Diese Funktion ändert NUR die Dashboard-Datumsfilter!
     setQuickSelectValue(value);
@@ -334,91 +370,135 @@ const AttendanceAnalyzer: React.FC = () => {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
-    let start: Date, end: Date;
+    let startDate: Date, endDate: Date;
     
     switch (value) {
       case 'thisWeek': {
-        const currentDay = now.getDay();
-        const diff = currentDay === 0 ? 6 : currentDay - 1;
-        const startDate = new Date(now);
-        startDate.setDate(now.getDate() - diff);
-        startDate.setHours(0, 0, 0, 0);
+        // Berechne den aktuellen Montag (Wochenanfang)
+        const currentDay = now.getDay(); // 0 = Sonntag, 1 = Montag, ...
+        const diff = currentDay === 0 ? 6 : currentDay - 1; // Wie viele Tage bis zum letzten Montag
         
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 6);
-        endDate.setHours(23, 59, 59, 999);
+        // Erzeuge UTC-Datum für Montag 00:00:00
+        startDate = new Date(Date.UTC(
+          now.getFullYear(), 
+          now.getMonth(), 
+          now.getDate() - diff, 
+          0, 0, 0
+        ));
         
-        start = startDate;
-        end = endDate;
+        // Erzeuge UTC-Datum für Sonntag 23:59:59 (6 Tage später)
+        endDate = new Date(Date.UTC(
+          startDate.getUTCFullYear(), 
+          startDate.getUTCMonth(), 
+          startDate.getUTCDate() + 6, 
+          23, 59, 59
+        ));
         break;
       }
       case 'lastWeek': {
+        // Montag der letzten Woche = (aktueller Montag - 7 Tage)
         const currentDay = now.getDay();
-        const diff = currentDay === 0 ? 6 : currentDay - 1;
-        const startDate = new Date(now);
-        startDate.setDate(now.getDate() - diff - 7);
-        startDate.setHours(0, 0, 0, 0);
+        const diffToMonday = currentDay === 0 ? 6 : currentDay - 1;
+        const diffToLastMonday = diffToMonday + 7;
         
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 6);
-        endDate.setHours(23, 59, 59, 999);
+        // Erzeuge UTC-Datum für Montag der letzten Woche 00:00:00
+        startDate = new Date(Date.UTC(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - diffToLastMonday,
+          0, 0, 0
+        ));
         
-        start = startDate;
-        end = endDate;
+        // Erzeuge UTC-Datum für Sonntag der letzten Woche 23:59:59
+        endDate = new Date(Date.UTC(
+          startDate.getUTCFullYear(),
+          startDate.getUTCMonth(),
+          startDate.getUTCDate() + 6,
+          23, 59, 59
+        ));
         break;
       }
       case 'lastTwoWeeks': {
+        // Montag der vorletzten Woche = (aktueller Montag - 14 Tage)
         const currentDay = now.getDay();
-        const diff = currentDay === 0 ? 6 : currentDay - 1;
-        const startDate = new Date(now);
-        startDate.setDate(now.getDate() - diff - 14);
-        startDate.setHours(0, 0, 0, 0);
+        const diffToMonday = currentDay === 0 ? 6 : currentDay - 1;
+        const diffToTwoWeeksAgoMonday = diffToMonday + 14;
         
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 13);
-        endDate.setHours(23, 59, 59, 999);
+        // Erzeuge UTC-Datum für Montag vor zwei Wochen 00:00:00
+        startDate = new Date(Date.UTC(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - diffToTwoWeeksAgoMonday,
+          0, 0, 0
+        ));
         
-        start = startDate;
-        end = endDate;
+        // Erzeuge UTC-Datum für Sonntag letzte Woche 23:59:59 (13 Tage später)
+        endDate = new Date(Date.UTC(
+          startDate.getUTCFullYear(),
+          startDate.getUTCMonth(),
+          startDate.getUTCDate() + 13,
+          23, 59, 59
+        ));
         break;
       }
       case 'thisMonth': {
-        // Erster Tag des aktuellen Monats
-        start = new Date(currentYear, currentMonth, 1);
-        start.setHours(0, 0, 0, 0);
+        // Erster Tag des aktuellen Monats mit UTC-Zeit 00:00:00
+        startDate = new Date(Date.UTC(currentYear, currentMonth, 1, 0, 0, 0));
         
-        // Letzter Tag des aktuellen Monats
-        end = new Date(currentYear, currentMonth + 1, 0);
-        end.setHours(23, 59, 59, 999);
+        // Letzter Tag des aktuellen Monats mit UTC-Zeit 23:59:59
+        endDate = new Date(Date.UTC(currentYear, currentMonth + 1, 0, 23, 59, 59));
         break;
       }
       case 'lastMonth': {
         const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
         const yearOfLastMonth = currentMonth === 0 ? currentYear - 1 : currentYear;
         
-        // Erster Tag des letzten Monats
-        start = new Date(yearOfLastMonth, lastMonth, 1);
-        start.setHours(0, 0, 0, 0);
+        // Erster Tag des letzten Monats mit UTC-Zeit 00:00:00
+        startDate = new Date(Date.UTC(yearOfLastMonth, lastMonth, 1, 0, 0, 0));
         
-        // Letzter Tag des letzten Monats
-        end = new Date(yearOfLastMonth, lastMonth + 1, 0);
-        end.setHours(23, 59, 59, 999);
+        // Letzter Tag des letzten Monats mit UTC-Zeit 23:59:59
+        endDate = new Date(Date.UTC(yearOfLastMonth, lastMonth + 1, 0, 23, 59, 59));
         break;
       }
       case 'schoolYear': {    
-        // Setze Start und Ende auf die berechneten Daten
+        // Das Schuljahr holen
         const schoolYear = getCurrentSchoolYear();
-        start = schoolYear.startDate;
-        end = schoolYear.endDate;
+        
+        // Korrektes UTC-Datum für den Schuljahres-Start
+        startDate = new Date(Date.UTC(
+          parseInt(schoolYear.start),
+          8, // September (0-basiert: 8)
+          1, // Erster Tag
+          0, 0, 0 // 00:00:00 Uhr
+        ));
+        
+        // Korrektes UTC-Datum für das Schuljahres-Ende
+        endDate = new Date(Date.UTC(
+          parseInt(schoolYear.end), 
+          6, // Juli (0-basiert: 6) 
+          31, // Letzter Tag im Juli
+          23, 59, 59 // 23:59:59 Uhr
+        ));
         break;
       }
       default:
         return;
     }
     
+    // ISO-Strings für die Datumseingabefelder (YYYY-MM-DD)
+    const startDateString = startDate.toISOString().split('T')[0];
+    const endDateString = endDate.toISOString().split('T')[0];
+    
+    console.log(`Dashboard Quick Select (${value}):`, {
+      start: startDate.toLocaleDateString('de-DE'),
+      end: endDate.toLocaleDateString('de-DE'),
+      startISO: startDateString,
+      endISO: endDateString
+    });
+    
     // Nur die Dashboard-Daten setzen
-    setDashboardStartDate(start.toLocaleDateString('sv'));
-    setDashboardEndDate(end.toLocaleDateString('sv'));
+    setDashboardStartDate(startDateString);
+    setDashboardEndDate(endDateString);
   };
 
   const handleExportExcel = () => {
@@ -484,7 +564,8 @@ const AttendanceAnalyzer: React.FC = () => {
       onDashboardEndDateChange={setDashboardEndDate}
       resetTriggerId={resetTriggerId}
       quickSelectValue={quickSelectValue}
-      handleQuickSelect={viewMode === 'dashboard' ? handleDashboardQuickSelect : handleQuickSelect}
+      // WICHTIG: Hier verwenden wir die korrekte Funktion je nach Kontext
+      handleQuickSelect={handleDashboardQuickSelect} // Nur für Dashboard-Kontext
     >
       <AttendanceAnalyzerContent
         rawData={rawData}
@@ -532,7 +613,7 @@ const AttendanceAnalyzer: React.FC = () => {
         setEndDate={setEndDate}
         setDashboardStartDate={setDashboardStartDate}
         setDashboardEndDate={setDashboardEndDate}
-        handleQuickSelect={handleQuickSelect}
+        handleQuickSelect={handleQuickSelect} // Für Sidebar weiterhin die alte Funktion
         setSelectedWeeks={setSelectedWeeks}
         handleFileProcessed={handleFileProcessed}
         handleExportExcel={handleExportExcel}

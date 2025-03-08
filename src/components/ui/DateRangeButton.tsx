@@ -124,13 +124,13 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
     const startYear = firstMonth.index < 8 ? schoolStartYear + 1 : schoolStartYear;
     const endYear = lastMonth.index < 8 ? schoolStartYear + 1 : schoolStartYear;
     
-    // Erstelle die Datum-Objekte (WICHTIG: Zur besseren Lesbarkeit getrennt)
-    // Erster Tag des ersten ausgewählten Monats
-    const startDate = new Date(startYear, firstMonth.index, 1);
+    // Erstelle die Datum-Objekte für deutschen Zeitzonenkontext
+    // Erster Tag des ersten ausgewählten Monats - garantiert der 1. des Monats
+    const startDate = new Date(Date.UTC(startYear, firstMonth.index, 1, 0, 0, 0));
     
     // Letzter Tag des letzten ausgewählten Monats
     // Trick: Tag 0 des nächsten Monats ist der letzte Tag des aktuellen Monats
-    const endDate = new Date(endYear, lastMonth.index + 1, 0);
+    const endDate = new Date(Date.UTC(endYear, lastMonth.index + 1, 0, 23, 59, 59));
     
     // Debug-Ausgaben für besseres Verständnis
     console.log('Monatsauswahl:', {
@@ -152,7 +152,20 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
   };
   
   // Funktion zur Umrechnung eines einzelnen Monats in Datumsbereich
+  // Ohne das Dropdown zu schließen für Mehrfachauswahl
   const selectSingleMonth = (monthKey: string) => {
+    // Toggle-Logik: Monat hinzufügen oder entfernen
+    setSelectedMonths(prev => {
+      if (prev.includes(monthKey)) {
+        return prev.filter(m => m !== monthKey);
+      } else {
+        return [...prev, monthKey];
+      }
+    });
+  };
+  
+  // Funktion, um direkt einen einzelnen Monat zu applizieren
+  const applySingleMonth = (monthKey: string) => {
     const month = schoolYearMonths.find(m => m.key === monthKey);
     if (!month) return;
     
@@ -166,15 +179,15 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
       schoolStartYear = currentYear - 1;
     }
     
-    // Berechne Start- und Enddatum für einen einzelnen Monat
+    // Berechne Jahr für diesen Monat im Schuljahr-Kontext
     const monthYear = month.index < 8 ? schoolStartYear + 1 : schoolStartYear;
     
-    // Erstelle die Datum-Objekte mit korrekten Stunden/Minuten/Sekunden
-    const startDate = new Date(monthYear, month.index, 1);
-    startDate.setHours(0, 0, 0, 0); // Anfang des Tages
+    // Erstelle die Datum-Objekte mit korrekten Werten für deutsche Zeitzone
+    // Immer den 1. des Monats als Startdatum verwenden
+    const startDate = new Date(Date.UTC(monthYear, month.index, 1, 0, 0, 0));
     
-    const endDate = new Date(monthYear, month.index + 1, 0);
-    endDate.setHours(23, 59, 59, 999); // Ende des Tages
+    // Letzter Tag des Monats - korrekt berechnet für jeden Monat
+    const endDate = new Date(Date.UTC(monthYear, month.index + 1, 0, 23, 59, 59));
     
     // Debug-Ausgabe
     console.log(`Einzelmonat ${month.label}:`, {
@@ -183,9 +196,6 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
       startISO: startDate.toISOString(),
       endISO: endDate.toISOString()
     });
-    
-    // Wähle nur diesen einen Monat aus
-    setSelectedMonths([monthKey]);
     
     // Format JJJJ-MM-TT für Eingabefelder (ISO-Format ohne Zeitanteil)
     const startFormatted = startDate.toISOString().split('T')[0];
@@ -211,12 +221,20 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
       // Alle Monate auswählen
       setSelectedMonths(schoolYearMonths.map(m => m.key));
       
-      // Explizite Zeitangaben hinzufügen für korrekte Datumsberechnung
-      const startDate = new Date(schoolYear.startDate);
-      startDate.setHours(0, 0, 0, 0);
+      // Explizite Zeitangaben hinzufügen für korrekte Datumsberechnung mit deutscher Zeitzone
+      const startDate = new Date(Date.UTC(
+        parseInt(schoolYear.start),
+        8, // September (0-basiert: 8)
+        1, // Erster Tag
+        0, 0, 0 // 00:00:00 Uhr
+      ));
       
-      const endDate = new Date(schoolYear.endDate);
-      endDate.setHours(23, 59, 59, 999);
+      const endDate = new Date(Date.UTC(
+        parseInt(schoolYear.end), 
+        6, // Juli (0-basiert: 6) 
+        31, // Letzter Tag im Juli
+        23, 59, 59 // 23:59:59 Uhr
+      ));
       
       // Format JJJJ-MM-TT für Eingabefelder (ISO-Format ohne Zeitanteil)
       const startFormatted = startDate.toISOString().split('T')[0];
@@ -333,7 +351,7 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
                 </button>
               </div>
             </div>
-            
+                      
             {/* Custom Date Range - mit korrigiertem Layout */}
             <div className="space-y-1 pt-2 border-t border-gray-200 dark:border-gray-600">
               <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Benutzerdefiniert</div>

@@ -222,6 +222,7 @@ const AttendanceAnalyzer: React.FC = () => {
       .sort(([a], [b]) => a.localeCompare(b));
   };
 
+  // Neue Version der handleQuickSelect-Funktion:
   const handleQuickSelect = (value: string) => {
     // Update des quickSelectValue
     setQuickSelectValue(value);
@@ -312,8 +313,112 @@ const AttendanceAnalyzer: React.FC = () => {
     }
     
     // Konsistente Konvertierung zu String-Daten für die Eingabefelder
-    setStartDate(start.toLocaleDateString('sv'));
-    setEndDate(end.toLocaleDateString('sv'));
+    const startDateString = start.toLocaleDateString('sv');
+    const endDateString = end.toLocaleDateString('sv');
+    
+    // Wenn wir im Dashboard-Modus sind, setzen wir NUR die Dashboard-Daten
+    if (viewMode === 'dashboard') {
+      setDashboardStartDate(startDateString);
+      setDashboardEndDate(endDateString);
+    } else {
+      // Sonst setzen wir die Sidebar-Daten
+      setStartDate(startDateString);
+      setEndDate(endDateString);
+    }
+  };
+
+  const handleDashboardQuickSelect = (value: string) => {
+    // Diese Funktion ändert NUR die Dashboard-Datumsfilter!
+    setQuickSelectValue(value);
+    
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    let start: Date, end: Date;
+    
+    switch (value) {
+      case 'thisWeek': {
+        const currentDay = now.getDay();
+        const diff = currentDay === 0 ? 6 : currentDay - 1;
+        const startDate = new Date(now);
+        startDate.setDate(now.getDate() - diff);
+        startDate.setHours(0, 0, 0, 0);
+        
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 6);
+        endDate.setHours(23, 59, 59, 999);
+        
+        start = startDate;
+        end = endDate;
+        break;
+      }
+      case 'lastWeek': {
+        const currentDay = now.getDay();
+        const diff = currentDay === 0 ? 6 : currentDay - 1;
+        const startDate = new Date(now);
+        startDate.setDate(now.getDate() - diff - 7);
+        startDate.setHours(0, 0, 0, 0);
+        
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 6);
+        endDate.setHours(23, 59, 59, 999);
+        
+        start = startDate;
+        end = endDate;
+        break;
+      }
+      case 'lastTwoWeeks': {
+        const currentDay = now.getDay();
+        const diff = currentDay === 0 ? 6 : currentDay - 1;
+        const startDate = new Date(now);
+        startDate.setDate(now.getDate() - diff - 14);
+        startDate.setHours(0, 0, 0, 0);
+        
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 13);
+        endDate.setHours(23, 59, 59, 999);
+        
+        start = startDate;
+        end = endDate;
+        break;
+      }
+      case 'thisMonth': {
+        // Erster Tag des aktuellen Monats
+        start = new Date(currentYear, currentMonth, 1);
+        start.setHours(0, 0, 0, 0);
+        
+        // Letzter Tag des aktuellen Monats
+        end = new Date(currentYear, currentMonth + 1, 0);
+        end.setHours(23, 59, 59, 999);
+        break;
+      }
+      case 'lastMonth': {
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const yearOfLastMonth = currentMonth === 0 ? currentYear - 1 : currentYear;
+        
+        // Erster Tag des letzten Monats
+        start = new Date(yearOfLastMonth, lastMonth, 1);
+        start.setHours(0, 0, 0, 0);
+        
+        // Letzter Tag des letzten Monats
+        end = new Date(yearOfLastMonth, lastMonth + 1, 0);
+        end.setHours(23, 59, 59, 999);
+        break;
+      }
+      case 'schoolYear': {    
+        // Setze Start und Ende auf die berechneten Daten
+        const schoolYear = getCurrentSchoolYear();
+        start = schoolYear.startDate;
+        end = schoolYear.endDate;
+        break;
+      }
+      default:
+        return;
+    }
+    
+    // Nur die Dashboard-Daten setzen
+    setDashboardStartDate(start.toLocaleDateString('sv'));
+    setDashboardEndDate(end.toLocaleDateString('sv'));
   };
 
   const handleExportExcel = () => {
@@ -379,7 +484,7 @@ const AttendanceAnalyzer: React.FC = () => {
       onDashboardEndDateChange={setDashboardEndDate}
       resetTriggerId={resetTriggerId}
       quickSelectValue={quickSelectValue}
-      handleQuickSelect={handleQuickSelect}
+      handleQuickSelect={viewMode === 'dashboard' ? handleDashboardQuickSelect : handleQuickSelect}
     >
       <AttendanceAnalyzerContent
         rawData={rawData}

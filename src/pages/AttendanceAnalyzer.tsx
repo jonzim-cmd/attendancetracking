@@ -39,6 +39,7 @@ const AttendanceAnalyzer: React.FC = () => {
   const [hasFileUploaded, setHasFileUploaded] = useState(false);
   // Neuer State für Schnellauswahl
   const [quickSelectValue, setQuickSelectValue] = useState('');
+  const [isInitialized, setIsInitialized] = useState(false);
   const schoolYear = getCurrentSchoolYear();
   
   // Aktualisierte visibleColumns-Struktur für feingranularere Kontrolle
@@ -48,6 +49,7 @@ const AttendanceAnalyzer: React.FC = () => {
   
   // Neuer State für Dashboard-Ansicht
   const [viewMode, setViewMode] = useState<'table' | 'dashboard'>('table');
+  const [resetTriggerId, setResetTriggerId] = useState(0);
 
   // Neue State-Variablen für Summenzeile
   const [enableSummaryRow, setEnableSummaryRow] = useState(true);
@@ -98,18 +100,6 @@ const AttendanceAnalyzer: React.FC = () => {
     setResults(null);
     setHasFileUploaded(false); // Reset file upload status
     
-    // Statt leerer Strings setzen wir sinnvolle Default-Werte
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
-    const start = new Date(currentYear, currentMonth, 1);
-    const end = new Date(currentYear, currentMonth + 1, 0);
-    
-    setStartDate(start.toISOString().split('T')[0]);
-    setEndDate(end.toISOString().split('T')[0]);
-    setDashboardStartDate(''); // Reset dashboard date filters
-    setDashboardEndDate('');
-    
     setSearchQuery('');
     setError('');
     setDetailedData({});
@@ -128,8 +118,19 @@ const AttendanceAnalyzer: React.FC = () => {
     setActiveFilters(new Map());
     setVisibleColumns(['basic', 'verspaetungen', 'fehlzeiten', 'stats']);
     setViewMode('table'); // Zurück zur Tabellenansicht
-    // Schnellauswahl zurücksetzen
-    setQuickSelectValue('');
+    
+    // Set default QuickSelect to "thisMonth" (instead of empty string)
+    setQuickSelectValue('thisMonth');
+    // Call handleQuickSelect to properly set dates based on the current month
+    handleQuickSelect('thisMonth');
+    
+    // Reset dashboard date filters directly as they're independent
+    setDashboardStartDate('');
+    setDashboardEndDate('');
+    
+    // Trigger reset in the FilterContext
+    setResetTriggerId(prev => prev + 1);
+    
     // Trigger hochzählen um einen neuen Upload-Zyklus zu starten
     setUploadTrigger(prev => prev + 1);
   };
@@ -168,23 +169,16 @@ const AttendanceAnalyzer: React.FC = () => {
   }, [rawData, startDate, endDate, uploadTrigger]); // uploadTrigger als Abhängigkeit hinzugefügt
 
   useEffect(() => {
-    if (!startDate && !endDate) {
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth();
-      const start = new Date(currentYear + '-' + String(currentMonth + 1).padStart(2, '0') + '-01T00:00:00');
-      const end = new Date(
-        currentYear +
-          '-' +
-          String(currentMonth + 1).padStart(2, '0') +
-          '-' +
-          String(new Date(currentYear, currentMonth + 1, 0).getDate()).padStart(2, '0') +
-          'T23:59:59'
-      );
-      setStartDate(start.toLocaleDateString('sv').split('T')[0]);
-      setEndDate(end.toLocaleDateString('sv').split('T')[0]);
+    // Nur ausführen, wenn die Datumsfelder leer sind und die Initialisierung noch nicht erfolgt ist
+    if ((!startDate || !endDate) && !isInitialized) {
+      // Als initialisiert markieren
+      setIsInitialized(true);
+      
+      // Einfach die Schnellauswahl "Diesen Monat" verwenden
+      handleQuickSelect('thisMonth');
+      setQuickSelectValue('thisMonth');
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, isInitialized]);
 
   useEffect(() => {
     if (rawData) {
@@ -236,30 +230,21 @@ const AttendanceAnalyzer: React.FC = () => {
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
     let start: Date, end: Date;
+    
     switch (value) {
       case 'thisWeek': {
         const currentDay = now.getDay();
         const diff = currentDay === 0 ? 6 : currentDay - 1;
         const startDate = new Date(now);
         startDate.setDate(now.getDate() - diff);
+        startDate.setHours(0, 0, 0, 0);
+        
         const endDate = new Date(startDate);
         endDate.setDate(startDate.getDate() + 6);
-        start = new Date(
-          startDate.getFullYear() +
-            '-' +
-            String(startDate.getMonth() + 1).padStart(2, '0') +
-            '-' +
-            String(startDate.getDate()).padStart(2, '0') +
-            'T00:00:00'
-        );
-        end = new Date(
-          endDate.getFullYear() +
-            '-' +
-            String(endDate.getMonth() + 1).padStart(2, '0') +
-            '-' +
-            String(endDate.getDate()).padStart(2, '0') +
-            'T23:59:59'
-        );
+        endDate.setHours(23, 59, 59, 999);
+        
+        start = startDate;
+        end = endDate;
         break;
       }
       case 'lastWeek': {
@@ -267,24 +252,14 @@ const AttendanceAnalyzer: React.FC = () => {
         const diff = currentDay === 0 ? 6 : currentDay - 1;
         const startDate = new Date(now);
         startDate.setDate(now.getDate() - diff - 7);
+        startDate.setHours(0, 0, 0, 0);
+        
         const endDate = new Date(startDate);
         endDate.setDate(startDate.getDate() + 6);
-        start = new Date(
-          startDate.getFullYear() +
-            '-' +
-            String(startDate.getMonth() + 1).padStart(2, '0') +
-            '-' +
-            String(startDate.getDate()).padStart(2, '0') +
-            'T00:00:00'
-        );
-        end = new Date(
-          endDate.getFullYear() +
-            '-' +
-            String(endDate.getMonth() + 1).padStart(2, '0') +
-            '-' +
-            String(endDate.getDate()).padStart(2, '0') +
-            'T23:59:59'
-        );
+        endDate.setHours(23, 59, 59, 999);
+        
+        start = startDate;
+        end = endDate;
         break;
       }
       case 'lastTwoWeeks': {
@@ -292,54 +267,42 @@ const AttendanceAnalyzer: React.FC = () => {
         const diff = currentDay === 0 ? 6 : currentDay - 1;
         const startDate = new Date(now);
         startDate.setDate(now.getDate() - diff - 14);
+        startDate.setHours(0, 0, 0, 0);
+        
         const endDate = new Date(startDate);
         endDate.setDate(startDate.getDate() + 13);
-        start = new Date(
-          startDate.getFullYear() +
-            '-' +
-            String(startDate.getMonth() + 1).padStart(2, '0') +
-            '-' +
-            String(startDate.getDate()).padStart(2, '0') +
-            'T00:00:00'
-        );
-        end = new Date(
-          endDate.getFullYear() +
-            '-' +
-            String(endDate.getMonth() + 1).padStart(2, '0') +
-            '-' +
-            String(endDate.getDate()).padStart(2, '0') +
-            'T23:59:59'
-        );
+        endDate.setHours(23, 59, 59, 999);
+        
+        start = startDate;
+        end = endDate;
         break;
       }
       case 'thisMonth': {
-        start = new Date(currentYear + '-' + String(currentMonth + 1).padStart(2, '0') + '-01T00:00:00');
-        end = new Date(
-          currentYear +
-            '-' +
-            String(currentMonth + 1).padStart(2, '0') +
-            '-' +
-            String(new Date(currentYear, currentMonth + 1, 0).getDate()).padStart(2, '0') +
-            'T23:59:59'
-        );
+        // Erster Tag des aktuellen Monats
+        start = new Date(currentYear, currentMonth, 1);
+        start.setHours(0, 0, 0, 0);
+        
+        // Letzter Tag des aktuellen Monats
+        end = new Date(currentYear, currentMonth + 1, 0);
+        end.setHours(23, 59, 59, 999);
         break;
       }
       case 'lastMonth': {
         const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
         const yearOfLastMonth = currentMonth === 0 ? currentYear - 1 : currentYear;
-        start = new Date(yearOfLastMonth + '-' + String(lastMonth + 1).padStart(2, '0') + '-01T00:00:00');
-        end = new Date(
-          yearOfLastMonth +
-            '-' +
-            String(lastMonth + 1).padStart(2, '0') +
-            '-' +
-            String(new Date(yearOfLastMonth, lastMonth + 1, 0).getDate()).padStart(2, '0') +
-            'T23:59:59'
-        );
+        
+        // Erster Tag des letzten Monats
+        start = new Date(yearOfLastMonth, lastMonth, 1);
+        start.setHours(0, 0, 0, 0);
+        
+        // Letzter Tag des letzten Monats
+        end = new Date(yearOfLastMonth, lastMonth + 1, 0);
+        end.setHours(23, 59, 59, 999);
         break;
       }
       case 'schoolYear': {    
         // Setze Start und Ende auf die berechneten Daten
+        const schoolYear = getCurrentSchoolYear();
         start = schoolYear.startDate;
         end = schoolYear.endDate;
         break;
@@ -347,8 +310,10 @@ const AttendanceAnalyzer: React.FC = () => {
       default:
         return;
     }
-    setStartDate(start.toLocaleDateString('sv').split('T')[0]);
-    setEndDate(end.toLocaleDateString('sv').split('T')[0]);
+    
+    // Konsistente Konvertierung zu String-Daten für die Eingabefelder
+    setStartDate(start.toLocaleDateString('sv'));
+    setEndDate(end.toLocaleDateString('sv'));
   };
 
   const handleExportExcel = () => {
@@ -412,6 +377,7 @@ const AttendanceAnalyzer: React.FC = () => {
       dashboardEndDate={dashboardEndDate}
       onDashboardStartDateChange={setDashboardStartDate}
       onDashboardEndDateChange={setDashboardEndDate}
+      resetTriggerId={resetTriggerId}
     >
       <AttendanceAnalyzerContent
         rawData={rawData}

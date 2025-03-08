@@ -365,6 +365,8 @@ interface SchoolYear {
   endDate: Date;       // Tatsächliches Enddatum (letzter Freitag im Juli)
 }
 
+// Korrektur in src/lib/attendance-utils.ts für die getCurrentSchoolYear-Funktion
+
 export const getCurrentSchoolYear = (): SchoolYear => {
   const today = new Date();
   // Bestimme das relevante Startjahr basierend auf aktuellem Monat
@@ -377,20 +379,37 @@ export const getCurrentSchoolYear = (): SchoolYear => {
   let firstMonday = new Date(year, 8, 1 + daysToFirstMonday);
   let secondMonday = new Date(year, 8, 1 + daysToFirstMonday + 7);
   
-  // Berechne den letzten Freitag im Juli des Folgejahres
+  // Berechne den letzten Tag im Juli des Folgejahres
   let julyLastDay = new Date(year + 1, 6, 31); // Juli (0-basierter Index)
   let lastDayOfWeek = julyLastDay.getDay(); // 0 = Sonntag, 1 = Montag, ...
-  let daysFromFriday = lastDayOfWeek < 5 ? lastDayOfWeek + 2 : lastDayOfWeek - 5;
-  let lastFriday = new Date(year + 1, 6, 31 - daysFromFriday);
   
-  // Korrekte Zeiteinstellungen
-  secondMonday.setHours(0, 0, 0, 0);
-  lastFriday.setHours(23, 59, 59, 999);
+  let endDate;
+  
+  // Prüfe, ob der letzte Tag im Juli ein Freitag ist (5 = Freitag)
+  if (lastDayOfWeek === 5) {
+    // Wenn ja, verwende den letzten Freitag im Juli (also den letzten Tag im Juli)
+    endDate = julyLastDay;
+  } else {
+    // Wenn nein, berechne den ersten Freitag im August
+    // Bestimme, wie viele Tage vom 1. August bis zum ersten Freitag
+    let augustFirst = new Date(year + 1, 7, 1); // August (0-basierter Index)
+    let augustFirstDayOfWeek = augustFirst.getDay();
+    let daysToFriday = augustFirstDayOfWeek <= 5 ? 
+                        5 - augustFirstDayOfWeek : // Wenn August 1 vor Freitag liegt
+                        5 + (7 - augustFirstDayOfWeek); // Wenn August 1 nach Freitag liegt
+    
+    endDate = new Date(year + 1, 7, 1 + daysToFriday);
+  }
+  
+  // WICHTIG: Korrekte Zeiteinstellungen für 12:00 Uhr mittags setzen
+  // Dies verhindert Probleme mit Zeitzonen, wenn das Datum in einen ISO-String umgewandelt wird
+  secondMonday.setHours(12, 0, 0, 0);
+  endDate.setHours(12, 0, 0, 0);
   
   return {
     start: `${year}`,
     end: `${year + 1}`,
     startDate: secondMonday,
-    endDate: lastFriday
+    endDate: endDate
   };
 };

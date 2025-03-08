@@ -52,6 +52,7 @@ export const FilterProvider: React.FC<{
   dashboardEndDate?: string; // Neu: Dashboard-Datumsfilter als optionale Prop
   onDashboardStartDateChange?: (date: string) => void; // Neu: Dashboard-Datumsfilter-Handler
   onDashboardEndDateChange?: (date: string) => void; // Neu: Dashboard-Datumsfilter-Handler
+  resetTriggerId?: number; // Neu: Trigger für das Zurücksetzen der Filter
 }> = ({ 
   children, 
   propSelectedClasses, 
@@ -64,6 +65,7 @@ export const FilterProvider: React.FC<{
   dashboardEndDate = '', // Default-Wert
   onDashboardStartDateChange = () => {}, // Leere Funktion als Default
   onDashboardEndDateChange = () => {}, // Leere Funktion als Default
+  resetTriggerId = 0, // Default-Wert für Reset-Trigger
 }) => {
   // Dashboard-Filter
   const [selectedDashboardClasses, setSelectedDashboardClasses] = useState<string[]>(propSelectedClasses);
@@ -136,6 +138,15 @@ export const FilterProvider: React.FC<{
       }, 0);
     }
   }, [dashboardStartDate, dashboardEndDate, internalDashboardStartDate, internalDashboardEndDate]);
+  
+  // NEU: Effect zum Zurücksetzen aller Filter wenn resetTriggerId sich ändert
+  useEffect(() => {
+    if (resetTriggerId > 0) {
+      // Alle internen Filter zurücksetzen
+      setSelectedStudents([]);
+      setGroupingOption('weekly');
+    }
+  }, [resetTriggerId]);
   
   const contextValue = {
     selectedDashboardClasses,

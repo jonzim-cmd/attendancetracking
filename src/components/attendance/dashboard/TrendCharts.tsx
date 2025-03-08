@@ -304,8 +304,8 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
             Wochentagsanalyse
-            <span className="text-base font-normal ml-2 text-gray-500 dark:text-gray-400">
-              (Mo-Fr)
+            <span className="text-sm font-normal ml-2 text-gray-500 dark:text-gray-400">
+              (Max. erfasste Fehlzeiten nach Wochentag - unabhängig von Zeitraumsauswahl)
             </span>
           </h3>
           <div className="flex flex-wrap space-x-2 text-base">

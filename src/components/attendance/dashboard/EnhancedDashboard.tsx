@@ -28,10 +28,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   startDate,
   endDate,
   selectedWeeks,
-  availableClasses,
-  selectedClasses: propSelectedClasses,
   weeklyStats = {},
-  schoolYearStats = {},
   weeklyDetailedData = {},
 }) => {
   const {
@@ -53,7 +50,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   const [studentStats, setStudentStats] = useState<Record<string, StudentStats>>({});
   
   // Additional state for filtered students
-  const [filteredStudentStats, setFilteredStudentStats] = useState<[string, StudentStats][]>([]);
+  const [, setFilteredStudentStats] = useState<[string, StudentStats][]>([]);
   
   // Chart visibility options
   const [trendChartVisibility, setTrendChartVisibility] = useState({
@@ -163,8 +160,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   ]);
   
   // Bestimme den effektiven Zeitraum für die Anzeige des Datums (Dashboard-Daten oder fallback zu props)
-  const effectiveStartDate = dashboardStartDate || startDate;
-  const effectiveEndDate = dashboardEndDate || endDate;
 
   if (!rawData) {
     return (
@@ -193,14 +188,5 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
 };
 
 // Helper function to format date
-const formatDate = (dateStr: string): string => {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('de-DE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
-};
 
 export default EnhancedDashboard;

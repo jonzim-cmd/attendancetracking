@@ -223,8 +223,8 @@ const AttendanceAnalyzer: React.FC = () => {
   };
 
   // Neue Version der handleQuickSelect-Funktion:
-   // Korrigierte handleQuickSelect-Funktion für die Sidebar
-   const handleQuickSelect = (value: string) => {
+   // Korrigierte handleQuickSelect-Funktion in AttendanceAnalyzer.tsx (für Sidebar)
+  const handleQuickSelect = (value: string) => {
     // Update des quickSelectValue
     setQuickSelectValue(value);
     
@@ -325,21 +325,10 @@ const AttendanceAnalyzer: React.FC = () => {
         // Das Schuljahr holen
         const schoolYear = getCurrentSchoolYear();
         
-        // Korrektes UTC-Datum für den Schuljahres-Start
-        startDate = new Date(Date.UTC(
-          parseInt(schoolYear.start),
-          8, // September (0-basiert: 8)
-          1, // Erster Tag
-          0, 0, 0 // 00:00:00 Uhr
-        ));
-        
-        // Korrektes UTC-Datum für das Schuljahres-Ende
-        endDate = new Date(Date.UTC(
-          parseInt(schoolYear.end), 
-          6, // Juli (0-basiert: 6) 
-          31, // Letzter Tag im Juli
-          23, 59, 59 // 23:59:59 Uhr
-        ));
+        // KORREKTUR: Verwende die bereits berechneten Start- und Enddaten direkt
+        // statt neue Daten mit festen Werten zu erstellen
+        startDate = schoolYear.startDate;
+        endDate = schoolYear.endDate;
         break;
       }
       default:
@@ -362,7 +351,7 @@ const AttendanceAnalyzer: React.FC = () => {
     setEndDate(endDateString);
   };
 
-  // Korrigierte handleDashboardQuickSelect-Funktion für das Dashboard
+  // Korrigierte handleDashboardQuickSelect-Funktion in AttendanceAnalyzer.tsx (für Dashboard)
   const handleDashboardQuickSelect = (value: string) => {
     // Diese Funktion ändert NUR die Dashboard-Datumsfilter!
     setQuickSelectValue(value);
@@ -464,21 +453,10 @@ const AttendanceAnalyzer: React.FC = () => {
         // Das Schuljahr holen
         const schoolYear = getCurrentSchoolYear();
         
-        // Korrektes UTC-Datum für den Schuljahres-Start
-        startDate = new Date(Date.UTC(
-          parseInt(schoolYear.start),
-          8, // September (0-basiert: 8)
-          1, // Erster Tag
-          0, 0, 0 // 00:00:00 Uhr
-        ));
-        
-        // Korrektes UTC-Datum für das Schuljahres-Ende
-        endDate = new Date(Date.UTC(
-          parseInt(schoolYear.end), 
-          6, // Juli (0-basiert: 6) 
-          31, // Letzter Tag im Juli
-          23, 59, 59 // 23:59:59 Uhr
-        ));
+        // KORREKTUR: Verwende die bereits berechneten Start- und Enddaten direkt
+        // statt neue Daten mit festen Werten zu erstellen
+        startDate = schoolYear.startDate;
+        endDate = schoolYear.endDate;
         break;
       }
       default:

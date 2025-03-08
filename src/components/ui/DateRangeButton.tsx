@@ -209,7 +209,7 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
     setIsDateDropdownOpen(false);
   };
   
-  // Toggle für alle Monate - setzt direkt das Schuljahr als Datum
+  // Korrigierte toggleAllMonths-Funktion in DateRangeButton.tsx
   const toggleAllMonths = () => {
     // Hole das aktuelle Schuljahr
     const schoolYear = getCurrentSchoolYear();
@@ -221,20 +221,10 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
       // Alle Monate auswählen
       setSelectedMonths(schoolYearMonths.map(m => m.key));
       
-      // Explizite Zeitangaben hinzufügen für korrekte Datumsberechnung mit deutscher Zeitzone
-      const startDate = new Date(Date.UTC(
-        parseInt(schoolYear.start),
-        8, // September (0-basiert: 8)
-        1, // Erster Tag
-        0, 0, 0 // 00:00:00 Uhr
-      ));
-      
-      const endDate = new Date(Date.UTC(
-        parseInt(schoolYear.end), 
-        6, // Juli (0-basiert: 6) 
-        31, // Letzter Tag im Juli
-        23, 59, 59 // 23:59:59 Uhr
-      ));
+      // KORREKTUR: Verwende die bereits berechneten Start- und Enddaten direkt
+      // statt neue Daten mit festen Werten zu erstellen
+      const startDate = schoolYear.startDate;
+      const endDate = schoolYear.endDate;
       
       // Format JJJJ-MM-TT für Eingabefelder (ISO-Format ohne Zeitanteil)
       const startFormatted = startDate.toISOString().split('T')[0];

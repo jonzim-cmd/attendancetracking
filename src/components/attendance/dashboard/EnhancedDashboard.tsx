@@ -31,7 +31,7 @@ interface EnhancedDashboardProps {
   selectedClasses: string[];
   weeklyStats?: Record<string, any>;
   schoolYearStats?: Record<string, any>;
-  weeklyDetailedData?: Record<string, any>;
+  weeklyDetailedData?: Record<string, any>; // Added weeklyDetailedData prop
 }
 
 const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
@@ -74,7 +74,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     fehlzeitenGesamt: true,
     verspaetungenAvg: false,
     fehlzeitenAvg: false,
-    // New student average visibility options - initialize to true
+    // New student average visibility options - initialize to false
     verspaetungenStudentAvg: false,
     fehlzeitenStudentAvg: false
   });
@@ -86,13 +86,11 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     fehlzeitenGesamt: true
   });
   
-  // Neue State-Variable für die Gesamtdaten aller Klassen
+  // State for all classes and all students data
   const [allClassesData, setAllClassesData] = useState<any[]>([]);
-  
-  // New state variable for all students data
   const [allStudentsData, setAllStudentsData] = useState<any[]>([]);
   
-  // New state to control if student comparison is enabled
+  // State to control if student comparison is enabled
   const [showStudentAverageComparison, setShowStudentAverageComparison] = useState<boolean>(false);
   
   // Convert filtered students to a dictionary for easier access
@@ -181,7 +179,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     }));
   }, [dashboardStartDate, dashboardEndDate, startDate, endDate, groupingOption, studentStats, weeklyDetailedData, selectedDashboardClasses, selectedStudents]);
   
-  // Memoized function for all classes/students data
+  // Memoized function for all classes data
   const memoizedAllClassesData = useCallback(() => {
     // Special call with empty class and student lists to get data for all classes
     return prepareAttendanceOverTime(
@@ -204,7 +202,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       groupingOption,
       studentStats,
       weeklyDetailedData,
-      [], // CHANGED: Remove class filter to get ALL students
+      [], // No class filter to ensure ALL students are included
       []  // No student filter
     );
   }, [dashboardStartDate, dashboardEndDate, startDate, endDate, groupingOption, studentStats, weeklyDetailedData]);
@@ -238,7 +236,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     memoizedAllClassesData
   ]);
   
-  // Effect to update "all students" cache based on the current class filter
+  // Effect to update "all students" cache
   useEffect(() => {
     if (!rawData || !startDate || !endDate) return;
     
@@ -272,14 +270,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     memoizedAllStudentsData
   ]);
   
-  // Clean up caches on unmount
-  useEffect(() => {
-    return () => {
-      clearAllClassesCache();
-      clearAllStudentsCache();
-    };
-  }, []);
-  
   // Effect to prepare single student data when needed
   useEffect(() => {
     if (selectedStudents.length === 1) {
@@ -288,6 +278,14 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       setSingleStudentData([]);
     }
   }, [selectedStudents, memoizedSingleStudentData]);
+  
+  // Clean up caches on unmount
+  useEffect(() => {
+    return () => {
+      clearAllClassesCache();
+      clearAllStudentsCache();
+    };
+  }, []);
   
   // Effect to prepare all data when filters change
   useEffect(() => {
@@ -301,53 +299,36 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     // Base time series data
     const baseAttendanceData = memoizedAttendanceOverTime();
     
-    // Check if we should show standard class averages
-    const shouldShowClassAvgs = shouldShowAverages(selectedDashboardClasses, selectedStudents);
-    
     // Check if we should show student averages (single student selected or forced comparison)
     const shouldShowStudentAvgs = shouldShowStudentAverages(
       selectedStudents.length === 1 ? selectedStudents[0] : undefined, 
       showStudentAverageComparison
     );
     
+    // Check if we should show standard class averages
+    const shouldShowClassAvgs = shouldShowAverages(selectedDashboardClasses, selectedStudents);
+    
+    // Evaluate which type of data to display - priority: student averages > class averages > base data
     if (selectedStudents.length === 1 && shouldShowStudentAvgs) {
-      // Process single student comparison with averages
+      // If a single student is selected and student averages should be shown
       
-      // Use the student's individual data as base
-      const studentData = singleStudentData.length > 0 
-        ? singleStudentData 
-        : baseAttendanceData;
+      // Get the base data for this specific student
+      const studentData = singleStudentData.length > 0 ? singleStudentData : baseAttendanceData;
       
-      // CHANGED: Calculate student averages using the base attendance data directly
-      // instead of using allStudentsData which might be filtered
-      const dataWithAverages = calculateStudentAverages(allStudentsData, studentStats);
+      // Apply student averages directly to this data
+      // This follows the same pattern as the class averages calculation
+      const enhancedData = calculateStudentAverages(studentData, studentStats);
       
-      // Merge student data with the calculated averages
-      const enhancedData = studentData.map(point => {
-        // Find matching average data point
-        const avgPoint = dataWithAverages.find(p => p.name === point.name);
-        
-        if (!avgPoint) return point;
-        
-        // Add student average values to the data point
-        return {
-          ...point,
-          verspaetungenStudentAvg: avgPoint.verspaetungenStudentAvg,
-          fehlzeitenStudentAvg: avgPoint.fehlzeitenStudentAvg,
-          fehlzeitenEntschStudentAvg: avgPoint.fehlzeitenEntschStudentAvg,
-          fehlzeitenUnentschStudentAvg: avgPoint.fehlzeitenUnentschStudentAvg
-        };
-      });
-      
+      // Set the enhanced data with student averages
       setAttendanceOverTime(enhancedData);
     }
     else if (shouldShowClassAvgs) {
-      // Standard class average calculation
+      // Standard class average calculation - unchanged from original
       const enhancedData = calculateClassAverages(baseAttendanceData, studentStats);
       setAttendanceOverTime(enhancedData);
     }
     else {
-      // No averages, just use base data
+      // No averages, just use base data - unchanged from original
       setAttendanceOverTime(baseAttendanceData);
     }
   }, [

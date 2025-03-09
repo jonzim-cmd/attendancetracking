@@ -7,6 +7,7 @@ import {
   prepareDayOfWeekAnalysis,
   prepareAttendanceOverTime
 } from './utils';
+import { calculateClassAverages, shouldShowAverages } from './classAverages';
 import { StudentStats } from '@/types';
 
 interface EnhancedDashboardProps {
@@ -19,7 +20,7 @@ interface EnhancedDashboardProps {
   selectedClasses: string[];
   weeklyStats?: Record<string, any>;
   schoolYearStats?: Record<string, any>;
-  weeklyDetailedData?: Record<string, any>;
+  weeklyDetailedData?: Record<string, any>; // Added weeklyDetailedData prop
 }
 
 const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
@@ -57,7 +58,10 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     verspaetungen: true,
     fehlzeitenEntsch: true,
     fehlzeitenUnentsch: true,
-    fehlzeitenGesamt: true
+    fehlzeitenGesamt: true,
+    // Durchschnittskurven standardmäßig ausgeblendet
+    verspaetungenAvg: false,
+    fehlzeitenAvg: false
   });
   
   const [weekdayChartVisibility, setWeekdayChartVisibility] = useState({
@@ -141,8 +145,19 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     setWeeklyTrends(memoizedWeeklyTrends());
     setAbsenceTypes(memoizedAbsenceTypes());
     setDayOfWeekData(memoizedDayOfWeekData());
-    setAttendanceOverTime(memoizedAttendanceOverTime());
     
+    // Basis-Zeitreihendaten
+    const baseAttendanceData = memoizedAttendanceOverTime();
+    
+    // Wenn Klassendurchschnitte angezeigt werden sollen, berechne sie
+    if (shouldShowAverages(selectedDashboardClasses, selectedStudents)) {
+      // Erweitere die Zeitreihendaten um Durchschnittswerte
+      const enhancedData = calculateClassAverages(baseAttendanceData, studentStats);
+      setAttendanceOverTime(enhancedData);
+    } else {
+      // Setze die Basisdaten ohne Durchschnitte
+      setAttendanceOverTime(baseAttendanceData);
+    }
   }, [
     rawData,
     startDate,
@@ -156,7 +171,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     memoizedWeeklyTrends,
     memoizedAbsenceTypes,
     memoizedDayOfWeekData,
-    memoizedAttendanceOverTime
+    memoizedAttendanceOverTime,
+    studentStats  // Hinzugefügt für die Durchschnittsberechnung
   ]);
   
   // Bestimme den effektiven Zeitraum für die Anzeige des Datums (Dashboard-Daten oder fallback zu props)

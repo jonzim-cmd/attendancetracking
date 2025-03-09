@@ -18,6 +18,10 @@ interface LineChartProps {
     name: string;
     color: string;
     activeDot?: boolean;
+    // Neue Eigenschaften für Durchschnittskurven
+    strokeDasharray?: string;  // Für gestrichelte Linien
+    strokeWidth?: number;      // Linienbreite
+    opacity?: number;          // Transparenz
   }[];
   formatXAxis?: (value: string) => string;
   yAxisMax?: number;
@@ -110,8 +114,10 @@ export const AttendanceLineChart: React.FC<LineChartProps> = ({
               name={line.name} 
               stroke={line.color} 
               activeDot={line.activeDot !== undefined ? { r: 8 } : { r: 8 }} 
-              strokeWidth={2}
-              dot={{ r: 3 }}
+              strokeWidth={line.strokeWidth || 2}
+              strokeDasharray={line.strokeDasharray || ''}
+              strokeOpacity={line.opacity !== undefined ? line.opacity : 1}
+              dot={line.activeDot === false ? false : { r: 3 }}
             />
           ))}
         </LineChart>

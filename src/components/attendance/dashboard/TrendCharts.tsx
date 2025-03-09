@@ -7,6 +7,8 @@ import {
   InfoTile 
 } from './ChartComponents';
 import { useFilters } from '@/contexts/FilterContext';
+import { shouldShowAverages } from './classAverages';
+import { TimeSeriesDataPointWithAvg } from './classAverages';
 
 interface TrendChartsProps {
   weeklyTrends: any[];
@@ -19,12 +21,17 @@ interface TrendChartsProps {
     fehlzeitenEntsch: boolean;
     fehlzeitenUnentsch: boolean;
     fehlzeitenGesamt: boolean;
+    // Neue Sichtbarkeitsoptionen für Durchschnittskurven
+    verspaetungenAvg: boolean;
+    fehlzeitenAvg: boolean;
   };
   setChartVisibility: React.Dispatch<React.SetStateAction<{
     verspaetungen: boolean;
     fehlzeitenEntsch: boolean;
     fehlzeitenUnentsch: boolean;
     fehlzeitenGesamt: boolean;
+    verspaetungenAvg: boolean;
+    fehlzeitenAvg: boolean;
   }>>;
   weekdayChartVisibility: {
     verspaetungen: boolean;
@@ -51,7 +58,16 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   setWeekdayChartVisibility
 }) => {
   // Zugriff auf den FilterContext
-  useFilters();
+  const {
+    selectedDashboardClasses,
+    selectedStudents
+  } = useFilters();
+  
+  // Prüfen, ob Durchschnittskurven verfügbar sein sollen
+  const showAverageOptions = shouldShowAverages(selectedDashboardClasses, selectedStudents);
+  
+  // Typ-Cast: Wir wissen, dass attendanceOverTime möglicherweise Durchschnittswerte enthält
+  const timeSeriesData = attendanceOverTime as TimeSeriesDataPointWithAvg[];
   
   // Referenz für den scrollbaren Container
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -126,6 +142,19 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
       color: "#9333ea", // Purple
       activeDot: true 
     });
+    
+    // Durchschnittskurve für Verspätungen, wenn aktiviert
+    if (showAverageOptions && chartVisibility.verspaetungenAvg) {
+      visibleLines.push({ 
+        dataKey: "verspaetungenAvg", 
+        name: "⌀ Verspätungen pro Klasse", 
+        color: "#9333ea", // Gleiche Farbe wie Verspätungen
+        strokeDasharray: "5 5", // Gestrichelte Linie
+        activeDot: false, // Keine hervorgehobenen Punkte
+        strokeWidth: 2,
+        opacity: 0.7 // Halbtransparent
+      });
+    }
   }
   
   if (chartVisibility.fehlzeitenEntsch) {
@@ -153,6 +182,19 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
       color: "#3b82f6", // Blue
       activeDot: true 
     });
+    
+    // Durchschnittskurve für Fehltage, wenn aktiviert
+    if (showAverageOptions && chartVisibility.fehlzeitenAvg) {
+      visibleLines.push({ 
+        dataKey: "fehlzeitenAvg", 
+        name: "⌀ Fehltage pro Klasse", 
+        color: "#3b82f6", // Gleiche Farbe wie Fehltage
+        strokeDasharray: "5 5", // Gestrichelte Linie
+        activeDot: false, // Keine hervorgehobenen Punkte
+        strokeWidth: 2,
+        opacity: 0.7 // Halbtransparent
+      });
+    }
   }
   
   // Prepare bars for weekday analysis
@@ -194,8 +236,21 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       // Find the corresponding data entry to get the date range
-      const dataEntry = attendanceOverTime.find(entry => entry.name === label);
+      const dataEntry = timeSeriesData.find(entry => entry.name === label);
       const dateRange = dataEntry?.dateRange || '';
+      
+      // Gruppiere Einträge, um Durchschnittswerte zusammen mit normalen Werten anzuzeigen
+      const normalEntries: any[] = [];
+      const avgEntries: any[] = [];
+      
+      // Sortiere die Einträge in normale und Durchschnittswerte
+      payload.forEach((entry: any) => {
+        if (entry.dataKey.includes('Avg')) {
+          avgEntries.push(entry);
+        } else {
+          normalEntries.push(entry);
+        }
+      });
       
       return (
         <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
@@ -203,8 +258,17 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
           {dateRange && (
             <p className="text-gray-600 dark:text-gray-400 text-base mb-1">{dateRange}</p>
           )}
+          
+          {/* Klassen-Meta-Info anzeigen, wenn Durchschnitte vorhanden sind */}
+          {dataEntry?.classCount && avgEntries.length > 0 && (
+            <p className="text-gray-500 dark:text-gray-400 text-xs mb-2">
+              Durchschnitte basierend auf {dataEntry.classCount} Klassen
+            </p>
+          )}
+          
+          {/* Normale Einträge */}
           <div className="flex flex-col space-y-1">
-            {payload.map((entry: any, index: number) => (
+            {normalEntries.map((entry: any, index: number) => (
               <div key={`item-${index}`} className="flex items-center">
                 <div className="w-3 h-3 mr-2" style={{ backgroundColor: entry.color }}></div>
                 <span className="text-gray-700 dark:text-gray-300 text-base">
@@ -212,6 +276,25 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
                 </span>
               </div>
             ))}
+            
+            {/* Durchschnittswerte, wenn vorhanden */}
+            {avgEntries.length > 0 && (
+              <>
+                <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                {avgEntries.map((entry: any, index: number) => (
+                  <div key={`avg-${index}`} className="flex items-center">
+                    <div className="w-3 h-3 mr-2" style={{ 
+                      backgroundColor: entry.color,
+                      opacity: 0.7,
+                      backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.4) 2px, rgba(255,255,255,0.4) 4px)'
+                    }}></div>
+                    <span className="text-gray-700 dark:text-gray-300 text-base">
+                      {entry.name}: {entry.value.toFixed(1)}
+                    </span>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </div>
       );
@@ -267,6 +350,35 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
               />
               <span className="text-blue-600 dark:text-blue-400">F (gesamt)</span>
             </label>
+            
+            {/* Neue Checkboxen für Durchschnittskurven - nur anzeigen, wenn relevant */}
+            {showAverageOptions && (
+              <>
+                {chartVisibility.verspaetungen && (
+                  <label className="inline-flex items-center cursor-pointer ml-2" title="Durchschnittliche Verspätungen pro Klasse">
+                    <input 
+                      type="checkbox" 
+                      checked={chartVisibility.verspaetungenAvg}
+                      onChange={() => setChartVisibility(prev => ({...prev, verspaetungenAvg: !prev.verspaetungenAvg}))}
+                      className="mr-1 w-4 h-4"
+                    />
+                    <span className="text-purple-600 dark:text-purple-400 text-opacity-70 dark:text-opacity-70">⌀ Versp.</span>
+                  </label>
+                )}
+                
+                {chartVisibility.fehlzeitenGesamt && (
+                  <label className="inline-flex items-center cursor-pointer" title="Durchschnittliche Fehltage pro Klasse">
+                    <input 
+                      type="checkbox" 
+                      checked={chartVisibility.fehlzeitenAvg}
+                      onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenAvg: !prev.fehlzeitenAvg}))}
+                      className="mr-1 w-4 h-4"
+                    />
+                    <span className="text-blue-600 dark:text-blue-400 text-opacity-70 dark:text-opacity-70">⌀ F (ges.)</span>
+                  </label>
+                )}
+              </>
+            )}
           </div>
         </div>
         <div className="overflow-x-auto" ref={scrollContainerRef}>

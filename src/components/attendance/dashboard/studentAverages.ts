@@ -2,7 +2,7 @@
 import { StudentStats } from '@/types';
 
 /**
- * Interface for the time series data points with student averages
+ * Interface for time series data points with student averages
  */
 export interface TimeSeriesDataPointWithStudentAvg {
   name: string;
@@ -24,17 +24,17 @@ export interface TimeSeriesDataPointWithStudentAvg {
   // Metadata for calculation
   studentCount?: number;
   totalStudentCount?: number;
-  isAllStudentsData?: boolean;
-
-  // For individual student data
   studentName?: string;
+  isAllStudentsData?: boolean;
 }
 
-// Cache for all students data
+// Cache for storing complete student data to ensure consistent averages
 let cachedAllStudentsData: Record<string, number> = {};
 
 /**
- * Calculates average values per student for each time series data point
+ * Calculates average values per student for each time series data point.
+ * The averages are always calculated based on the total student population,
+ * regardless of currently selected filters, to ensure consistent benchmarks.
  * 
  * @param timeSeriesData The time series data for the current selection
  * @param studentStats Statistics data for all students
@@ -45,37 +45,43 @@ export function calculateStudentAverages(
   studentStats: Record<string, StudentStats>
 ): TimeSeriesDataPointWithStudentAvg[] {
   // Count total number of students in the system
-  const studentCount = Object.keys(studentStats).length;
+  const allStudents = Object.keys(studentStats);
+  const studentCount = allStudents.length;
+  
+  console.log(`Calculating student averages across ${studentCount} students`);
   
   if (studentCount === 0) {
+    console.warn("No students found for average calculation");
     return timeSeriesData;
   }
 
   // Check if we have cached data for all students
-  if (Object.keys(cachedAllStudentsData).length === 0) {
-    // Cache data if this is all students data
-    const isAllStudentsData = timeSeriesData.length > 0 && timeSeriesData[0].isAllStudentsData;
+  const hasCachedData = Object.keys(cachedAllStudentsData).length > 0;
+  
+  // If we don't have cached data, check if this is all students data
+  if (!hasCachedData) {
+    const isAllStudentsData = timeSeriesData.length > 0 && 
+                             timeSeriesData[0].isAllStudentsData;
     
     if (isAllStudentsData) {
+      console.log("Caching all students data for future average calculations");
       timeSeriesData.forEach(point => {
-        // Store data in cache with unique keys
+        // Store data in cache with unique keys by time point
         cachedAllStudentsData[`verspaetungen_${point.name}`] = point.verspaetungen;
         cachedAllStudentsData[`fehlzeiten_${point.name}`] = point.fehlzeiten;
         cachedAllStudentsData[`fehlzeitenEntsch_${point.name}`] = point.fehlzeitenEntsch;
         cachedAllStudentsData[`fehlzeitenUnentsch_${point.name}`] = point.fehlzeitenUnentsch;
       });
-      
-      console.log("Cached all students data for future average calculations");
     }
   }
   
   // Enhance time series data with student averages
   return timeSeriesData.map(point => {
-    // Copy the point
+    // Copy the point to avoid modifying the original
     const enrichedPoint: TimeSeriesDataPointWithStudentAvg = { ...point };
     
-    // Use cached total values if available
-    if (Object.keys(cachedAllStudentsData).length > 0) {
+    // Use cached total values if available for consistent averages across all views
+    if (hasCachedData) {
       enrichedPoint.verspaetungenStudentAvg = 
         (cachedAllStudentsData[`verspaetungen_${point.name}`] || 0) / studentCount;
       
@@ -88,13 +94,15 @@ export function calculateStudentAverages(
       enrichedPoint.fehlzeitenUnentschStudentAvg = 
         (cachedAllStudentsData[`fehlzeitenUnentsch_${point.name}`] || 0) / studentCount;
     } else {
-      // Fallback: use current values if cache is not available
+      // Fallback: If cache isn't available, use current values
+      // This is less accurate but provides some values
+      console.warn("Using fallback calculation without complete data");
       enrichedPoint.verspaetungenStudentAvg = point.verspaetungen / studentCount;
       enrichedPoint.fehlzeitenStudentAvg = point.fehlzeiten / studentCount;
       enrichedPoint.fehlzeitenEntschStudentAvg = point.fehlzeitenEntsch / studentCount;
       enrichedPoint.fehlzeitenUnentschStudentAvg = point.fehlzeitenUnentsch / studentCount;
       
-      // Mark for future cache updates
+      // Mark this data for potential future cache updates
       if (!point.isAllStudentsData && 
           !timeSeriesData.some(p => p.isAllStudentsData) && 
           timeSeriesData.length > 0) {
@@ -102,7 +110,7 @@ export function calculateStudentAverages(
       }
     }
     
-    // Store student count
+    // Store student count for reference
     enrichedPoint.studentCount = studentCount;
     enrichedPoint.totalStudentCount = studentCount;
     
@@ -111,12 +119,13 @@ export function calculateStudentAverages(
 }
 
 /**
- * Updates the cache with all students data
- * Call this when "All Students" view is displayed
+ * Updates the cache with all students data.
+ * Call this when "All Students" view is displayed or when data is refreshed.
  * 
  * @param allStudentsData The data for all students
  */
 export function updateAllStudentsCache(allStudentsData: any[]): void {
+  // Clear existing cache and add new data
   cachedAllStudentsData = {};
   
   allStudentsData.forEach(point => {
@@ -126,12 +135,12 @@ export function updateAllStudentsCache(allStudentsData: any[]): void {
     cachedAllStudentsData[`fehlzeitenUnentsch_${point.name}`] = point.fehlzeitenUnentsch;
   });
   
-  console.log("Updated cache with all students data");
+  console.log("Updated cache with all students data, entries:", Object.keys(cachedAllStudentsData).length);
 }
 
 /**
- * Clears the cache of all students data
- * Call when base data changes
+ * Clears the cache of all students data.
+ * Call when base data changes (e.g., file upload, date range change).
  */
 export function clearAllStudentsCache(): void {
   cachedAllStudentsData = {};
@@ -141,7 +150,7 @@ export function clearAllStudentsCache(): void {
 /**
  * Determines if student averages should be shown
  * 
- * @param selectedStudent The currently selected student, if any
+ * @param selectedStudent The currently selected individual student, if any
  * @param showAverageComparison Force show the average comparison
  * @returns true if student averages should be shown
  */
@@ -149,6 +158,8 @@ export function shouldShowStudentAverages(
   selectedStudent?: string,
   showAverageComparison: boolean = false
 ): boolean {
-  // Show student averages when forced or when an individual student is selected
+  // Show student averages when:
+  // 1. The user has specifically enabled average comparison OR
+  // 2. A single student is selected (for automatic comparison)
   return showAverageComparison || !!selectedStudent;
 }

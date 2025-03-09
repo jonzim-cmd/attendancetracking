@@ -204,10 +204,10 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       groupingOption,
       studentStats,
       weeklyDetailedData,
-      selectedDashboardClasses, // Keep class filter
+      [], // CHANGED: Remove class filter to get ALL students
       []  // No student filter
     );
-  }, [dashboardStartDate, dashboardEndDate, startDate, endDate, groupingOption, studentStats, weeklyDetailedData, selectedDashboardClasses]);
+  }, [dashboardStartDate, dashboardEndDate, startDate, endDate, groupingOption, studentStats, weeklyDetailedData]);
   
   // Effect to update "all classes" cache
   useEffect(() => {
@@ -242,7 +242,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   useEffect(() => {
     if (!rawData || !startDate || !endDate) return;
     
-    // Calculate data for all students based on current class filter
+    // Calculate data for all students without class filtering
     const allStudentsTimeSeriesData = memoizedAllStudentsData();
     
     // Mark the data as "all students" data
@@ -259,7 +259,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     
     console.log("Updated all students data for student averages", {
       dataPoints: markedData.length,
-      classFilter: selectedDashboardClasses,
       firstPoint: markedData[0]
     });
     
@@ -270,8 +269,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     dashboardStartDate,
     dashboardEndDate,
     groupingOption,
-    memoizedAllStudentsData,
-    selectedDashboardClasses // Include when class filter changes
+    memoizedAllStudentsData
   ]);
   
   // Clean up caches on unmount
@@ -320,13 +318,14 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         ? singleStudentData 
         : baseAttendanceData;
       
-      // Calculate student averages using all students data
-      const studentAverages = calculateStudentAverages(allStudentsData, studentStats);
+      // CHANGED: Calculate student averages using the base attendance data directly
+      // instead of using allStudentsData which might be filtered
+      const dataWithAverages = calculateStudentAverages(allStudentsData, studentStats);
       
-      // Merge student data with average reference lines
+      // Merge student data with the calculated averages
       const enhancedData = studentData.map(point => {
         // Find matching average data point
-        const avgPoint = studentAverages.find(p => p.name === point.name);
+        const avgPoint = dataWithAverages.find(p => p.name === point.name);
         
         if (!avgPoint) return point;
         

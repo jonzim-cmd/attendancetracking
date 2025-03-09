@@ -192,7 +192,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
         strokeDasharray: "5 5", // Gestrichelte Linie
         activeDot: false, // Keine hervorgehobenen Punkte
         strokeWidth: 2,
-        opacity: 0.7 // Halbtransparent
+        opacity: 0.5 // Halbtransparent
       });
     }
   }

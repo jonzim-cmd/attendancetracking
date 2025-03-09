@@ -7,7 +7,12 @@ import {
   prepareDayOfWeekAnalysis,
   prepareAttendanceOverTime
 } from './utils';
-import { calculateClassAverages, shouldShowAverages } from './classAverages';
+import { 
+  calculateClassAverages, 
+  shouldShowAverages, 
+  updateAllClassesCache, 
+  clearAllClassesCache 
+} from './classAverages';
 import { StudentStats } from '@/types';
 
 interface EnhancedDashboardProps {
@@ -70,6 +75,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     fehlzeitenUnentsch: true,
     fehlzeitenGesamt: true
   });
+  
+  // Neue State-Variable für die Gesamtdaten aller Klassen
+  const [allClassesData, setAllClassesData] = useState<any[]>([]);
   
   // Convert filtered students to a dictionary for easier access
   useEffect(() => {
@@ -137,6 +145,58 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     );
   }, [dashboardStartDate, dashboardEndDate, startDate, endDate, groupingOption, studentStats, weeklyDetailedData, selectedDashboardClasses, selectedStudents]);
   
+  // NEU: Memoized function für alle Klassen Daten
+  const memoizedAllClassesData = useCallback(() => {
+    // Spezieller Aufruf mit leeren Klassenlisten und Schülerlisten,
+    // um Daten für alle Klassen zu erhalten
+    return prepareAttendanceOverTime(
+      dashboardStartDate || startDate,
+      dashboardEndDate || endDate,
+      groupingOption,
+      studentStats,
+      weeklyDetailedData,
+      [], // Leere Klassenliste = alle Klassen
+      []  // Leere Schülerliste = alle Schüler
+    );
+  }, [dashboardStartDate, dashboardEndDate, startDate, endDate, groupingOption, studentStats, weeklyDetailedData]);
+  
+  // NEU: Effect zum Aktualisieren der "alle Klassen"-Daten
+  useEffect(() => {
+    if (!rawData || !startDate || !endDate) return;
+    
+    // Berechne die Gesamtdaten aller Klassen
+    const allClassesTimeSeriesData = memoizedAllClassesData();
+    
+    // Markiere diese Daten als "alle Klassen"-Daten
+    const markedData = allClassesTimeSeriesData.map(point => ({
+      ...point,
+      isAllClassesData: true as boolean // Markierung für den Cache mit Type Assertion
+    }));
+    
+    // Speichere die Daten im lokalen State
+    setAllClassesData(markedData);
+    
+    // Aktualisiere den Cache mit den Gesamtdaten aller Klassen
+    updateAllClassesCache(markedData);
+    
+  }, [
+    rawData,
+    startDate,
+    endDate,
+    dashboardStartDate,
+    dashboardEndDate,
+    groupingOption,
+    memoizedAllClassesData
+  ]);
+  
+  // Bereinige den Cache, wenn sich wesentliche Parameter ändern
+  useEffect(() => {
+    return () => {
+      // Bereinige den Cache beim Unmount
+      clearAllClassesCache();
+    };
+  }, []);
+  
   // Effect to prepare all data when filters change
   useEffect(() => {
     if (!rawData || !startDate || !endDate) return;
@@ -172,10 +232,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     memoizedAbsenceTypes,
     memoizedDayOfWeekData,
     memoizedAttendanceOverTime,
-    studentStats  // Hinzugefügt für die Durchschnittsberechnung
+    studentStats,  // Hinzugefügt für die Durchschnittsberechnung
+    allClassesData // NEU: Reagiere auf Änderungen der Gesamtdaten
   ]);
-  
-  // Bestimme den effektiven Zeitraum für die Anzeige des Datums (Dashboard-Daten oder fallback zu props)
 
   if (!rawData) {
     return (
@@ -202,7 +261,5 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     </div>
   );
 };
-
-// Helper function to format date
 
 export default EnhancedDashboard;

@@ -33,22 +33,31 @@ let cachedAllStudentsData: Record<string, number> = {};
 
 /**
  * Calculates average values per student for each time series data point.
- * The averages are always calculated based on the total student population,
- * regardless of currently selected filters, to ensure consistent benchmarks.
+ * The averages are always calculated based on the total student population
+ * from the selected classes, regardless of which individual student is selected.
  * 
  * @param timeSeriesData The time series data for the current selection
  * @param studentStats Statistics data for all students
+ * @param selectedClasses Array of selected class names to filter students by
  * @returns Time series data with added student average values
  */
 export function calculateStudentAverages(
   timeSeriesData: any[],
-  studentStats: Record<string, StudentStats>
+  studentStats: Record<string, StudentStats>,
+  selectedClasses: string[] = []
 ): TimeSeriesDataPointWithStudentAvg[] {
-  // Count total number of students in the system
-  const allStudents = Object.keys(studentStats);
-  const studentCount = allStudents.length;
+  // Count number of students in the selected classes
+  const studentsInSelectedClasses = Object.entries(studentStats)
+    .filter(([_, stats]) => 
+      // If no classes are selected, include all students
+      // Otherwise, only include students from selected classes
+      selectedClasses.length === 0 || selectedClasses.includes(stats.klasse)
+    ).length;
   
-  console.log(`Calculating student averages across ${studentCount} students`);
+  // Ensure we have at least 1 student to avoid division by zero
+  const studentCount = Math.max(1, studentsInSelectedClasses);
+  
+  console.log(`Calculating student averages across ${studentCount} students in selected classes`);
   
   if (studentCount === 0) {
     console.warn("No students found for average calculation");

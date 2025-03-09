@@ -202,10 +202,19 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       groupingOption,
       studentStats,
       weeklyDetailedData,
-      [], // No class filter to ensure ALL students are included
-      []  // No student filter
+      selectedDashboardClasses, // WICHTIG: Hier die ausgewählten Klassen übergeben!
+      []  // Kein Schülerfilter
     );
-  }, [dashboardStartDate, dashboardEndDate, startDate, endDate, groupingOption, studentStats, weeklyDetailedData]);
+  }, [
+    dashboardStartDate, 
+    dashboardEndDate, 
+    startDate, 
+    endDate, 
+    groupingOption, 
+    studentStats, 
+    weeklyDetailedData,
+    selectedDashboardClasses // Auch hier als Abhängigkeit hinzufügen
+  ]);
   
   // Effect to update "all classes" cache
   useEffect(() => {
@@ -308,16 +317,20 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     // Check if we should show standard class averages
     const shouldShowClassAvgs = shouldShowAverages(selectedDashboardClasses, selectedStudents);
     
-    // Evaluate which type of data to display - priority: student averages > class averages > base data
+
+    // Finde den Aufruf von calculateStudentAverages innerhalb des useEffect:
     if (selectedStudents.length === 1 && shouldShowStudentAvgs) {
-      // If a single student is selected and student averages should be shown
+      // Wenn ein einzelner Schüler ausgewählt ist und student averages angezeigt werden sollen
       
-      // Get the base data for this specific student
+      // Das Basis-Dataset für diesen Schüler holen
       const studentData = singleStudentData.length > 0 ? singleStudentData : baseAttendanceData;
       
-      // Apply student averages directly to this data
-      // This follows the same pattern as the class averages calculation
-      const enhancedData = calculateStudentAverages(studentData, studentStats);
+      // Hier die Änderung durchführen: selectedDashboardClasses übergeben
+      const enhancedData = calculateStudentAverages(
+        studentData, 
+        studentStats,
+        selectedDashboardClasses // WICHTIG: Ausgewählte Klassen als Parameter übergeben
+      );
       
       // Set the enhanced data with student averages
       setAttendanceOverTime(enhancedData);

@@ -13,6 +13,12 @@ import {
   updateAllClassesCache, 
   clearAllClassesCache 
 } from './classAverages';
+import {
+  calculateStudentAverages,
+  shouldShowStudentAverages,
+  updateAllStudentsCache,
+  clearAllStudentsCache
+} from './studentAverages';
 import { StudentStats } from '@/types';
 
 interface EnhancedDashboardProps {
@@ -25,7 +31,7 @@ interface EnhancedDashboardProps {
   selectedClasses: string[];
   weeklyStats?: Record<string, any>;
   schoolYearStats?: Record<string, any>;
-  weeklyDetailedData?: Record<string, any>; // Added weeklyDetailedData prop
+  weeklyDetailedData?: Record<string, any>;
 }
 
 const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
@@ -41,7 +47,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     selectedDashboardClasses,
     selectedStudents,
     groupingOption,
-    // Verwende Dashboard-spezifische Datumsfilter
     dashboardStartDate,
     dashboardEndDate
   } = useFilters();
@@ -51,6 +56,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   const [absenceTypes, setAbsenceTypes] = useState<any[]>([]);
   const [dayOfWeekData, setDayOfWeekData] = useState<any[]>([]);
   const [attendanceOverTime, setAttendanceOverTime] = useState<any[]>([]);
+  
+  // State for specifically handling data for a single selected student
+  const [singleStudentData, setSingleStudentData] = useState<any[]>([]);
   
   // Get all student stats
   const [studentStats, setStudentStats] = useState<Record<string, StudentStats>>({});
@@ -64,9 +72,11 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     fehlzeitenEntsch: true,
     fehlzeitenUnentsch: true,
     fehlzeitenGesamt: true,
-    // Durchschnittskurven standardmäßig ausgeblendet
     verspaetungenAvg: false,
-    fehlzeitenAvg: false
+    fehlzeitenAvg: false,
+    // New student average visibility options - initialize to true
+    verspaetungenStudentAvg: false,
+    fehlzeitenStudentAvg: false
   });
   
   const [weekdayChartVisibility, setWeekdayChartVisibility] = useState({
@@ -78,6 +88,12 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   
   // Neue State-Variable für die Gesamtdaten aller Klassen
   const [allClassesData, setAllClassesData] = useState<any[]>([]);
+  
+  // New state variable for all students data
+  const [allStudentsData, setAllStudentsData] = useState<any[]>([]);
+  
+  // New state to control if student comparison is enabled
+  const [showStudentAverageComparison, setShowStudentAverageComparison] = useState<boolean>(false);
   
   // Convert filtered students to a dictionary for easier access
   useEffect(() => {
@@ -96,7 +112,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   
   // Memoized function for weekly trends data
   const memoizedWeeklyTrends = useCallback(() => {
-    // Use the updated function signature from the new utils.ts
     return prepareWeeklyTrends(
       weeklyStats,
       studentStats,
@@ -108,7 +123,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   
   // Memoized function for absence types data
   const memoizedAbsenceTypes = useCallback(() => {
-    // Use the updated function signature from the new utils.ts
     return prepareAbsenceTypes(
       studentStats,
       selectedDashboardClasses,
@@ -118,7 +132,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   
   // Memoized function for day of week data
   const memoizedDayOfWeekData = useCallback(() => {
-    // Use the updated function signature from the new utils.ts
     return prepareDayOfWeekAnalysis(
       weeklyDetailedData,
       studentStats,
@@ -133,7 +146,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     const effectiveStartDate = dashboardStartDate || startDate;
     const effectiveEndDate = dashboardEndDate || endDate;
     
-    // Use the updated function signature from the new utils.ts
     return prepareAttendanceOverTime(
       effectiveStartDate,
       effectiveEndDate,
@@ -145,38 +157,75 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     );
   }, [dashboardStartDate, dashboardEndDate, startDate, endDate, groupingOption, studentStats, weeklyDetailedData, selectedDashboardClasses, selectedStudents]);
   
-  // NEU: Memoized function für alle Klassen Daten
+  // Memoized function for individual student data
+  const memoizedSingleStudentData = useCallback(() => {
+    // Only process if exactly one student is selected
+    if (selectedStudents.length !== 1) return [];
+    
+    const selectedStudent = selectedStudents[0];
+    const effectiveStartDate = dashboardStartDate || startDate;
+    const effectiveEndDate = dashboardEndDate || endDate;
+    
+    // Prepare time series data for just this student
+    return prepareAttendanceOverTime(
+      effectiveStartDate,
+      effectiveEndDate,
+      groupingOption,
+      studentStats,
+      weeklyDetailedData,
+      selectedDashboardClasses,
+      [selectedStudent] // Just the selected student
+    ).map(point => ({
+      ...point,
+      studentName: selectedStudent // Add student name to the data point
+    }));
+  }, [dashboardStartDate, dashboardEndDate, startDate, endDate, groupingOption, studentStats, weeklyDetailedData, selectedDashboardClasses, selectedStudents]);
+  
+  // Memoized function for all classes/students data
   const memoizedAllClassesData = useCallback(() => {
-    // Spezieller Aufruf mit leeren Klassenlisten und Schülerlisten,
-    // um Daten für alle Klassen zu erhalten
+    // Special call with empty class and student lists to get data for all classes
     return prepareAttendanceOverTime(
       dashboardStartDate || startDate,
       dashboardEndDate || endDate,
       groupingOption,
       studentStats,
       weeklyDetailedData,
-      [], // Leere Klassenliste = alle Klassen
-      []  // Leere Schülerliste = alle Schüler
+      [], // Empty class list = all classes
+      []  // Empty student list = all students
     );
   }, [dashboardStartDate, dashboardEndDate, startDate, endDate, groupingOption, studentStats, weeklyDetailedData]);
   
-  // NEU: Effect zum Aktualisieren der "alle Klassen"-Daten
+  // Memoized function for all students data (regardless of class filter)
+  const memoizedAllStudentsData = useCallback(() => {
+    // Special call to get data for all students (regardless of class selection)
+    return prepareAttendanceOverTime(
+      dashboardStartDate || startDate,
+      dashboardEndDate || endDate,
+      groupingOption,
+      studentStats,
+      weeklyDetailedData,
+      selectedDashboardClasses, // Keep class filter
+      []  // No student filter
+    );
+  }, [dashboardStartDate, dashboardEndDate, startDate, endDate, groupingOption, studentStats, weeklyDetailedData, selectedDashboardClasses]);
+  
+  // Effect to update "all classes" cache
   useEffect(() => {
     if (!rawData || !startDate || !endDate) return;
     
-    // Berechne die Gesamtdaten aller Klassen
+    // Calculate data for all classes
     const allClassesTimeSeriesData = memoizedAllClassesData();
     
-    // Markiere diese Daten als "alle Klassen"-Daten
+    // Mark the data as "all classes" data
     const markedData = allClassesTimeSeriesData.map(point => ({
       ...point,
-      isAllClassesData: true as boolean // Markierung für den Cache mit Type Assertion
+      isAllClassesData: true 
     }));
     
-    // Speichere die Daten im lokalen State
+    // Store the data locally
     setAllClassesData(markedData);
     
-    // Aktualisiere den Cache mit den Gesamtdaten aller Klassen
+    // Update caches for future calculations
     updateAllClassesCache(markedData);
     
   }, [
@@ -189,13 +238,58 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     memoizedAllClassesData
   ]);
   
-  // Bereinige den Cache, wenn sich wesentliche Parameter ändern
+  // Effect to update "all students" cache based on the current class filter
+  useEffect(() => {
+    if (!rawData || !startDate || !endDate) return;
+    
+    // Calculate data for all students based on current class filter
+    const allStudentsTimeSeriesData = memoizedAllStudentsData();
+    
+    // Mark the data as "all students" data
+    const markedData = allStudentsTimeSeriesData.map(point => ({
+      ...point,
+      isAllStudentsData: true
+    }));
+    
+    // Store the data locally
+    setAllStudentsData(markedData);
+    
+    // Update student cache for future calculations
+    updateAllStudentsCache(markedData);
+    
+    console.log("Updated all students data for student averages", {
+      dataPoints: markedData.length,
+      classFilter: selectedDashboardClasses,
+      firstPoint: markedData[0]
+    });
+    
+  }, [
+    rawData,
+    startDate,
+    endDate,
+    dashboardStartDate,
+    dashboardEndDate,
+    groupingOption,
+    memoizedAllStudentsData,
+    selectedDashboardClasses // Include when class filter changes
+  ]);
+  
+  // Clean up caches on unmount
   useEffect(() => {
     return () => {
-      // Bereinige den Cache beim Unmount
       clearAllClassesCache();
+      clearAllStudentsCache();
     };
   }, []);
+  
+  // Effect to prepare single student data when needed
+  useEffect(() => {
+    if (selectedStudents.length === 1) {
+      setSingleStudentData(memoizedSingleStudentData());
+    } else {
+      setSingleStudentData([]);
+    }
+  }, [selectedStudents, memoizedSingleStudentData]);
   
   // Effect to prepare all data when filters change
   useEffect(() => {
@@ -206,24 +300,63 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     setAbsenceTypes(memoizedAbsenceTypes());
     setDayOfWeekData(memoizedDayOfWeekData());
     
-    // Basis-Zeitreihendaten
+    // Base time series data
     const baseAttendanceData = memoizedAttendanceOverTime();
     
-    // Wenn Klassendurchschnitte angezeigt werden sollen, berechne sie
-    if (shouldShowAverages(selectedDashboardClasses, selectedStudents)) {
-      // Erweitere die Zeitreihendaten um Durchschnittswerte
+    // Check if we should show standard class averages
+    const shouldShowClassAvgs = shouldShowAverages(selectedDashboardClasses, selectedStudents);
+    
+    // Check if we should show student averages (single student selected or forced comparison)
+    const shouldShowStudentAvgs = shouldShowStudentAverages(
+      selectedStudents.length === 1 ? selectedStudents[0] : undefined, 
+      showStudentAverageComparison
+    );
+    
+    if (selectedStudents.length === 1 && shouldShowStudentAvgs) {
+      // Process single student comparison with averages
+      
+      // Use the student's individual data as base
+      const studentData = singleStudentData.length > 0 
+        ? singleStudentData 
+        : baseAttendanceData;
+      
+      // Calculate student averages using all students data
+      const studentAverages = calculateStudentAverages(allStudentsData, studentStats);
+      
+      // Merge student data with average reference lines
+      const enhancedData = studentData.map(point => {
+        // Find matching average data point
+        const avgPoint = studentAverages.find(p => p.name === point.name);
+        
+        if (!avgPoint) return point;
+        
+        // Add student average values to the data point
+        return {
+          ...point,
+          verspaetungenStudentAvg: avgPoint.verspaetungenStudentAvg,
+          fehlzeitenStudentAvg: avgPoint.fehlzeitenStudentAvg,
+          fehlzeitenEntschStudentAvg: avgPoint.fehlzeitenEntschStudentAvg,
+          fehlzeitenUnentschStudentAvg: avgPoint.fehlzeitenUnentschStudentAvg
+        };
+      });
+      
+      setAttendanceOverTime(enhancedData);
+    }
+    else if (shouldShowClassAvgs) {
+      // Standard class average calculation
       const enhancedData = calculateClassAverages(baseAttendanceData, studentStats);
       setAttendanceOverTime(enhancedData);
-    } else {
-      // Setze die Basisdaten ohne Durchschnitte
+    }
+    else {
+      // No averages, just use base data
       setAttendanceOverTime(baseAttendanceData);
     }
   }, [
     rawData,
     startDate,
     endDate,
-    dashboardStartDate,  // NEU: Reagiere auf Änderungen an den Dashboard-Datumsfiltern
-    dashboardEndDate,    // NEU: Reagiere auf Änderungen an den Dashboard-Datumsfiltern
+    dashboardStartDate,
+    dashboardEndDate,
     selectedWeeks,
     selectedDashboardClasses,
     selectedStudents,
@@ -232,8 +365,11 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     memoizedAbsenceTypes,
     memoizedDayOfWeekData,
     memoizedAttendanceOverTime,
-    studentStats,  // Hinzugefügt für die Durchschnittsberechnung
-    allClassesData // NEU: Reagiere auf Änderungen der Gesamtdaten
+    studentStats,
+    allClassesData,
+    allStudentsData,
+    singleStudentData,
+    showStudentAverageComparison
   ]);
 
   if (!rawData) {
@@ -246,7 +382,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   
   return (
     <div className="space-y-4"> 
-      {/* Only render TrendCharts, removed other components */}
       <TrendCharts 
         weeklyTrends={weeklyTrends}
         attendanceOverTime={attendanceOverTime}
@@ -257,6 +392,10 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         setChartVisibility={setTrendChartVisibility}
         weekdayChartVisibility={weekdayChartVisibility}
         setWeekdayChartVisibility={setWeekdayChartVisibility}
+        // Pass student-specific props
+        selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
+        showStudentAverageComparison={showStudentAverageComparison}
+        setShowStudentAverageComparison={setShowStudentAverageComparison}
       />
     </div>
   );

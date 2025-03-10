@@ -69,8 +69,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   // Chart visibility options
   const [trendChartVisibility, setTrendChartVisibility] = useState({
     verspaetungen: true,
-    fehlzeitenEntsch: true,
-    fehlzeitenUnentsch: true,
+    fehlzeitenEntsch: false,
+    fehlzeitenUnentsch: false,
     fehlzeitenGesamt: true,
     verspaetungenAvg: false,
     fehlzeitenAvg: false,
@@ -358,20 +358,22 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         [] // KRITISCHE ÄNDERUNG: Leeres Array für selectedClasses
       );
       
+      // Berechne die Gesamtzahl der Klassen im System
+      const totalClassCount = Object.values(studentStats)
+        .reduce((classSet, student) => {
+          if (student.klasse) classSet.add(student.klasse);
+          return classSet;
+        }, new Set<string>()).size;
+      
       // WICHTIG: Korrekte Metadaten für den Tooltip hinzufügen
       const enhancedDataWithMetadata = enhancedData.map(point => ({
         ...point,
-        // Behalte vorhandene studentCount/totalStudentCount Werte von calculateStudentAverages
-        // aber setze sie explizit auf die Gesamtanzahl aller Schüler, falls sie fehlen
-        studentCount: point.studentCount || selectedStudents.length,
-        totalStudentCount: totalStudentsInSystem, // WICHTIG: Immer die Gesamtanzahl verwenden
+        // KRITISCHE ÄNDERUNG: Die Werte werden korrekt gesetzt, nicht vertauscht
+        totalStudentCount: point.totalStudentCount, // Behalte die Gesamtanzahl aus calculateStudentAverages
+        studentCount: selectedStudents.length, // Anzahl der ausgewählten Schüler ist 1
         // Setze auch classCount und totalClassCount für gemischte Visualisierungen
         classCount: selectedDashboardClasses.length || 1,
-        totalClassCount: Object.values(studentStats)
-          .reduce((classSet, student) => {
-            if (student.klasse) classSet.add(student.klasse);
-            return classSet;
-          }, new Set<string>()).size
+        totalClassCount: totalClassCount || 1
       }));
       
       // Für Debugging

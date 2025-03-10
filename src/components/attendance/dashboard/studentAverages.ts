@@ -169,6 +169,17 @@ export function updateAllStudentsCache(allStudentsData: any[], totalStudents?: n
 }
 
 /**
+ * Completely resets the student cache.
+ * This MUST be called whenever a new report is loaded to ensure calculations 
+ * use the correct student count for the new report.
+ */
+export function resetStudentCache(): void {
+  cachedTotalStudentCount = 0;
+  cachedAllStudentsData = {};
+  console.log("Reset student averages cache - total student count is now 0");
+}
+
+/**
  * Clears the cache of all students data.
  * Call when base data changes (e.g., file upload, date range change).
  */

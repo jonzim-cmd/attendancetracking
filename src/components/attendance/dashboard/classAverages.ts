@@ -172,6 +172,19 @@ export function updateAllClassesCache(allClassesData: any[], totalClasses?: numb
   console.log("Updated cache with all classes data");
 }
 
+
+
+/**
+ * Completely resets the class cache.
+ * This MUST be called whenever a new report is loaded to ensure calculations 
+ * use the correct class count for the new report.
+ */
+export function resetClassCache(): void {
+  cachedTotalClassCount = 0;
+  cachedAllClassesData = {};
+  console.log("Reset class averages cache - total class count is now 0");
+}
+
 /**
  * Löscht den Cache mit den Gesamtdaten aller Klassen
  * Sollte aufgerufen werden, wenn sich die Basisdaten ändern

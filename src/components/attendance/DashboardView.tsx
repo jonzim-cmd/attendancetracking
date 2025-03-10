@@ -3,6 +3,7 @@ import { StudentStats } from '@/types';
 import EnhancedDashboard from './dashboard/EnhancedDashboard';
 import { formatDate } from './dashboard/utils';
 import { useFilters } from '@/contexts/FilterContext';
+import { resetAllCaches } from './dashboard/cacheHelpers';
 
 interface DashboardViewProps {
   getFilteredStudents: () => [string, StudentStats][];
@@ -36,6 +37,14 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   const effectiveStartDate = dashboardStartDate || startDate;
   const effectiveEndDate = dashboardEndDate || endDate;
   
+// Reset caches when new report data is loaded
+React.useEffect(() => {
+  if (rawData) {
+    // Only reset if we actually have data
+    resetAllCaches();
+  }
+}, [rawData]); // This dependency ensures it only runs when rawData changes
+
   if (!rawData) {
     return (
       <div className="p-4 text-center text-gray-500 dark:text-gray-400">

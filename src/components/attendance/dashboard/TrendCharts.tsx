@@ -176,11 +176,11 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
       visibleLines.push({ 
         dataKey: "verspaetungenAvg", 
         name: "⌀ Verspätungen pro Klasse", 
-        color: "#9333ea", // Gleiche Farbe wie Verspätungen
+        color: "#b980ed", // Gleiche Farbe wie Verspätungen
         strokeDasharray: "5 5", // Gestrichelte Linie
         activeDot: false, // Keine hervorgehobenen Punkte
         strokeWidth: 2,
-        opacity: 0.7 // Halbtransparent
+        opacity: 0.7  // Halbtransparent
       });
     }
     
@@ -191,11 +191,11 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
       visibleLines.push({ 
         dataKey: "verspaetungenStudentAvg", 
         name: "⌀ Verspätungen pro Schüler", 
-        color: "#9333ea", // Same color as regular tardiness (purple)
-        strokeDasharray: "3 3", // Different dash pattern from class averages
+        color: "#b980ed", // Same color as regular tardiness (purple)
+        strokeDasharray: "10 3", // Different dash pattern from class averages
         activeDot: false, 
         strokeWidth: 2,
-        opacity: 0.6 // Slightly more transparent
+        opacity: 0.7 // Slightly more transparent
       });
     }
   }
@@ -231,11 +231,11 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
       visibleLines.push({ 
         dataKey: "fehlzeitenAvg", 
         name: "⌀ Fehltage pro Klasse", 
-        color: "#3b82f6", // Gleiche Farbe wie Fehltage
+        color: "#7facf5", // Gleiche Farbe wie Fehltage
         strokeDasharray: "5 5", // Gestrichelte Linie
         activeDot: false, // Keine hervorgehobenen Punkte
         strokeWidth: 2,
-        opacity: 0.5 // Halbtransparent
+        opacity: 0.7 // Halbtransparent
       });
     }
     
@@ -246,11 +246,11 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
       visibleLines.push({ 
         dataKey: "fehlzeitenStudentAvg", 
         name: "⌀ Fehltage pro Schüler", 
-        color: "#3b82f6", // Same color as regular absences (blue)
-        strokeDasharray: "3 3", // Different dash pattern from class averages
+        color: "#7facf5", // Same color as regular absences (blue)
+        strokeDasharray: "10 3", // Different dash pattern from class averages
         activeDot: false, 
         strokeWidth: 2,
-        opacity: 0.6 // Slightly more transparent
+        opacity: 0.7 // Slightly more transparent
       });
     }
   }

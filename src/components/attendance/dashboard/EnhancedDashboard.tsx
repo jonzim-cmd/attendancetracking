@@ -20,6 +20,7 @@ import {
   clearAllStudentsCache
 } from './studentAverages';
 import { StudentStats } from '@/types';
+import { getClassAverageAvailability, setTotalClassCount } from './classAverageUtils';
 
 interface EnhancedDashboardProps {
   getFilteredStudents: () => [string, StudentStats][];
@@ -311,6 +312,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   // Effect to prepare all data when filters change
   useEffect(() => {
     if (!rawData || !startDate || !endDate) return;
+
+    // HIER: Setze die tatsächliche Anzahl der Klassen im gesamten Dataset
+    setTotalClassCount(rawData);
     
     // Update states with memoized data
     setWeeklyTrends(memoizedWeeklyTrends());
@@ -406,6 +410,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     );
   }
   
+  // Berechne die Verfügbarkeit der Klassenvergleichsfunktion - OHNE Parameter!
+  const classAverageAvailability = getClassAverageAvailability();
+  
   return (
     <div className="space-y-4"> 
       <TrendCharts 
@@ -422,6 +429,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
         showStudentAverageComparison={showStudentAverageComparison}
         setShowStudentAverageComparison={setShowStudentAverageComparison}
+        classAverageAvailability={classAverageAvailability}
       />
     </div>
   );

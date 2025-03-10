@@ -55,6 +55,12 @@ interface TrendChartsProps {
   selectedStudent?: string;
   showStudentAverageComparison?: boolean;
   setShowStudentAverageComparison?: (show: boolean) => void;
+  // Neue Prop für Klassenvergleichsfunktion
+  classAverageAvailability?: { 
+    isAvailable: boolean, 
+    tooltip: string, 
+    classCount: number 
+  };
 }
 
 const TrendCharts: React.FC<TrendChartsProps> = memo(({
@@ -69,7 +75,9 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   // Student comparison props
   selectedStudent,
   showStudentAverageComparison = false,
-  setShowStudentAverageComparison = () => {}
+  setShowStudentAverageComparison = () => {},
+  // Neue Prop mit Default-Wert
+  classAverageAvailability = { isAvailable: true, tooltip: "", classCount: 0 }
 }) => {
   // Zugriff auf den FilterContext
   const {
@@ -200,7 +208,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   // Average curves - now independent of primary data visibility
   
   // Class average for tardiness
-  if (chartVisibility.verspaetungenAvg) {
+  if (chartVisibility.verspaetungenAvg && classAverageAvailability.isAvailable) {
     visibleLines.push({ 
       dataKey: "verspaetungenAvg", 
       name: "⌀ Verspätungen pro Klasse", 
@@ -213,7 +221,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   }
   
   // Class average for absences
-  if (chartVisibility.fehlzeitenAvg) {
+  if (chartVisibility.fehlzeitenAvg && classAverageAvailability.isAvailable) {
     visibleLines.push({ 
       dataKey: "fehlzeitenAvg", 
       name: "⌀ Fehltage pro Klasse", 
@@ -450,21 +458,37 @@ const CustomTooltip = ({ active, payload, label }: any) => {
             {/* Class average checkboxes - always shown and not dependent on main data visibility */}
             <>
               <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-2 ml-4"></div>
-              <label className="inline-flex items-center cursor-pointer ml-2" title="Durchschnittliche Verspätungen pro Klasse">
+              <label 
+                className={`inline-flex items-center ${classAverageAvailability.isAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`} 
+                title={classAverageAvailability.tooltip}
+              >
                 <input 
                   type="checkbox" 
-                  checked={chartVisibility.verspaetungenAvg}
-                  onChange={() => setChartVisibility(prev => ({...prev, verspaetungenAvg: !prev.verspaetungenAvg}))}
+                  checked={classAverageAvailability.isAvailable && chartVisibility.verspaetungenAvg}
+                  onChange={() => {
+                    if (classAverageAvailability.isAvailable) {
+                      setChartVisibility(prev => ({...prev, verspaetungenAvg: !prev.verspaetungenAvg}));
+                    }
+                  }}
+                  disabled={!classAverageAvailability.isAvailable}
                   className="mr-1 w-4 h-4"
                 />
                 <span className="text-purple-600 dark:text-purple-400 text-opacity-70 dark:text-opacity-70">⌀ Klasse (V)</span>
               </label>
               
-              <label className="inline-flex items-center cursor-pointer" title="Durchschnittliche Fehltage pro Klasse">
+              <label 
+                className={`inline-flex items-center ${classAverageAvailability.isAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`} 
+                title={classAverageAvailability.tooltip}
+              >
                 <input 
                   type="checkbox" 
-                  checked={chartVisibility.fehlzeitenAvg}
-                  onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenAvg: !prev.fehlzeitenAvg}))}
+                  checked={classAverageAvailability.isAvailable && chartVisibility.fehlzeitenAvg}
+                  onChange={() => {
+                    if (classAverageAvailability.isAvailable) {
+                      setChartVisibility(prev => ({...prev, fehlzeitenAvg: !prev.fehlzeitenAvg}));
+                    }
+                  }}
+                  disabled={!classAverageAvailability.isAvailable}
                   className="mr-1 w-4 h-4"
                 />
                 <span className="text-blue-600 dark:text-blue-400 text-opacity-70 dark:text-opacity-70">⌀ Klasse (Fges.)</span>

@@ -59,6 +59,7 @@ export const FilterProvider: React.FC<{
   resetTriggerId?: number; // Neu: Trigger für das Zurücksetzen der Filter
   quickSelectValue?: string; // Neu: QuickSelect-Value als optionale Prop
   handleQuickSelect?: (value: string) => void; // Neu: QuickSelect-Handler als optionale Prop
+  onDashboardClassesChange?: (classes: string[]) => void; // Neu: Callback für Dashboard-Klassen-Änderungen
 }> = ({ 
   children, 
   propSelectedClasses, 
@@ -74,6 +75,7 @@ export const FilterProvider: React.FC<{
   resetTriggerId = 0, // Default-Wert für Reset-Trigger
   quickSelectValue = '', // Default-Wert für QuickSelect
   handleQuickSelect = () => {}, // Leere Funktion als Default
+  onDashboardClassesChange = () => {}, // Neu: Leere Funktion als Default
 }) => {
   // Dashboard-Filter
   const [selectedDashboardClasses, setSelectedDashboardClasses] = useState<string[]>(propSelectedClasses);
@@ -83,6 +85,9 @@ export const FilterProvider: React.FC<{
   // Neuer State für die Suche
   const [internalSearchQuery, setInternalSearchQuery] = useState<string>(propSearchQuery);
   const [isUpdatingFromProp, setIsUpdatingFromProp] = useState(false);
+  
+  // Neuer State für Klassensynchronisation
+  const [isUpdatingClassesFromProp, setIsUpdatingClassesFromProp] = useState(false);
   
   // Interne Speicherung der Dashboard-Datumsfilter
   const [internalDashboardStartDate, setInternalDashboardStartDate] = useState<string>(dashboardStartDate);
@@ -113,14 +118,29 @@ export const FilterProvider: React.FC<{
     }
   }, [onDashboardEndDateChange, isUpdatingDashboardDates]);
   
+  // Memoized setSelectedDashboardClasses um Endlosschleifen zu vermeiden
+  const setSelectedDashboardClassesWithCallback = useCallback((classes: string[]) => {
+    setSelectedDashboardClasses(classes);
+    if (!isUpdatingClassesFromProp) {
+      onDashboardClassesChange(classes);
+    }
+  }, [onDashboardClassesChange, isUpdatingClassesFromProp]);
+  
   // Gemeinsame Filter - wir nutzen die Prop für den tatsächlichen Zustand
   const viewMode = propViewMode;
   const setViewMode = onViewModeChange;
   
   // Effect um selectedDashboardClasses zu aktualisieren, wenn propSelectedClasses sich ändert
   useEffect(() => {
-    setSelectedDashboardClasses(propSelectedClasses);
-  }, [propSelectedClasses]);
+    if (JSON.stringify(propSelectedClasses) !== JSON.stringify(selectedDashboardClasses)) {
+      setIsUpdatingClassesFromProp(true);
+      setSelectedDashboardClasses(propSelectedClasses);
+      // Flag nach kurzer Verzögerung zurücksetzen
+      setTimeout(() => {
+        setIsUpdatingClassesFromProp(false);
+      }, 0);
+    }
+  }, [propSelectedClasses, selectedDashboardClasses]);
   
   // Neuer Effect um searchQuery zu aktualisieren, wenn propSearchQuery sich ändert
   useEffect(() => {
@@ -158,7 +178,7 @@ export const FilterProvider: React.FC<{
   
   const contextValue = {
     selectedDashboardClasses,
-    setSelectedDashboardClasses,
+    setSelectedDashboardClasses: setSelectedDashboardClassesWithCallback,
     selectedStudents,
     setSelectedStudents,
     groupingOption,

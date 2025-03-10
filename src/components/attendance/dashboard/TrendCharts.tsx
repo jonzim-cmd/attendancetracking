@@ -328,10 +328,16 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
           )}
           
           {/* Class metadata if available */}
-          {dataEntry?.classCount && (classAvgEntries.length > 0 || studentAvgEntries.length > 0) && (
+          {classAvgEntries.length > 0 && (
             <p className="text-gray-500 dark:text-gray-400 text-xs mb-2">
-              Durchschnitte basierend auf {dataEntry.classCount} Klassen
-              {dataEntry.studentCount && ` / ${dataEntry.studentCount} Schülern`}
+              Durchschnitte basierend auf {dataEntry?.totalClassCount || dataEntry?.classCount || "?"} Klassen
+            </p>
+          )}
+          
+          {/* Student average metadata if available */}
+          {studentAvgEntries.length > 0 && (
+            <p className="text-gray-500 dark:text-gray-400 text-xs mb-2">
+              Durchschnitte basierend auf {dataEntry?.totalStudentCount || dataEntry?.studentCount || "?"} Schülern
             </p>
           )}
           

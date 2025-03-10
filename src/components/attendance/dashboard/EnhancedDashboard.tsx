@@ -171,7 +171,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       groupingOption,
       studentStats,
       weeklyDetailedData,
-      selectedDashboardClasses,
+      selectedDashboardClasses, // Just the selected student
       [selectedStudent] // Just the selected student
     ).map(point => ({
       ...point,
@@ -202,7 +202,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       groupingOption,
       studentStats,
       weeklyDetailedData,
-      selectedDashboardClasses, // WICHTIG: Hier die ausgewählten Klassen übergeben!
+      [], // KRITISCHE ÄNDERUNG: [] anstatt selectedDashboardClasses, damit ALLE Schüler berücksichtigt werden
       []  // Kein Schülerfilter
     );
   }, [
@@ -212,8 +212,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     endDate, 
     groupingOption, 
     studentStats, 
-    weeklyDetailedData,
-    selectedDashboardClasses // Auch hier als Abhängigkeit hinzufügen
+    weeklyDetailedData
   ]);
   
   // Effect to update "all classes" cache
@@ -261,12 +260,24 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     // Store the data locally
     setAllStudentsData(markedData);
     
-    // Update student cache for future calculations
-    updateAllStudentsCache(markedData);
+    // WICHTIG: Übergebe die Gesamtzahl aller Schüler an updateAllStudentsCache
+    // Wir verwenden Object.keys(studentStats).length, wenn alle Filter deaktiviert sind
+    // In diesem Fall entspricht die Anzahl der Schlüssel in studentStats allen Schülern im System
+    const allStudentsInSystem = Object.keys(studentStats).length;
+    
+    // Nur bei vollständiger Datenmenge die Gesamtzahl aktualisieren
+    if (allStudentsInSystem > 10) { // Angenommen, wir haben mehr als 10 Schüler im System
+      updateAllStudentsCache(markedData, allStudentsInSystem);
+      console.log(`Updating total student count: ${allStudentsInSystem}`);
+    } else {
+      // Andernfalls nur die Daten aktualisieren, ohne die Gesamtzahl zu ändern
+      updateAllStudentsCache(markedData);
+    }
     
     console.log("Updated all students data for student averages", {
       dataPoints: markedData.length,
-      firstPoint: markedData[0]
+      firstPoint: markedData[0],
+      totalStudents: allStudentsInSystem
     });
     
   }, [
@@ -276,7 +287,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     dashboardStartDate,
     dashboardEndDate,
     groupingOption,
-    memoizedAllStudentsData
+    memoizedAllStudentsData,
+    studentStats // Wichtig: studentStats als Abhängigkeit hinzufügen
   ]);
   
   // Effect to prepare single student data when needed
@@ -317,32 +329,73 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     // Check if we should show standard class averages
     const shouldShowClassAvgs = shouldShowAverages(selectedDashboardClasses, selectedStudents);
     
+    // WICHTIGE ÄNDERUNG: Stelle sicher, dass der Cache für allStudentsData gefüllt ist
+    if (allStudentsData.length === 0) {
+      console.warn("All students data cache is empty - calculations may be incorrect");
+    } else {
+      console.log("All students cache is ready for average calculations, entries:", allStudentsData.length);
+    }
 
-    // Finde den Aufruf von calculateStudentAverages innerhalb des useEffect:
     if (selectedStudents.length === 1 && shouldShowStudentAvgs) {
       // Wenn ein einzelner Schüler ausgewählt ist und student averages angezeigt werden sollen
       
       // Das Basis-Dataset für diesen Schüler holen
       const studentData = singleStudentData.length > 0 ? singleStudentData : baseAttendanceData;
       
-      // Hier die Änderung durchführen: selectedDashboardClasses übergeben
+      // Stelle sicher, dass der Cache gefüllt wird, bevor wir calculateStudentAverages aufrufen
+      if (allStudentsData.length > 0) {
+        updateAllStudentsCache(allStudentsData);
+      }
+      
+      // Rufe calculateStudentAverages mit dem richtigen Dataset auf
       const enhancedData = calculateStudentAverages(
         studentData, 
         studentStats,
-        selectedDashboardClasses // WICHTIG: Ausgewählte Klassen als Parameter übergeben
+        [] // KRITISCHE ÄNDERUNG: [] anstatt selectedDashboardClasses, damit immer ALLE Schüler berücksichtigt werden
       );
       
+      // WICHTIG: Korrekte Metadaten für den Tooltip hinzufügen
+      const enhancedDataWithMetadata = enhancedData.map(point => ({
+        ...point,
+        classCount: Object.keys(studentStats).length, // Gesamtschüleranzahl für Tooltip
+        totalClassCount: Object.keys(studentStats).length, // Gesamtschüleranzahl für Tooltip
+        studentCount: Object.keys(studentStats).length, // Schüleranzahl für Tooltip 
+        totalStudentCount: Object.keys(studentStats).length // Gesamtschüleranzahl
+      }));
+      
       // Set the enhanced data with student averages
-      setAttendanceOverTime(enhancedData);
+      setAttendanceOverTime(enhancedDataWithMetadata);
     }
     else if (shouldShowClassAvgs) {
-      // Standard class average calculation - unchanged from original
+      // Standard class average calculation mit korrigierten Metadaten
       const enhancedData = calculateClassAverages(baseAttendanceData, studentStats);
-      setAttendanceOverTime(enhancedData);
+      
+      // WICHTIG: Korrekte Metadaten für den Tooltip hinzufügen
+      const enhancedDataWithMetadata = enhancedData.map(point => ({
+        ...point,
+        classCount: selectedDashboardClasses.length || 1, // Anzahl ausgewählter Klassen (mind. 1)
+        totalClassCount: allClassesData.length > 0 ? 
+                         Math.max(selectedDashboardClasses.length, 5) : // Geschätzte Gesamtzahl wenn Daten vorhanden
+                         selectedDashboardClasses.length || 1, // Fallback
+        studentCount: Object.keys(studentStats).length, // Gesamtschüleranzahl für Tooltip
+        totalStudentCount: Object.keys(studentStats).length // Sicherheitshalber auch hier
+      }));
+      
+      setAttendanceOverTime(enhancedDataWithMetadata);
     }
     else {
-      // No averages, just use base data - unchanged from original
-      setAttendanceOverTime(baseAttendanceData);
+      // No averages, just use base data with Metadaten
+      const enhancedDataWithMetadata = baseAttendanceData.map(point => ({
+        ...point,
+        classCount: selectedDashboardClasses.length || 1, // Anzahl ausgewählter Klassen (mind. 1)
+        totalClassCount: allClassesData.length > 0 ? 
+                         Math.max(selectedDashboardClasses.length, 5) : // Geschätzte Gesamtzahl wenn Daten vorhanden
+                         selectedDashboardClasses.length || 1, // Fallback
+        studentCount: Object.keys(studentStats).length, // Gesamtschüleranzahl
+        totalStudentCount: Object.keys(studentStats).length // Sicherheitshalber
+      }));
+      
+      setAttendanceOverTime(enhancedDataWithMetadata);
     }
   }, [
     rawData,

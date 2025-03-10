@@ -28,12 +28,12 @@ export interface TimeSeriesDataPointWithAvg {
 
 // Map zum Caching der Durchschnittswerte aller Klassen
 let cachedAllClassesData: Record<string, number> = {};
+// NEUE VARIABLE: Cache für die Anzahl aller Klassen im System
+let cachedTotalClassCount: number = 0;
 
 /**
  * Berechnet Durchschnittswerte pro Klasse für jeden Zeitreihen-Datenpunkt
- * 
- * KORRIGIERTE IMPLEMENTIERUNG:
- * Die Durchschnittswerte werden immer aus allen Klassen berechnet,
+ * Die Durchschnittswerte werden immer über alle Klassen berechnet,
  * unabhängig von der aktuellen Filterung oder Auswahl.
  * 
  * @param timeSeriesData Die Zeitreihen-Daten für die aktuell ausgewählten Klassen
@@ -52,9 +52,30 @@ export function calculateClassAverages(
     }
   });
   
-  const classCount = allClasses.size;
-  console.log(`Durchschnittsberechnung: ${classCount} Klassen gefunden`);
+  // Verwende die aktuelle Anzahl der Klassen nur für Logging-Zwecke
+  const currentClassCount = allClasses.size;
+  console.log(`Durchschnittsberechnung: ${currentClassCount} Klassen gefunden`);
   
+  // KORREKTUR: Verwende die gecachte Gesamtanzahl, wenn verfügbar
+  let totalClassCount = cachedTotalClassCount;
+  
+  // Wenn keine gecachte Anzahl oder weniger als 2 Klassen, aktualisiere den Cache
+  if (totalClassCount < 2 && currentClassCount > totalClassCount) {
+    cachedTotalClassCount = currentClassCount;
+    totalClassCount = currentClassCount;
+    console.log(`Aktualisiere gecachte Gesamtklassenzahl auf ${totalClassCount}`);
+  }
+  
+  // Wenn immer noch keine gute Schätzung, setze auf die aktuelle Anzahl oder 13 (Beispielwert)
+  if (totalClassCount < 2) {
+    totalClassCount = Math.max(currentClassCount, 13); // Mindestwert 13 (kann angepasst werden)
+    cachedTotalClassCount = totalClassCount;
+    console.log(`Verwende Standardwert für Gesamtklassenzahl: ${totalClassCount}`);
+  }
+
+  // WICHTIG: Wir verwenden immer die Gesamtzahl aller Klassen für die Berechnung 
+  const classCount = Math.max(1, totalClassCount);
+
   // Wenn keine Klassen gefunden wurden, gib die ursprünglichen Daten zurück
   if (classCount === 0) {
     return timeSeriesData;
@@ -118,8 +139,8 @@ export function calculateClassAverages(
     }
     
     // Speichere die Anzahl der Klassen
-    enrichedPoint.classCount = classCount;
-    enrichedPoint.totalClassCount = classCount; // Gesamtzahl der Klassen
+    enrichedPoint.classCount = currentClassCount; // Aktuelle Anzahl für UI
+    enrichedPoint.totalClassCount = classCount;   // Gesamtzahl für Berechnungen
     
     return enrichedPoint;
   });
@@ -130,8 +151,9 @@ export function calculateClassAverages(
  * Diese Funktion muss aufgerufen werden, wenn die "Alle Klassen" Ansicht angezeigt wird
  * 
  * @param allClassesData Die Daten aller Klassen
+ * @param totalClasses Optionale Gesamtanzahl aller Klassen im System
  */
-export function updateAllClassesCache(allClassesData: any[]): void {
+export function updateAllClassesCache(allClassesData: any[], totalClasses?: number): void {
   cachedAllClassesData = {};
   
   allClassesData.forEach(point => {
@@ -140,6 +162,12 @@ export function updateAllClassesCache(allClassesData: any[]): void {
     cachedAllClassesData[`fehlzeitenEntsch_${point.name}`] = point.fehlzeitenEntsch;
     cachedAllClassesData[`fehlzeitenUnentsch_${point.name}`] = point.fehlzeitenUnentsch;
   });
+  
+  // Wenn die Gesamtanzahl der Klassen übergeben wurde, aktualisiere den Cache
+  if (totalClasses && totalClasses > 0) {
+    cachedTotalClassCount = totalClasses;
+    console.log(`Updated cached total class count: ${cachedTotalClassCount}`);
+  }
   
   console.log("Updated cache with all classes data");
 }
@@ -150,7 +178,9 @@ export function updateAllClassesCache(allClassesData: any[]): void {
  */
 export function clearAllClassesCache(): void {
   cachedAllClassesData = {};
-  console.log("Cleared all classes data cache");
+  // Wir löschen NICHT cachedTotalClassCount, damit die Gesamtzahl 
+  // der Klassen über Resets hinweg erhalten bleibt
+  console.log("Cleared all classes data cache, but preserved total class count:", cachedTotalClassCount);
 }
 
 /**

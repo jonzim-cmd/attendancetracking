@@ -544,6 +544,7 @@ const AttendanceAnalyzer: React.FC = () => {
       quickSelectValue={quickSelectValue}
       // WICHTIG: Hier verwenden wir die korrekte Funktion je nach Kontext
       handleQuickSelect={handleDashboardQuickSelect} // Nur für Dashboard-Kontext
+      onDashboardClassesChange={setSelectedClasses}
     >
       <AttendanceAnalyzerContent
         rawData={rawData}

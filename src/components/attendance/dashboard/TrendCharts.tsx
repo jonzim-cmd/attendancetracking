@@ -1,3 +1,4 @@
+// src/components/attendance/dashboard/TrendCharts.tsx
 import React, { memo, useRef, useEffect, useState } from 'react';
 import { CARD_CLASSES } from './styles';
 import { 
@@ -9,6 +10,7 @@ import { useFilters } from '@/contexts/FilterContext';
 import { shouldShowAverages } from './classAverages';
 import { TimeSeriesDataPointWithAvg } from './classAverages';
 import { TimeSeriesDataPointWithStudentAvg } from './studentAverages';
+import AnalyticsSection from './AnalyticsSection';
 
 // Extend the TimeSeriesDataPoint to include student average data
 type TimeSeriesDataPointWithAllAvg = TimeSeriesDataPointWithAvg & TimeSeriesDataPointWithStudentAvg;
@@ -61,6 +63,10 @@ interface TrendChartsProps {
     tooltip: string, 
     classCount: number 
   };
+  // Daten für statistische Analysen
+  schoolYearDetailedData?: Record<string, any>;
+  weeklyDetailedData?: Record<string, any>;
+  allStudentStats?: Record<string, any>;
 }
 
 const TrendCharts: React.FC<TrendChartsProps> = memo(({
@@ -77,7 +83,11 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   showStudentAverageComparison = false,
   setShowStudentAverageComparison = () => {},
   // Neue Prop mit Default-Wert
-  classAverageAvailability = { isAvailable: true, tooltip: "", classCount: 0 }
+  classAverageAvailability = { isAvailable: true, tooltip: "", classCount: 0 },
+  // Daten für statistische Analysen
+  schoolYearDetailedData = {},
+  weeklyDetailedData = {},
+  allStudentStats = {}
 }) => {
   // Zugriff auf den FilterContext
   const {
@@ -650,6 +660,15 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           </div>
         )}
       </div>
+      
+      {/* Neue Sektion für statistische Analysen */}
+      <AnalyticsSection 
+        attendanceOverTime={attendanceOverTime}
+        schoolYearDetailedData={schoolYearDetailedData}
+        weeklyDetailedData={weeklyDetailedData}
+        allStudentStats={allStudentStats}
+        className="mt-6"
+      />
     </>
   );
 });

@@ -329,11 +329,20 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     // Check if we should show standard class averages
     const shouldShowClassAvgs = shouldShowAverages(selectedDashboardClasses, selectedStudents);
     
-    // WICHTIGE ÄNDERUNG: Stelle sicher, dass der Cache für allStudentsData gefüllt ist
+    // WICHTIG: Gesamtanzahl der Schüler im System erfassen
+    const totalStudentsInSystem = Object.keys(studentStats).length;
+    
+    // WICHTIG: Stelle sicher, dass der Cache für allStudentsData gefüllt ist
     if (allStudentsData.length === 0) {
       console.warn("All students data cache is empty - calculations may be incorrect");
     } else {
       console.log("All students cache is ready for average calculations, entries:", allStudentsData.length);
+      
+      // Immer die Gesamtanzahl aller Schüler im Cache aktualisieren
+      if (totalStudentsInSystem > 10) {
+        updateAllStudentsCache(allStudentsData, totalStudentsInSystem);
+        console.log(`Updating student cache with total student count: ${totalStudentsInSystem}`);
+      }
     }
 
     if (selectedStudents.length === 1 && shouldShowStudentAvgs) {
@@ -341,27 +350,38 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       
       // Das Basis-Dataset für diesen Schüler holen
       const studentData = singleStudentData.length > 0 ? singleStudentData : baseAttendanceData;
-      
-      // Stelle sicher, dass der Cache gefüllt wird, bevor wir calculateStudentAverages aufrufen
-      if (allStudentsData.length > 0) {
-        updateAllStudentsCache(allStudentsData);
-      }
-      
-      // Rufe calculateStudentAverages mit dem richtigen Dataset auf
+            
+      // Rufe calculateStudentAverages mit dem richtigen Dataset auf - immer leeres Array für selectedClasses
       const enhancedData = calculateStudentAverages(
         studentData, 
         studentStats,
-        [] // KRITISCHE ÄNDERUNG: [] anstatt selectedDashboardClasses, damit immer ALLE Schüler berücksichtigt werden
+        [] // KRITISCHE ÄNDERUNG: Leeres Array für selectedClasses
       );
       
       // WICHTIG: Korrekte Metadaten für den Tooltip hinzufügen
       const enhancedDataWithMetadata = enhancedData.map(point => ({
         ...point,
-        classCount: Object.keys(studentStats).length, // Gesamtschüleranzahl für Tooltip
-        totalClassCount: Object.keys(studentStats).length, // Gesamtschüleranzahl für Tooltip
-        studentCount: Object.keys(studentStats).length, // Schüleranzahl für Tooltip 
-        totalStudentCount: Object.keys(studentStats).length // Gesamtschüleranzahl
+        // Behalte vorhandene studentCount/totalStudentCount Werte von calculateStudentAverages
+        // aber setze sie explizit auf die Gesamtanzahl aller Schüler, falls sie fehlen
+        studentCount: point.studentCount || selectedStudents.length,
+        totalStudentCount: totalStudentsInSystem, // WICHTIG: Immer die Gesamtanzahl verwenden
+        // Setze auch classCount und totalClassCount für gemischte Visualisierungen
+        classCount: selectedDashboardClasses.length || 1,
+        totalClassCount: Object.values(studentStats)
+          .reduce((classSet, student) => {
+            if (student.klasse) classSet.add(student.klasse);
+            return classSet;
+          }, new Set<string>()).size
       }));
+      
+      // Für Debugging
+      console.log("Student averages metadata for tooltip:", {
+        totalStudentCount: totalStudentsInSystem,
+        firstPointMetadata: enhancedDataWithMetadata.length > 0 ? {
+          totalStudentCount: enhancedDataWithMetadata[0].totalStudentCount,
+          studentCount: enhancedDataWithMetadata[0].studentCount
+        } : null
+      });
       
       // Set the enhanced data with student averages
       setAttendanceOverTime(enhancedDataWithMetadata);
@@ -373,12 +393,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       // WICHTIG: Korrekte Metadaten für den Tooltip hinzufügen
       const enhancedDataWithMetadata = enhancedData.map(point => ({
         ...point,
-        classCount: selectedDashboardClasses.length || 1, // Anzahl ausgewählter Klassen (mind. 1)
-        totalClassCount: allClassesData.length > 0 ? 
-                         Math.max(selectedDashboardClasses.length, 5) : // Geschätzte Gesamtzahl wenn Daten vorhanden
-                         selectedDashboardClasses.length || 1, // Fallback
-        studentCount: Object.keys(studentStats).length, // Gesamtschüleranzahl für Tooltip
-        totalStudentCount: Object.keys(studentStats).length // Sicherheitshalber auch hier
+        studentCount: selectedStudents.length || Object.keys(studentStats).length,
+        totalStudentCount: totalStudentsInSystem // Wichtig für gemischte Visualisierungen
       }));
       
       setAttendanceOverTime(enhancedDataWithMetadata);
@@ -387,12 +403,14 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       // No averages, just use base data with Metadaten
       const enhancedDataWithMetadata = baseAttendanceData.map(point => ({
         ...point,
-        classCount: selectedDashboardClasses.length || 1, // Anzahl ausgewählter Klassen (mind. 1)
-        totalClassCount: allClassesData.length > 0 ? 
-                         Math.max(selectedDashboardClasses.length, 5) : // Geschätzte Gesamtzahl wenn Daten vorhanden
-                         selectedDashboardClasses.length || 1, // Fallback
-        studentCount: Object.keys(studentStats).length, // Gesamtschüleranzahl
-        totalStudentCount: Object.keys(studentStats).length // Sicherheitshalber
+        classCount: selectedDashboardClasses.length || 1,
+        totalClassCount: Object.values(studentStats)
+          .reduce((classSet, student) => {
+            if (student.klasse) classSet.add(student.klasse);
+            return classSet;
+          }, new Set<string>()).size,
+        studentCount: selectedStudents.length || Object.keys(studentStats).length,
+        totalStudentCount: totalStudentsInSystem
       }));
       
       setAttendanceOverTime(enhancedDataWithMetadata);

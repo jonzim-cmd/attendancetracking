@@ -48,47 +48,25 @@ export function calculateStudentAverages(
   studentStats: Record<string, StudentStats>,
   selectedClasses: string[] = []
 ): TimeSeriesDataPointWithStudentAvg[] {
-  // KORREKTUR: Verwende die gecachte Gesamtanzahl, wenn verfügbar
-  // Wenn nicht, verwende die Anzahl der Schlüssel in cachedAllStudentsData als Basis
-  // weil der Cache alle Schüler enthalten sollte
-  let totalStudentCount = cachedTotalStudentCount;
+  // KRITISCHE ÄNDERUNG: Immer die Gesamtanzahl der Schüler im System verwenden
+  // Das ist die Anzahl aller Schülereinträge in studentStats
+  const totalStudentCount = Math.max(cachedTotalStudentCount, Object.keys(studentStats).length);
   
-  // Wenn keine gecachte Anzahl oder weniger als 2 Schüler, prüfe Daten im Cache
-  if (totalStudentCount < 2 && Object.keys(cachedAllStudentsData).length > 0) {
-    // Versuche, die Anzahl der Schüler aus dem Cache zu schätzen
-    // Bei 4 Werten pro Datenpunkt (verspaetungen, fehlzeiten, etc.) dividieren durch 4
-    const uniqueTimePoints = new Set<string>();
-    Object.keys(cachedAllStudentsData).forEach(key => {
-      const timepointName = key.split('_')[1]; // z.B. "verspaetungen_KW 12" -> "KW 12"
-      if (timepointName) uniqueTimePoints.add(timepointName);
-    });
-    
-    // Wenn wir mindestens einen Zeitpunkt haben, setzen wir cachedTotalStudentCount
-    if (uniqueTimePoints.size > 0) {
-      // Hier setzen wir studentCount explizit auf 30, wenn wir nicht sicher sind
-      // Du kannst diesen Wert auf die tatsächliche Anzahl der Schüler in deinem System anpassen
-      cachedTotalStudentCount = 30;
-      console.log(`Estimated total student count based on cache data: ${cachedTotalStudentCount}`);
-    }
-    totalStudentCount = cachedTotalStudentCount;
+  // Wenn die neue Anzahl größer ist als die gespeicherte, aktualisiere den Cache
+  if (totalStudentCount > cachedTotalStudentCount) {
+    cachedTotalStudentCount = totalStudentCount;
+    console.log(`Updated cached total student count: ${cachedTotalStudentCount}`);
   }
   
-  // Fallback: Wenn immer noch keine gute Schätzung, setze auf 30
-  if (totalStudentCount < 2) {
-    totalStudentCount = 30;
-    console.log(`Using default total student count: ${totalStudentCount}`);
-  }
+  // KRITISCHE ÄNDERUNG: Immer die Gesamtzahl aller Schüler für die Durchschnittsberechnung verwenden
+  // Die selectedClasses werden KOMPLETT IGNORIERT
+  const studentCount = totalStudentCount; // Verwende IMMER die Gesamtzahl aller Schüler
   
-  // Die alte Berechnung bleibt nur für Logging-Zwecke
-  const studentsInSelectedClasses = Object.entries(studentStats)
-    .filter(([_, stats]) => 
+  console.log(`Calculating student averages across ALL ${studentCount} students (instead of just ${
+    Object.entries(studentStats).filter(([_, stats]) => 
       selectedClasses.length === 0 || selectedClasses.includes(stats.klasse)
-    ).length;
-  
-  // ÄNDERUNG: Verwende immer totalStudentCount statt studentsInSelectedClasses
-  const studentCount = Math.max(1, totalStudentCount);
-  
-  console.log(`Calculating student averages across ALL ${studentCount} students (instead of just ${studentsInSelectedClasses} from selected classes)`);
+    ).length
+  } from selected classes)`);
   
   if (studentCount === 0) {
     console.warn("No students found for average calculation");
@@ -176,10 +154,15 @@ export function updateAllStudentsCache(allStudentsData: any[], totalStudents?: n
     cachedAllStudentsData[`fehlzeitenUnentsch_${point.name}`] = point.fehlzeitenUnentsch;
   });
   
-  // Wenn die Gesamtzahl der Schüler übergeben wurde, aktualisiere den Cache
+  // KRITISCH: Wenn die Gesamtzahl der Schüler übergeben wurde, immer den Cache aktualisieren
   if (totalStudents && totalStudents > 0) {
-    cachedTotalStudentCount = totalStudents;
-    console.log(`Updated cached total student count: ${cachedTotalStudentCount}`);
+    // Aber nur, wenn totalStudents größer als der aktuelle Wert ist
+    if (totalStudents > cachedTotalStudentCount) {
+      cachedTotalStudentCount = totalStudents;
+      console.log(`Updated cached total student count to: ${cachedTotalStudentCount}`);
+    } else {
+      console.log(`Kept cached total student count at: ${cachedTotalStudentCount} (new value was ${totalStudents})`);
+    }
   }
   
   console.log("Updated cache with all students data, entries:", Object.keys(cachedAllStudentsData).length);

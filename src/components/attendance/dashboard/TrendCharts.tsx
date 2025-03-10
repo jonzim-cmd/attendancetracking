@@ -291,111 +291,111 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   }
 
   // Custom tooltip for attendance chart
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      // Find the corresponding data entry to get the date range
-      const dataEntry = timeSeriesData.find(entry => entry.name === label);
-      const dateRange = dataEntry?.dateRange || '';
-      
-      // Group entries to display normal values, class averages, and student averages
-      const normalEntries: any[] = [];
-      const classAvgEntries: any[] = [];
-      const studentAvgEntries: any[] = [];
-      
-      // Sort entries into appropriate groups
-      payload.forEach((entry: any) => {
-        if (entry.dataKey.includes('StudentAvg')) {
-          studentAvgEntries.push(entry);
-        } else if (entry.dataKey.includes('Avg')) {
-          classAvgEntries.push(entry);
-        } else {
-          normalEntries.push(entry);
-        }
-      });
-      
-      return (
-        <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
-          <p className="text-gray-700 dark:text-gray-300 font-medium mb-1 text-base">{formatDate(label)}</p>
-          {dateRange && (
-            <p className="text-gray-600 dark:text-gray-400 text-base mb-1">{dateRange}</p>
-          )}
-          
-          {/* Student name if available */}
-          {dataEntry?.studentName && (
-            <p className="text-gray-700 dark:text-gray-300 text-sm mb-1">
-              Schüler: {dataEntry.studentName}
-            </p>
-          )}
-          
-          {/* Class metadata if available */}
-          {classAvgEntries.length > 0 && (
-            <p className="text-gray-500 dark:text-gray-400 text-xs mb-2">
-              Durchschnitte basierend auf {dataEntry?.totalClassCount || dataEntry?.classCount || "?"} Klassen
-            </p>
-          )}
-          
-          {/* Student average metadata if available */}
-          {studentAvgEntries.length > 0 && (
-            <p className="text-gray-500 dark:text-gray-400 text-xs mb-2">
-              Durchschnitte basierend auf {dataEntry?.totalStudentCount || dataEntry?.studentCount || "?"} Schülern
-            </p>
-          )}
-          
-          {/* Student data */}
-          <div className="flex flex-col space-y-1">
-            {normalEntries.map((entry: any, index: number) => (
-              <div key={`item-${index}`} className="flex items-center">
-                <div className="w-3 h-3 mr-2" style={{ backgroundColor: entry.color }}></div>
-                <span className="text-gray-700 dark:text-gray-300 text-base">
-                  {entry.name}: {entry.value}
-                </span>
-              </div>
-            ))}
-            
-            {/* Class averages if available */}
-            {classAvgEntries.length > 0 && (
-              <>
-                <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-                {classAvgEntries.map((entry: any, index: number) => (
-                  <div key={`class-avg-${index}`} className="flex items-center">
-                    <div className="w-3 h-3 mr-2" style={{ 
-                      backgroundColor: entry.color,
-                      opacity: 0.7,
-                      backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.4) 2px, rgba(255,255,255,0.4) 4px)'
-                    }}></div>
-                    <span className="text-gray-700 dark:text-gray-300 text-base">
-                      {entry.name}: {entry.value.toFixed(1)}
-                    </span>
-                  </div>
-                ))}
-              </>
-            )}
-            
-            {/* Student averages if available */}
-            {studentAvgEntries.length > 0 && (
-              <>
-                <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-                {studentAvgEntries.map((entry: any, index: number) => (
-                  <div key={`student-avg-${index}`} className="flex items-center">
-                    <div className="w-3 h-3 mr-2" style={{ 
-                      backgroundColor: entry.color,
-                      opacity: 0.8,
-                      backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.4) 2px, rgba(255,255,255,0.4) 4px)'
-                    }}></div>
-                    <span className="text-gray-700 dark:text-gray-300 text-base">
-                      {entry.name}: {entry.value.toFixed(1)}
-                    </span>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-        </div>
-      );
-    }
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    // Find the corresponding data entry to get the date range
+    const dataEntry = timeSeriesData.find(entry => entry.name === label);
+    const dateRange = dataEntry?.dateRange || '';
     
-    return null;
-  };
+    // Group entries to display normal values, class averages, and student averages
+    const normalEntries: any[] = [];
+    const classAvgEntries: any[] = [];
+    const studentAvgEntries: any[] = [];
+    
+    // Sort entries into appropriate groups
+    payload.forEach((entry: any) => {
+      if (entry.dataKey.includes('StudentAvg')) {
+        studentAvgEntries.push(entry);
+      } else if (entry.dataKey.includes('Avg')) {
+        classAvgEntries.push(entry);
+      } else {
+        normalEntries.push(entry);
+      }
+    });
+    
+    return (
+      <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
+        <p className="text-gray-700 dark:text-gray-300 font-medium mb-1 text-base">{formatDate(label)}</p>
+        {dateRange && (
+          <p className="text-gray-600 dark:text-gray-400 text-base mb-1">{dateRange}</p>
+        )}
+        
+        {/* Student name if available */}
+        {dataEntry?.studentName && (
+          <p className="text-gray-700 dark:text-gray-300 text-sm mb-1">
+            Schüler: {dataEntry.studentName}
+          </p>
+        )}
+        
+        {/* Class metadata if available */}
+        {classAvgEntries.length > 0 && dataEntry?.totalClassCount && (
+          <p className="text-gray-500 dark:text-gray-400 text-xs mb-2">
+            Durchschnitte basierend auf {dataEntry.totalClassCount} Klassen
+          </p>
+        )}
+        
+        {/* Student average metadata if available */}
+        {studentAvgEntries.length > 0 && dataEntry?.totalStudentCount && (
+          <p className="text-gray-500 dark:text-gray-400 text-xs mb-2">
+            Durchschnitte basierend auf {dataEntry.totalStudentCount} Schülern
+          </p>
+        )}
+        
+        {/* Student data */}
+        <div className="flex flex-col space-y-1">
+          {normalEntries.map((entry: any, index: number) => (
+            <div key={`item-${index}`} className="flex items-center">
+              <div className="w-3 h-3 mr-2" style={{ backgroundColor: entry.color }}></div>
+              <span className="text-gray-700 dark:text-gray-300 text-base">
+                {entry.name}: {entry.value}
+              </span>
+            </div>
+          ))}
+          
+          {/* Class averages if available */}
+          {classAvgEntries.length > 0 && (
+            <>
+              <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+              {classAvgEntries.map((entry: any, index: number) => (
+                <div key={`class-avg-${index}`} className="flex items-center">
+                  <div className="w-3 h-3 mr-2" style={{ 
+                    backgroundColor: entry.color,
+                    opacity: 0.7,
+                    backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.4) 2px, rgba(255,255,255,0.4) 4px)'
+                  }}></div>
+                  <span className="text-gray-700 dark:text-gray-300 text-base">
+                    {entry.name}: {entry.value.toFixed(1)}
+                  </span>
+                </div>
+              ))}
+            </>
+          )}
+          
+          {/* Student averages if available */}
+          {studentAvgEntries.length > 0 && (
+            <>
+              <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+              {studentAvgEntries.map((entry: any, index: number) => (
+                <div key={`student-avg-${index}`} className="flex items-center">
+                  <div className="w-3 h-3 mr-2" style={{ 
+                    backgroundColor: entry.color,
+                    opacity: 0.8,
+                    backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.4) 2px, rgba(255,255,255,0.4) 4px)'
+                  }}></div>
+                  <span className="text-gray-700 dark:text-gray-300 text-base">
+                    {entry.name}: {entry.value.toFixed(1)}
+                  </span>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+  
+  return null;
+};
   
   return (
     <>

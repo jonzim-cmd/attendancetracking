@@ -34,9 +34,10 @@ export function calculateMovingAverage(
     // Extrahiere Werte im aktuellen Fenster
     const windowValues = values.slice(startIdx, i + 1);
     
-    // Verwende math.mean für die Durchschnittsberechnung
+    // Verwende math.mean für die Durchschnittsberechnung und konvertiere zu number
+    // Manuell berechnen, um Typprobleme zu vermeiden
     const movingAverage = windowValues.length > 0 ? 
-      math.mean(windowValues) : 
+      windowValues.reduce((sum, val) => sum + val, 0) / windowValues.length : 
       null;
     
     // Original-Datenpunkt mit MA ergänzen

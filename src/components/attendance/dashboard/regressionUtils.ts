@@ -81,37 +81,45 @@ export function calculateLinearRegression(
     // Vorbereitung der Matrizen für math.js
     const X = math.matrix(xValues.map(x => [1, x])); // Design-Matrix [1, x]
     const y = math.matrix(yValues.map(y => [y]));    // Zielvektor als Spaltenvektor
-    
+
     // Berechnung mit der Normalgleichung: β = (X^T * X)^(-1) * X^T * y
     const Xt = math.transpose(X);             // X^T
     const XtX = math.multiply(Xt, X);         // X^T * X
     const XtX_inv = math.inv(XtX);            // (X^T * X)^(-1)
     const XtY = math.multiply(Xt, y);         // X^T * y
     const beta = math.multiply(XtX_inv, XtY); // (X^T * X)^(-1) * X^T * y
-    
+
     // Koeffizienten extrahieren
-    const intercept = beta.get([0, 0]);
-    const slope = beta.get([1, 0]);
-    
+    const intercept = math.number(beta.get([0, 0]));
+    const slope = math.number(beta.get([1, 0]));
+
     // R² berechnen
-    const yMean = math.mean(yValues);
-    
+    const yMean = math.number(math.mean(yValues));
+
     // Totale Summe der Quadrate (TSS)
-    const tss = math.sum(yValues.map(y => math.pow(y - yMean, 2)));
-    
+    const tssValues = yValues.map(y => {
+      const diff = y - yMean;
+      return diff * diff;
+    });
+    const tss = tssValues.reduce((sum, val) => sum + val, 0);
+
     // Residualsumme der Quadrate (RSS)
     const predictions = xValues.map(x => intercept + slope * x);
-    const rss = math.sum(yValues.map((y, i) => math.pow(y - predictions[i], 2)));
-    
+    const rssValues = yValues.map((y, i) => {
+      const diff = y - predictions[i];
+      return diff * diff;
+    });
+    const rss = rssValues.reduce((sum, val) => sum + val, 0);
+
     // R² = 1 - (RSS / TSS)
     const rSquared = 1 - (rss / tss);
-    
+
     // Vorhersage für den nächsten Zeitpunkt
     const prediction = intercept + slope * xValues.length;
-    
+
     // Trendinterpretation
     const trendDescription = getTrendDescription(slope, rSquared);
-    
+
     return { 
       slope, 
       intercept, 

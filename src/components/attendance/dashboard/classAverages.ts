@@ -209,5 +209,5 @@ export function shouldShowAverages(
 ): boolean {
   // Zeige Durchschnitte, wenn eine oder mehrere Klassen ausgewählt sind
   // und keine spezifischen Schüler ausgewählt sind ("alle Schüler")
-  return selectedClasses.length > 0 && selectedStudents.length === 0;
+  return selectedStudents.length === 0; // Zeige Durchschnitte an, wenn "alle Schüler" aktiv ist
 }

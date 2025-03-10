@@ -77,13 +77,10 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
     selectedStudents
   } = useFilters();
   
-  // No longer needed as we use the chartVisibility state now
-  // Removed student average visibility state
-  
-  // Prüfen, ob Durchschnittskurven verfügbar sein sollen
+  // Prüfen, ob Durchschnittskurven verfügbar sein sollen (nur für Debug-Zwecke)
   const showAverageOptions = shouldShowAverages(selectedDashboardClasses, selectedStudents);
   
-  // Prüfen, ob Schülerdurchschnittskurven verfügbar sein sollen
+  // Prüfen, ob Schülerdurchschnittskurven verfügbar sein sollen (nur für Debug-Zwecke)
   const showStudentAverageOptions = selectedStudents.length === 1;
   
   // Typ-Cast: Wir wissen, dass attendanceOverTime möglicherweise Durchschnittswerte enthält
@@ -163,6 +160,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   // Prepare visible lines for the chart based on user preferences
   const visibleLines = [];
   
+  // Primary data series
   if (chartVisibility.verspaetungen) {
     visibleLines.push({ 
       dataKey: "verspaetungen", 
@@ -170,34 +168,6 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
       color: "#9333ea", // Purple
       activeDot: true 
     });
-    
-    // Durchschnittskurve für Verspätungen, wenn aktiviert
-    if (showAverageOptions && chartVisibility.verspaetungenAvg) {
-      visibleLines.push({ 
-        dataKey: "verspaetungenAvg", 
-        name: "⌀ Verspätungen pro Klasse", 
-        color: "#b980ed", // Gleiche Farbe wie Verspätungen
-        strokeDasharray: "5 5", // Gestrichelte Linie
-        activeDot: false, // Keine hervorgehobenen Punkte
-        strokeWidth: 2,
-        opacity: 0.7  // Halbtransparent
-      });
-    }
-    
-    // Student average curve for tardiness when a student is selected and comparison is enabled
-    if (showStudentAverageOptions && showStudentAverageComparison && 
-        chartVisibility.verspaetungenStudentAvg && 
-        timeSeriesData.some(point => point.verspaetungenStudentAvg !== undefined)) {
-      visibleLines.push({ 
-        dataKey: "verspaetungenStudentAvg", 
-        name: "⌀ Verspätungen pro Schüler", 
-        color: "#b980ed", // Same color as regular tardiness (purple)
-        strokeDasharray: "10 3", // Different dash pattern from class averages
-        activeDot: false, 
-        strokeWidth: 2,
-        opacity: 0.7 // Slightly more transparent
-      });
-    }
   }
   
   if (chartVisibility.fehlzeitenEntsch) {
@@ -225,34 +195,64 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
       color: "#3b82f6", // Blue
       activeDot: true 
     });
-    
-    // Durchschnittskurve für Fehltage, wenn aktiviert
-    if (showAverageOptions && chartVisibility.fehlzeitenAvg) {
-      visibleLines.push({ 
-        dataKey: "fehlzeitenAvg", 
-        name: "⌀ Fehltage pro Klasse", 
-        color: "#7facf5", // Gleiche Farbe wie Fehltage
-        strokeDasharray: "5 5", // Gestrichelte Linie
-        activeDot: false, // Keine hervorgehobenen Punkte
-        strokeWidth: 2,
-        opacity: 0.7 // Halbtransparent
-      });
-    }
-    
-    // Student average curve for absences when a student is selected and comparison is enabled
-    if (showStudentAverageOptions && showStudentAverageComparison && 
-        chartVisibility.fehlzeitenStudentAvg && 
-        timeSeriesData.some(point => point.fehlzeitenStudentAvg !== undefined)) {
-      visibleLines.push({ 
-        dataKey: "fehlzeitenStudentAvg", 
-        name: "⌀ Fehltage pro Schüler", 
-        color: "#7facf5", // Same color as regular absences (blue)
-        strokeDasharray: "10 3", // Different dash pattern from class averages
-        activeDot: false, 
-        strokeWidth: 2,
-        opacity: 0.7 // Slightly more transparent
-      });
-    }
+  }
+  
+  // Average curves - now independent of primary data visibility
+  
+  // Class average for tardiness
+  if (chartVisibility.verspaetungenAvg) {
+    visibleLines.push({ 
+      dataKey: "verspaetungenAvg", 
+      name: "⌀ Verspätungen pro Klasse", 
+      color: "#b980ed", // Purple for tardiness
+      strokeDasharray: "5 5", // Gestrichelte Linie
+      activeDot: false, // Keine hervorgehobenen Punkte
+      strokeWidth: 2,
+      opacity: 0.7  // Halbtransparent
+    });
+  }
+  
+  // Class average for absences
+  if (chartVisibility.fehlzeitenAvg) {
+    visibleLines.push({ 
+      dataKey: "fehlzeitenAvg", 
+      name: "⌀ Fehltage pro Klasse", 
+      color: "#7facf5", // Blue for absences
+      strokeDasharray: "5 5", // Gestrichelte Linie
+      activeDot: false, // Keine hervorgehobenen Punkte
+      strokeWidth: 2,
+      opacity: 0.7 // Halbtransparent
+    });
+  }
+  
+  // Student average for tardiness
+  if (chartVisibility.verspaetungenStudentAvg && 
+      showStudentAverageComparison && 
+      timeSeriesData.some(point => point.verspaetungenStudentAvg !== undefined)) {
+    visibleLines.push({ 
+      dataKey: "verspaetungenStudentAvg", 
+      name: "⌀ Verspätungen pro Schüler", 
+      color: "#b980ed", // Purple for tardiness
+      strokeDasharray: "10 3", // Different dash pattern from class averages
+      activeDot: false, 
+      strokeWidth: 2,
+      opacity: 0.7 // Slightly more transparent
+    });
+  }
+  
+  // Student average for absences
+  if (chartVisibility.fehlzeitenStudentAvg && 
+      showStudentAverageComparison && 
+      timeSeriesData.some(point => point.fehlzeitenStudentAvg !== undefined)) {
+    visibleLines.push({ 
+      dataKey: "fehlzeitenStudentAvg", 
+      name: "⌀ Fehltage pro Schüler", 
+      color: "#7facf5", // Blue for absences
+      strokeDasharray: "10 3", // Different dash pattern from class averages
+      activeDot: false, 
+      strokeWidth: 2,
+      opacity: 0.7 // Slightly more transparent
+    });
   }
   
   // Prepare bars for weekday analysis
@@ -425,7 +425,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                 onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenEntsch: !prev.fehlzeitenEntsch}))}
                 className="mr-1 w-4 h-4"
               />
-              <span className="text-green-600 dark:text-green-400">F (entsch.)</span>
+              <span className="text-green-600 dark:text-green-400">F (e.)</span>
             </label>
             <label className="inline-flex items-center cursor-pointer" title="Unentschuldigte Fehltage im Trend anzeigen">
               <input 
@@ -434,7 +434,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                 onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenUnentsch: !prev.fehlzeitenUnentsch}))}
                 className="mr-1 w-4 h-4"
               />
-              <span className="text-red-600 dark:text-red-400">F (unentsch.)</span>
+              <span className="text-red-600 dark:text-red-400">F (u.)</span>
             </label>
             <label className="inline-flex items-center cursor-pointer" title="Gesamte Fehltage im Trend anzeigen">
               <input 
@@ -446,74 +446,63 @@ const CustomTooltip = ({ active, payload, label }: any) => {
               <span className="text-blue-600 dark:text-blue-400">F (gesamt)</span>
             </label>
             
-            {/* Checkboxen für Durchschnittskurven - nur anzeigen, wenn relevant */}
-            {showAverageOptions && (
-              <>
-                {chartVisibility.verspaetungen && (
-                  <label className="inline-flex items-center cursor-pointer ml-2" title="Durchschnittliche Verspätungen pro Klasse">
-                    <input 
-                      type="checkbox" 
-                      checked={chartVisibility.verspaetungenAvg}
-                      onChange={() => setChartVisibility(prev => ({...prev, verspaetungenAvg: !prev.verspaetungenAvg}))}
-                      className="mr-1 w-4 h-4"
-                    />
-                    <span className="text-purple-600 dark:text-purple-400 text-opacity-70 dark:text-opacity-70">⌀ Versp.</span>
-                  </label>
-                )}
-                
-                {chartVisibility.fehlzeitenGesamt && (
-                  <label className="inline-flex items-center cursor-pointer" title="Durchschnittliche Fehltage pro Klasse">
-                    <input 
-                      type="checkbox" 
-                      checked={chartVisibility.fehlzeitenAvg}
-                      onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenAvg: !prev.fehlzeitenAvg}))}
-                      className="mr-1 w-4 h-4"
-                    />
-                    <span className="text-blue-600 dark:text-blue-400 text-opacity-70 dark:text-opacity-70">⌀ F (ges.)</span>
-                  </label>
-                )}
-              </>
-            )}
+            {/* Checkboxen für Durchschnittskurven - IMMER anzeigen */}
+            {/* Class average checkboxes - always shown and not dependent on main data visibility */}
+            <>
+              <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-2 ml-4"></div>
+              <label className="inline-flex items-center cursor-pointer ml-2" title="Durchschnittliche Verspätungen pro Klasse">
+                <input 
+                  type="checkbox" 
+                  checked={chartVisibility.verspaetungenAvg}
+                  onChange={() => setChartVisibility(prev => ({...prev, verspaetungenAvg: !prev.verspaetungenAvg}))}
+                  className="mr-1 w-4 h-4"
+                />
+                <span className="text-purple-600 dark:text-purple-400 text-opacity-70 dark:text-opacity-70">⌀ Klasse (V)</span>
+              </label>
+              
+              <label className="inline-flex items-center cursor-pointer" title="Durchschnittliche Fehltage pro Klasse">
+                <input 
+                  type="checkbox" 
+                  checked={chartVisibility.fehlzeitenAvg}
+                  onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenAvg: !prev.fehlzeitenAvg}))}
+                  className="mr-1 w-4 h-4"
+                />
+                <span className="text-blue-600 dark:text-blue-400 text-opacity-70 dark:text-opacity-70">⌀ Klasse (Fges.)</span>
+              </label>
+            </>
             
-            {/* Student average checkboxes - similar to class averages */}
-            {showStudentAverageOptions && (
-              <>
-                <div className="border-l border-gray-300 dark:border-gray-600 pl-4 ml-4"></div>
-                {chartVisibility.verspaetungen && (
-                  <label className="inline-flex items-center cursor-pointer ml-2" title="Durchschnittliche Verspätungen pro Schüler">
-                    <input 
-                      type="checkbox" 
-                      checked={showStudentAverageComparison && chartVisibility.verspaetungenStudentAvg}
-                      onChange={() => {
-                        if (!showStudentAverageComparison) {
-                          setShowStudentAverageComparison(true);
-                        }
-                        setChartVisibility(prev => ({...prev, verspaetungenStudentAvg: !prev.verspaetungenStudentAvg}))
-                      }}
-                      className="mr-1 w-4 h-4"
-                    />
-                    <span className="text-purple-600 dark:text-purple-400 text-opacity-70 dark:text-opacity-70">⌀ Schüler (V)</span>
-                  </label>
-                )}
-                
-                {chartVisibility.fehlzeitenGesamt && (
-                  <label className="inline-flex items-center cursor-pointer" title="Durchschnittliche Fehltage pro Schüler">
-                    <input 
-                      type="checkbox" 
-                      checked={showStudentAverageComparison && chartVisibility.fehlzeitenStudentAvg}
-                      onChange={() => {
-                        if (!showStudentAverageComparison) {
-                          setShowStudentAverageComparison(true);
-                        }
-                        setChartVisibility(prev => ({...prev, fehlzeitenStudentAvg: !prev.fehlzeitenStudentAvg}))
-                      }}
-                      className="mr-1 w-4 h-4"
-                    />
-                    <span className="text-blue-600 dark:text-blue-400 text-opacity-70 dark:text-opacity-70">⌀ Schüler (F)</span>
-                  </label>
-                )}
-              </>
-            )}
+            {/* Student average checkboxes - always shown and not dependent on main data visibility */}
+            <>
+              <label className="inline-flex items-center cursor-pointer ml-2" title="Durchschnittliche Verspätungen pro Schüler">
+                <input 
+                  type="checkbox" 
+                  checked={showStudentAverageComparison && chartVisibility.verspaetungenStudentAvg}
+                  onChange={() => {
+                    if (!showStudentAverageComparison) {
+                      setShowStudentAverageComparison(true);
+                    }
+                    setChartVisibility(prev => ({...prev, verspaetungenStudentAvg: !prev.verspaetungenStudentAvg}))
+                  }}
+                  className="mr-1 w-4 h-4"
+                />
+                <span className="text-purple-600 dark:text-purple-400 text-opacity-70 dark:text-opacity-70">⌀ Schüler (V)</span>
+              </label>
+              
+              <label className="inline-flex items-center cursor-pointer" title="Durchschnittliche Fehltage pro Schüler">
+                <input 
+                  type="checkbox" 
+                  checked={showStudentAverageComparison && chartVisibility.fehlzeitenStudentAvg}
+                  onChange={() => {
+                    if (!showStudentAverageComparison) {
+                      setShowStudentAverageComparison(true);
+                    }
+                    setChartVisibility(prev => ({...prev, fehlzeitenStudentAvg: !prev.fehlzeitenStudentAvg}))
+                  }}
+                  className="mr-1 w-4 h-4"
+                />
+                <span className="text-blue-600 dark:text-blue-400 text-opacity-70 dark:text-opacity-70">⌀ Schüler (Fges.)</span>
+              </label>
+            </>
           </div>
         </div>
         <div className="overflow-x-auto" ref={scrollContainerRef}>
@@ -564,7 +553,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                 onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenEntsch: !prev.fehlzeitenEntsch}))}
                 className="mr-1 w-4 h-4"
               />
-              <span className="text-green-600 dark:text-green-400">F (entsch.)</span>
+              <span className="text-green-600 dark:text-green-400">F (e.)</span>
             </label>
             <label className="inline-flex items-center cursor-pointer" title="Unentschuldigte Fehltage nach Wochentag anzeigen">
               <input 
@@ -573,7 +562,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                 onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenUnentsch: !prev.fehlzeitenUnentsch}))}
                 className="mr-1 w-4 h-4"
               />
-              <span className="text-red-600 dark:text-red-400">F (unentsch.)</span>
+              <span className="text-red-600 dark:text-red-400">F (u.)</span>
             </label>
             <label className="inline-flex items-center cursor-pointer" title="Gesamte Fehltage nach Wochentag anzeigen">
               <input 

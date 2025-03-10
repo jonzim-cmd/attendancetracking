@@ -201,8 +201,7 @@ export function shouldShowStudentAverages(
   selectedStudent?: string,
   showAverageComparison: boolean = false
 ): boolean {
-  // Show student averages when:
-  // 1. The user has specifically enabled average comparison OR
-  // 2. A single student is selected (for automatic comparison)
-  return showAverageComparison || !!selectedStudent;
+  // ANGEPASST: Immer true zurückgeben, um die Anzeige von Schülerdurchschnitten zu ermöglichen
+  // Die Steuerung der tatsächlichen Anzeige erfolgt über die Checkboxen in der UI
+  return true;
 }

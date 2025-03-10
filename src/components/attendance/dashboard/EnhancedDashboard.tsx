@@ -320,15 +320,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     // Base time series data
     const baseAttendanceData = memoizedAttendanceOverTime();
     
-    // Check if we should show student averages (single student selected or forced comparison)
-    const shouldShowStudentAvgs = shouldShowStudentAverages(
-      selectedStudents.length === 1 ? selectedStudents[0] : undefined, 
-      showStudentAverageComparison
-    );
-    
-    // Check if we should show standard class averages
-    const shouldShowClassAvgs = shouldShowAverages(selectedDashboardClasses, selectedStudents);
-    
     // WICHTIG: Gesamtanzahl der Schüler im System erfassen
     const totalStudentsInSystem = Object.keys(studentStats).length;
     
@@ -344,79 +335,48 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         console.log(`Updating student cache with total student count: ${totalStudentsInSystem}`);
       }
     }
-
-    if (selectedStudents.length === 1 && shouldShowStudentAvgs) {
-      // Wenn ein einzelner Schüler ausgewählt ist und student averages angezeigt werden sollen
-      
-      // Das Basis-Dataset für diesen Schüler holen
-      const studentData = singleStudentData.length > 0 ? singleStudentData : baseAttendanceData;
-            
-      // Rufe calculateStudentAverages mit dem richtigen Dataset auf - immer leeres Array für selectedClasses
-      const enhancedData = calculateStudentAverages(
-        studentData, 
-        studentStats,
-        [] // KRITISCHE ÄNDERUNG: Leeres Array für selectedClasses
-      );
-      
-      // Berechne die Gesamtzahl der Klassen im System
-      const totalClassCount = Object.values(studentStats)
+  
+    // KRITISCHE ÄNDERUNG: Ermittle, ob Student Averages gezeigt werden sollen
+    // Jetzt UNABHÄNGIG von der Anzahl ausgewählter Schüler, nur basierend auf dem Toggle
+    const shouldShowStudentAvgs = showStudentAverageComparison || selectedStudents.length === 1;
+    
+    // Ermittle, ob Class Averages gezeigt werden sollen
+    const shouldShowClassAvgs = shouldShowAverages(selectedDashboardClasses, selectedStudents);
+    
+    // WICHTIG: Wir können jetzt sowohl Student als auch Class Averages gleichzeitig anzeigen!
+    let enhancedData = baseAttendanceData;
+    
+    // Immer Metadaten hinzufügen
+    enhancedData = enhancedData.map(point => ({
+      ...point,
+      classCount: selectedDashboardClasses.length || 1,
+      totalClassCount: Object.values(studentStats)
         .reduce((classSet, student) => {
           if (student.klasse) classSet.add(student.klasse);
           return classSet;
-        }, new Set<string>()).size;
-      
-      // WICHTIG: Korrekte Metadaten für den Tooltip hinzufügen
-      const enhancedDataWithMetadata = enhancedData.map(point => ({
-        ...point,
-        // KRITISCHE ÄNDERUNG: Die Werte werden korrekt gesetzt, nicht vertauscht
-        totalStudentCount: point.totalStudentCount, // Behalte die Gesamtanzahl aus calculateStudentAverages
-        studentCount: selectedStudents.length, // Anzahl der ausgewählten Schüler ist 1
-        // Setze auch classCount und totalClassCount für gemischte Visualisierungen
-        classCount: selectedDashboardClasses.length || 1,
-        totalClassCount: totalClassCount || 1
-      }));
-      
-      // Für Debugging
-      console.log("Student averages metadata for tooltip:", {
-        totalStudentCount: totalStudentsInSystem,
-        firstPointMetadata: enhancedDataWithMetadata.length > 0 ? {
-          totalStudentCount: enhancedDataWithMetadata[0].totalStudentCount,
-          studentCount: enhancedDataWithMetadata[0].studentCount
-        } : null
-      });
-      
-      // Set the enhanced data with student averages
-      setAttendanceOverTime(enhancedDataWithMetadata);
+        }, new Set<string>()).size,
+      studentCount: selectedStudents.length || Object.keys(studentStats).length,
+      totalStudentCount: totalStudentsInSystem
+    }));
+    
+    // Student Averages berechnen, wenn aktiviert
+    if (shouldShowStudentAvgs) {
+      console.log("Calculating student averages because showStudentAverageComparison is enabled");
+      enhancedData = calculateStudentAverages(
+        enhancedData, 
+        studentStats,
+        [] // KRITISCHE ÄNDERUNG: Leeres Array für selectedClasses
+      );
     }
-    else if (shouldShowClassAvgs) {
-      // Standard class average calculation mit korrigierten Metadaten
-      const enhancedData = calculateClassAverages(baseAttendanceData, studentStats);
-      
-      // WICHTIG: Korrekte Metadaten für den Tooltip hinzufügen
-      const enhancedDataWithMetadata = enhancedData.map(point => ({
-        ...point,
-        studentCount: selectedStudents.length || Object.keys(studentStats).length,
-        totalStudentCount: totalStudentsInSystem // Wichtig für gemischte Visualisierungen
-      }));
-      
-      setAttendanceOverTime(enhancedDataWithMetadata);
+    
+    // Class Averages berechnen, wenn aktiviert - nach Student Averages, damit beide existieren können
+    if (shouldShowClassAvgs) {
+      console.log("Calculating class averages");
+      enhancedData = calculateClassAverages(enhancedData, studentStats);
     }
-    else {
-      // No averages, just use base data with Metadaten
-      const enhancedDataWithMetadata = baseAttendanceData.map(point => ({
-        ...point,
-        classCount: selectedDashboardClasses.length || 1,
-        totalClassCount: Object.values(studentStats)
-          .reduce((classSet, student) => {
-            if (student.klasse) classSet.add(student.klasse);
-            return classSet;
-          }, new Set<string>()).size,
-        studentCount: selectedStudents.length || Object.keys(studentStats).length,
-        totalStudentCount: totalStudentsInSystem
-      }));
-      
-      setAttendanceOverTime(enhancedDataWithMetadata);
-    }
+    
+    // Finalisierte Daten setzen
+    setAttendanceOverTime(enhancedData);
   }, [
     rawData,
     startDate,
@@ -437,7 +397,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     singleStudentData,
     showStudentAverageComparison
   ]);
-
+  
   if (!rawData) {
     return (
       <div className="p-4 text-center text-gray-500 dark:text-gray-400">

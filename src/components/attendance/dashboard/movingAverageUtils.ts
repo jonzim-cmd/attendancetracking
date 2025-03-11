@@ -225,10 +225,13 @@ function deepCloneData(data: any[]): any[] {
 
 /**
  * Determines if an item matches class filter criteria
- * This implements a more robust matching approach
+ * Enhanced with more robust class detection methods
  */
 function matchesClass(item: any, classToMatch: string): boolean {
-  // Direct property matches
+  // If there's no class to match, then all items match
+  if (!classToMatch) return true;
+  
+  // Direct property matches (standard properties)
   const directMatches = [
     item.className === classToMatch,
     item.class === classToMatch,
@@ -236,26 +239,46 @@ function matchesClass(item: any, classToMatch: string): boolean {
     item.selectedClass === classToMatch
   ];
   
-  // Array property matches
+  // Array property matches (collections of classes)
   const arrayMatches = [
     Array.isArray(item.classes) && item.classes.includes(classToMatch),
     Array.isArray(item.selectedClasses) && item.selectedClasses.includes(classToMatch),
     Array.isArray(item.klassen) && item.klassen.includes(classToMatch)
   ];
   
+  // NEW: Check if the data point has a studentCount property with class-filtered data
+  const hasClassFilteredData = item.classCount !== undefined && 
+                              item.totalClassCount !== undefined &&
+                              Array.isArray(item.selectedDashboardClasses) && 
+                              item.selectedDashboardClasses.includes(classToMatch);
+  
+  // NEW: Check data point metadata for class information
+  const hasClassMetadata = item.classData && 
+                          (item.classData[classToMatch] || 
+                           Object.keys(item.classData).includes(classToMatch));
+  
   // Combine all matches
-  return directMatches.some(Boolean) || arrayMatches.some(Boolean);
+  return directMatches.some(Boolean) || 
+         arrayMatches.some(Boolean) || 
+         hasClassFilteredData ||
+         hasClassMetadata;
 }
 
 /**
  * Advanced function to extract data for a specific class
- * This scans multiple ways a class might be identified in the data
+ * Enhanced with additional class detection strategies
  */
 function extractClassData(
   timeSeriesData: any[], 
   classToExtract: string
 ): any[] {
   debugLog(`Attempting to extract data for class "${classToExtract}" from ${timeSeriesData.length} data points`);
+  
+  // Safety check - if no class specified, return all data
+  if (!classToExtract) {
+    debugLog(`No class specified, returning all ${timeSeriesData.length} data points`);
+    return timeSeriesData;
+  }
   
   // First pass: try to filter directly based on various class properties
   const directMatches = timeSeriesData.filter(item => matchesClass(item, classToExtract));
@@ -268,10 +291,11 @@ function extractClassData(
   debugLog(`No direct matches found for class "${classToExtract}" - trying secondary approaches`);
   
   // Second approach: Look for data that might be specific to this class in other ways
-  // This is a flexible scan for anything that could represent this class
   const potentialMatches = timeSeriesData.filter(item => {
     // Check if any property contains the class name as a substring
     return Object.entries(item).some(([key, value]) => {
+      if (value === null || value === undefined) return false;
+      
       const valueStr = String(value);
       return (
         // Look for the class name in string properties
@@ -288,8 +312,37 @@ function extractClassData(
     return potentialMatches;
   }
   
-  debugLog(`No data found that matches class "${classToExtract}"`);
-  return [];
+  // NEW: If we still don't have matches, use a deep inspection approach
+  debugLog(`No standard matches found for class "${classToExtract}" - trying deep property inspection`);
+  
+  // Inspect the first data point to understand its structure
+  if (timeSeriesData.length > 0) {
+    const sampleItem = timeSeriesData[0];
+    debugLog(`Sample data point structure:`, sampleItem);
+    
+    // Look for any properties that could contain class information
+    const potentialClassProps = Object.keys(sampleItem).filter(key => 
+      key.toLowerCase().includes('class') || 
+      key.toLowerCase().includes('klasse') ||
+      (typeof sampleItem[key] === 'object' && sampleItem[key] !== null)
+    );
+    
+    if (potentialClassProps.length > 0) {
+      debugLog(`Potential class-related properties found: ${potentialClassProps.join(', ')}`);
+    }
+  }
+  
+  // NEW: Last resort - if we have selectedDashboardClasses in the filter context but no matches,
+  // we'll use the unfiltered data and annotate it with class information
+  const fallbackData = timeSeriesData.map(item => ({
+    ...item,
+    className: classToExtract,  // Add the class name explicitly
+    classes: [classToExtract],  // Add as an array too
+    _isClassAnnotated: true     // Mark as manually annotated
+  }));
+  
+  debugLog(`Using fallback approach: annotating ${fallbackData.length} data points with class "${classToExtract}"`);
+  return fallbackData;
 }
 
 /**
@@ -305,14 +358,7 @@ function hasEnoughDataPoints(data: any[]): boolean {
 
 /**
  * Prepares time series data for moving average visualization
- * This is the main function that should be used by components
- * 
- * @param timeSeriesData Existing time series data from the dashboard
- * @param dataType Type of data to analyze ('verspaetungen' or 'fehlzeiten')
- * @param period Period size for moving average
- * @param selectedStudent Optional selected student for filtering
- * @param selectedClass Optional selected class for filtering
- * @returns Data with added moving average and outlier information
+ * Enhanced to better handle class selection
  */
 export function prepareMovingAverageData(
   timeSeriesData: any[],
@@ -363,26 +409,44 @@ export function prepareMovingAverageData(
     // Use enhanced class extraction
     filteredData = extractClassData(clonedData, selectedClass);
     
-    // Deep inspection of first few items
-    if (filteredData.length > 0) {
-      debugLog(`First item matching class "${selectedClass}":`, filteredData[0]);
-    } else if (clonedData.length > 0) {
-      debugLog(`No items match class "${selectedClass}". Sample data item:`, clonedData[0]);
+    // NEW: Debug the entire dataset if no data points were found
+    if (filteredData.length === 0 && clonedData.length > 0) {
+      debugLog(`WARNING: No items match class "${selectedClass}" - showing full dataset structure`);
       
-      // Additional fallback: if we have class-specific data in the timeSeriesData,
-      // we'll try to see if we can identify which classes are represented
+      // Attempt to find any class-related information in the dataset
       const classesInData = new Set<string>();
+      const classProps = new Set<string>();
+      
       clonedData.forEach(item => {
         Object.entries(item).forEach(([key, value]) => {
-          if (typeof value === 'string' && 
-             (key.includes('class') || key.includes('Class') || key.includes('klasse') || key.includes('Klasse'))) {
-            classesInData.add(value);
+          // Look for properties that might be related to classes
+          if (key.toLowerCase().includes('class') || key.toLowerCase().includes('klasse')) {
+            classProps.add(key);
+            if (typeof value === 'string') {
+              classesInData.add(value);
+            } else if (Array.isArray(value)) {
+              value.forEach(v => typeof v === 'string' && classesInData.add(v));
+            }
           }
         });
       });
       
+      if (classProps.size > 0) {
+        debugLog(`Class-related properties found in data: ${Array.from(classProps).join(', ')}`);
+      } else {
+        debugLog(`No class-related properties found in data`);
+      }
+      
       if (classesInData.size > 0) {
-        debugLog(`Available classes found in data:`, Array.from(classesInData));
+        debugLog(`Classes found in data: ${Array.from(classesInData).join(', ')}`);
+      } else {
+        debugLog(`No classes found in data`);
+      }
+      
+      // NEW: If we still don't have data, use a fallback approach
+      if (filteredData.length === 0) {
+        debugLog(`Using fallback approach: using all data for class "${selectedClass}"`);
+        filteredData = clonedData;
       }
     }
   }

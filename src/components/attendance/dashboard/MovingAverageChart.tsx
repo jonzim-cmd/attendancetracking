@@ -1,5 +1,5 @@
 // src/components/attendance/dashboard/MovingAverageChart.tsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { prepareMovingAverageData, formatDataForMovingAverageChart } from './movingAverageUtils';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
@@ -41,7 +41,6 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
   // State for Moving Average parameters
   const [dataType, setDataType] = useState<'verspaetungen' | 'fehlzeiten'>('verspaetungen');
   const [periodSize, setPeriodSize] = useState<number>(3);
-  const [useSchoolYearData, setUseSchoolYearData] = useState<boolean>(true);
   const [groupBy, setGroupBy] = useState<'weekly' | 'monthly'>('weekly');
   
   // Calculated data for the chart
@@ -49,6 +48,9 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
   
   // Data status
   const [noDataAvailable, setNoDataAvailable] = useState<boolean>(false);
+  
+  // Ref for scrollable container
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Determine the selected entity (student or class)
   const selectedEntity = selectedStudent 
@@ -62,17 +64,151 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
     : selectedClass 
       ? 'class' 
       : null;
+
+  // Function to ensure we have data points for every period (week or month)
+  // Define as useCallback to use in dependency arrays
+  const ensureCompleteDataSet = useCallback((data: any[], groupingType: 'weekly' | 'monthly') => {
+    if (!data || data.length === 0) return [];
+    
+    // Get all unique periods from the data
+    const periods = new Set(data.map(item => item.name));
+    
+    // If we already have a complete dataset, return it
+    if (periods.size >= 36) { // Most school years have about 36-40 weeks
+      return data;
+    }
+    
+    // Create a complete set of periods
+    const completeData = [...data];
+    
+    // For weekly grouping, ensure all weeks of the school year are present
+    if (groupingType === 'weekly') {
+      // Find min and max weeks to establish the range
+      const weekNumbers = Array.from(periods)
+        .map(name => {
+          const match = String(name).match(/KW\s*(\d+)/i);
+          return match ? parseInt(match[1]) : 0;
+        })
+        .filter(num => num > 0);
+      
+      if (weekNumbers.length === 0) return data;
+      
+      // Determine school year start and end week
+      let startWeek = Math.min(...weekNumbers);
+      let endWeek = Math.max(...weekNumbers);
+      
+      // If the range includes week 1, it likely spans from previous year to this year
+      const spansNewYear = weekNumbers.some(week => week < 10) && 
+                         weekNumbers.some(week => week > 40);
+      
+      if (spansNewYear) {
+        startWeek = weekNumbers.find(week => week > 35) || 37; // School typically starts at KW37
+        endWeek = weekNumbers.find(week => week < 10) || 5; // End around KW5
+        
+        // Build the complete sequence: startWeek to 52, then 1 to endWeek
+        const weekSequence = [];
+        
+        // First part: startWeek to 52
+        for (let week = startWeek; week <= 52; week++) {
+          if (!periods.has(`KW ${week}`)) {
+            weekSequence.push({
+              name: `KW ${week}`,
+              [dataType]: 0,
+              sortKey: week + 100 // Add 100 to weeks in first half (KW37-KW52)
+            });
+          }
+        }
+        
+        // Second part: 1 to endWeek
+        for (let week = 1; week <= endWeek; week++) {
+          if (!periods.has(`KW ${week}`)) {
+            weekSequence.push({
+              name: `KW ${week}`,
+              [dataType]: 0,
+              sortKey: week + 200 // Add 200 to weeks in second half (KW1-KW36)
+            });
+          }
+        }
+        
+        completeData.push(...weekSequence);
+      } else {
+        // Simple sequential range
+        for (let week = startWeek; week <= endWeek; week++) {
+          if (!periods.has(`KW ${week}`)) {
+            completeData.push({
+              name: `KW ${week}`,
+              [dataType]: 0,
+              sortKey: week
+            });
+          }
+        }
+      }
+    }
+    // For monthly grouping, ensure all months are present
+    else if (groupingType === 'monthly') {
+      const months = ['Sep', 'Okt', 'Nov', 'Dez', 'Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug'];
+      const currentYear = new Date().getFullYear();
+      
+      months.forEach((month, index) => {
+        // Create a sortKey based on month position in school year (Sep = 1, Aug = 12)
+        const sortKey = index + 1;
+        const year = index < 4 ? currentYear : currentYear + 1; // Sep-Dec = current year, Jan-Aug = next year
+        
+        if (!periods.has(`${month} ${year}`)) {
+          completeData.push({
+            name: `${month} ${year}`,
+            [dataType]: 0,
+            sortKey: sortKey
+          });
+        }
+      });
+    }
+    
+    // Sort the complete dataset
+    return completeData.sort((a, b) => (a.sortKey || 0) - (b.sortKey || 0));
+  }, [dataType]);
   
   // Prepare data for the chart using the formatDataForMovingAverageChart function
   const formattedData = useMemo(() => {
-    return formatDataForMovingAverageChart(
+    const data = formatDataForMovingAverageChart(
       attendanceOverTime,
       selectedStudent,
       selectedClass
     );
+    
+    // Create proper sort keys for school year ordering
+    return data.map(item => {
+      // Parse week numbers from names like "KW 37"
+      if (typeof item.name === 'string' && item.name.includes('KW')) {
+        const weekMatch = item.name.match(/KW\s*(\d+)/i);
+        if (weekMatch) {
+          const weekNum = parseInt(weekMatch[1]);
+          // School year ordering: KW37-KW52 comes before KW1-KW36
+          // We use sortKey 100-152 for KW1-KW52 of the first year
+          // and sortKey 200-236 for KW1-KW36 of the second year
+          const sortKey = weekNum >= 37 ? weekNum + 100 : weekNum + 200;
+          return { ...item, sortKey };
+        }
+      }
+      // For month names, create sort keys based on school year
+      else if (typeof item.name === 'string' && /^(Jan|Feb|Mar|Apr|Mai|Jun|Jul|Aug|Sep|Okt|Nov|Dez)/.test(item.name)) {
+        const monthMap: Record<string, number> = {
+          'Sep': 1, 'Okt': 2, 'Nov': 3, 'Dez': 4,
+          'Jan': 5, 'Feb': 6, 'Mar': 7, 'Apr': 8,
+          'Mai': 9, 'Jun': 10, 'Jul': 11, 'Aug': 12
+        };
+        
+        const monthMatch = item.name.match(/^(Jan|Feb|Mar|Apr|Mai|Jun|Jul|Aug|Sep|Okt|Nov|Dez)/);
+        if (monthMatch) {
+          const month = monthMatch[1];
+          return { ...item, sortKey: monthMap[month] };
+        }
+      }
+      return item;
+    }).sort((a, b) => (a.sortKey || 0) - (b.sortKey || 0));
   }, [attendanceOverTime, selectedStudent, selectedClass]);
   
-  // Prepare moving average data when input data or parameters change
+  // Process and prepare the data when inputs change
   useEffect(() => {
     // Fall back to attendanceOverTime if no detailed data is available
     if (!formattedData || formattedData.length === 0) {
@@ -81,19 +217,23 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
       return;
     }
     
+    // Include "zero" data points for times when the student had no absences/tardiness
+    // This makes sure we have enough data points for analysis
+    const completeDataSet = ensureCompleteDataSet(formattedData, groupBy);
+    
     // We need at least 3 data points for meaningful analysis
-    if (formattedData.length < 3) {
-      console.warn(`Not enough data points for ${selectedEntity || 'analysis'}: ${formattedData.length}`);
+    if (completeDataSet.length < 3) {
+      console.warn(`Not enough data points for ${selectedEntity || 'analysis'}: ${completeDataSet.length}`);
       setChartData([]);
       setNoDataAvailable(true);
       return;
     }
 
-    console.log(`Processing ${formattedData.length} data points for ${selectedEntity || 'analysis'}`);
+    console.log(`Processing ${completeDataSet.length} data points for ${selectedEntity || 'analysis'}`);
     
     // Calculate moving average and detect outliers
     const dataWithMA = prepareMovingAverageData(
-      formattedData,
+      completeDataSet,
       dataType,
       periodSize,
       selectedStudent,
@@ -107,13 +247,24 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
     selectedStudent, 
     selectedClass, 
     dataType, 
-    periodSize, 
-    useSchoolYearData,
+    periodSize,
     groupBy,
-    selectedEntity
+    selectedEntity,
+    ensureCompleteDataSet
   ]);
   
-  // Optimize chart data for display
+  // Effect for initial scrolling to the end of the chart
+  useEffect(() => {
+    if (scrollContainerRef.current && chartData.length > 0) {
+      const container = scrollContainerRef.current;
+      // Scroll to the end of the container
+      setTimeout(() => {
+        container.scrollLeft = container.scrollWidth - container.clientWidth;
+      }, 100); // Slightly longer timeout to ensure rendering is complete
+    }
+  }, [chartData, groupBy]); // Also respond to groupBy changes
+  
+  // Optimize chart data for display - this hook runs regardless of data availability
   const optimizedChartData = useMemo(() => {
     // Return data without NaN and null values
     return chartData.map(point => ({
@@ -125,7 +276,17 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
     }));
   }, [chartData]);
   
-  // No data available
+  // Function to control which labels to show on the x-axis to prevent overlapping
+  const shouldShowLabel = (value: string, index: number): boolean => {
+    // For wide displays or few data points, show all labels
+    if (chartData.length <= 15) return true;
+    
+    // Otherwise show every nth label based on data size
+    const showEvery = chartData.length > 30 ? 4 : chartData.length > 20 ? 3 : 2;
+    return index % showEvery === 0;
+  };
+  
+  // No data available - render early if no data
   if (noDataAvailable || !optimizedChartData || optimizedChartData.length === 0) {
     return (
       <div className={`${CARD_CLASSES} ${className}`}>
@@ -150,7 +311,10 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
   const outlierColor = dataType === 'verspaetungen' ? '#d946ef' : '#60a5fa';
   
   // Formatting for X-axis
-  const formatXAxis = (value: string) => {
+  const formatXAxis = (value: string, index: number) => {
+    // Skip labels if needed to prevent overlapping
+    if (!shouldShowLabel(value, index)) return '';
+    
     // If periodLabel is available, use it
     const dataPoint = chartData.find(p => p.name === value);
     if (dataPoint?.periodLabel) {
@@ -168,7 +332,7 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
       
       return (
         <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
-          <p className="text-gray-700 dark:text-gray-300 font-medium mb-1 text-base">{formatXAxis(label)}</p>
+          <p className="text-gray-700 dark:text-gray-300 font-medium mb-1 text-base">{label}</p>
           {dateRange && (
             <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">{dateRange}</p>
           )}
@@ -213,13 +377,22 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
     return 'Gleitender Durchschnitt';
   };
   
-  // Description text for data source
-  const getDataSourceDescription = () => {
-    if (useSchoolYearData) {
-      return 'Daten: Gesamtes Schuljahr';
-    } else {
-      return 'Daten: Ausgewählter Zeitraum';
+  // Calculate the appropriate width for the chart based on data points
+  const getChartWidth = () => {
+    if (!optimizedChartData || optimizedChartData.length === 0) return '100%';
+    
+    // For many data points, make it scrollable
+    const minWidth = 800; // Minimum width in pixels
+    // Allocate more width per point for monthly grouping
+    const pointWidth = groupBy === 'monthly' ? 100 : 60; // Width per data point in pixels
+    
+    // Always make scrollable if we have enough data points
+    if (optimizedChartData.length > 8) {
+      return `${Math.max(optimizedChartData.length * pointWidth, minWidth)}px`;
     }
+    
+    // For few data points, stretch to container
+    return '100%';
   };
   
   return (
@@ -229,9 +402,6 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
             {getTitleText()}
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {getDataSourceDescription()}
-          </p>
         </div>
         
         <div className="flex flex-wrap gap-3 items-center">
@@ -260,6 +430,7 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
               value={periodSize}
               onChange={(e) => setPeriodSize(parseInt(e.target.value))}
               className="bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm rounded px-1 py-0.5"
+              title="Anzahl der Perioden für die Berechnung des gleitenden Durchschnitts"
             >
               <option value="2">2</option>
               <option value="3">3</option>
@@ -267,112 +438,87 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
               <option value="6">6</option>
             </select>
           </div>
-          
-          {/* Grouping selection */}
-          <div className="flex items-center">
-            <label className="text-sm mr-1 text-gray-700 dark:text-gray-300">Gruppierung:</label>
-            <select
-              value={groupBy}
-              onChange={(e) => setGroupBy(e.target.value as 'weekly' | 'monthly')}
-              className="bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm rounded px-1 py-0.5"
+        </div>
+      </div>
+      
+      <div className="overflow-x-auto" ref={scrollContainerRef}>
+        <div style={{ 
+          width: getChartWidth(),
+          minWidth: '100%', 
+          height: '280px' 
+        }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={optimizedChartData}
+              margin={{ top: 5, right: 50, left: 20, bottom: 25 }}
             >
-              <option value="weekly">Wöchentlich</option>
-              <option value="monthly">Monatlich</option>
-            </select>
-          </div>
-          
-          {/* Option for school year or filtered data */}
-          <label className="flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={useSchoolYearData}
-              onChange={() => setUseSchoolYearData(!useSchoolYearData)}
-              className="mr-1.5 h-3.5 w-3.5"
-            />
-            <span className="text-sm text-gray-700 dark:text-gray-300">Schuljahr</span>
-          </label>
+              <CartesianGrid strokeDasharray="3 3" stroke="#777" opacity={0.2} />
+              <XAxis 
+                dataKey="name" 
+                tick={{ fill: 'currentColor', fontSize: 14 }}
+                axisLine={{ stroke: '#777' }}
+                tickLine={{ stroke: '#777' }}
+                height={40}
+                tickFormatter={formatXAxis}
+                interval={0} // Force to display all labels, our custom formatter will handle filtering
+              />
+              <YAxis 
+                tick={{ fill: 'currentColor', fontSize: 14 }}
+                axisLine={{ stroke: '#777' }}
+                tickLine={{ stroke: '#777' }}
+                allowDecimals={false}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend 
+                verticalAlign="bottom" 
+                height={36} 
+                wrapperStyle={{ paddingTop: '10px', fontSize: '14px' }}
+              />
+              
+              {/* Original data */}
+              <Line 
+                type="monotone" 
+                dataKey={dataType} 
+                name={dataType === 'verspaetungen' ? 'Verspätungen' : 'Fehltage'} 
+                stroke={mainColor} 
+                activeDot={{ r: 8 }}
+                dot={{ r: 4 }}
+              />
+              
+              {/* Moving average */}
+              <Line 
+                type="monotone" 
+                dataKey="movingAverage" 
+                name={`${periodSize}-Perioden gleitender Durchschnitt`} 
+                stroke={maColor} 
+                strokeWidth={2}
+                activeDot={false}
+                dot={false}
+                strokeDasharray="5 5"
+              />
+              
+              {/* Mark outliers */}
+              {optimizedChartData
+                .filter(point => point.isOutlier)
+                .map((point, index) => (
+                  <ReferenceDot
+                    key={`outlier-${index}`}
+                    x={point.name}
+                    y={point[dataType]}
+                    r={6}
+                    fill={outlierColor}
+                    stroke="white"
+                    strokeWidth={1}
+                  />
+                ))}
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
       
-      <div className="h-72 w-full overflow-x-auto">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={optimizedChartData}
-            margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#777" opacity={0.2} />
-            <XAxis 
-              dataKey="name" 
-              tick={{ fill: 'currentColor', fontSize: 14 }}
-              axisLine={{ stroke: '#777' }}
-              tickLine={{ stroke: '#777' }}
-              height={30}
-              tickFormatter={formatXAxis}
-            />
-            <YAxis 
-              tick={{ fill: 'currentColor', fontSize: 14 }}
-              axisLine={{ stroke: '#777' }}
-              tickLine={{ stroke: '#777' }}
-              allowDecimals={false}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend 
-              verticalAlign="bottom" 
-              height={36} 
-              wrapperStyle={{ paddingTop: '10px', fontSize: '14px' }}
-            />
-            
-            {/* Original data */}
-            <Line 
-              type="monotone" 
-              dataKey={dataType} 
-              name={dataType === 'verspaetungen' ? 'Verspätungen' : 'Fehltage'} 
-              stroke={mainColor} 
-              activeDot={{ r: 8 }}
-              dot={{ r: 4 }}
-            />
-            
-            {/* Moving average */}
-            <Line 
-              type="monotone" 
-              dataKey="movingAverage" 
-              name={`${periodSize}-Perioden gleitender Durchschnitt`} 
-              stroke={maColor} 
-              strokeWidth={2}
-              activeDot={false}
-              dot={false}
-              strokeDasharray="5 5"
-            />
-            
-            {/* Mark outliers */}
-            {optimizedChartData
-              .filter(point => point.isOutlier)
-              .map((point, index) => (
-                <ReferenceDot
-                  key={`outlier-${index}`}
-                  x={point.name}
-                  y={point[dataType]}
-                  r={6}
-                  fill={outlierColor}
-                  stroke="white"
-                  strokeWidth={1}
-                />
-              ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-      
-      <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div>
-            <h4 className="font-medium">Gleitender Durchschnitt</h4>
-            <p className="text-xs">Hilft kurzfristige Schwankungen zu glätten und langfristige Trends sichtbar zu machen.</p>
-          </div>
-          <div>
-            <h4 className="font-medium">Ausreißererkennung</h4>
-            <p className="text-xs">Hervorgehobene Punkte zeigen ungewöhnliche Werte, die deutlich vom Trend abweichen.</p>
-          </div>
-        </div>
+      <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+        <span className="font-medium">Gleitender Durchschnitt:</span> Glättet Schwankungen. Periode-Erhöhung verstärkt den Glättungseffekt. 
+        <span className="ml-2 font-medium">Ausreißer:</span> Markiert ungewöhnliche Werte, die deutlich vom Trend abweichen.
       </div>
     </div>
   );

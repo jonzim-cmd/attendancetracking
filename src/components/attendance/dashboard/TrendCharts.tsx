@@ -11,6 +11,8 @@ import { shouldShowAverages } from './classAverages';
 import { TimeSeriesDataPointWithAvg } from './classAverages';
 import { TimeSeriesDataPointWithStudentAvg } from './studentAverages';
 import AnalyticsSection from './AnalyticsSection';
+import InfoButton from '@/components/ui/InfoButton';
+import { CHART_EXPLANATIONS } from './chartExplanations';
 
 // Extend the TimeSeriesDataPoint to include student average data
 type TimeSeriesDataPointWithAllAvg = TimeSeriesDataPointWithAvg & TimeSeriesDataPointWithStudentAvg;
@@ -73,6 +75,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   weeklyTrends,
   attendanceOverTime,
   dayOfWeekData,
+  absenceTypes,
   groupingOption,
   chartVisibility,
   setChartVisibility,
@@ -417,15 +420,23 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   
   return (
     <>
-      {/* Zeitlicher Trend - Full width chart */}
-      <div className={CARD_CLASSES}>
+    <div className={CARD_CLASSES}>
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            Zeitlicher Verlauf
-            <span className="text-base font-normal ml-2 text-gray-500 dark:text-gray-400">
-              ({groupingTitle})
-            </span>
-          </h3>
+          {/* NEU: Flex-Container für Titel und Info-Button */}
+          <div className="flex items-center">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+              Zeitlicher Verlauf
+              <span className="text-base font-normal ml-2 text-gray-500 dark:text-gray-400">
+                ({groupingTitle})
+              </span>
+            </h3>
+            {/* NEU: Info-Button */}
+            <InfoButton 
+              title={CHART_EXPLANATIONS.timeSeriesChart.title} 
+              content={CHART_EXPLANATIONS.timeSeriesChart.content} 
+              className="ml-2"
+            />
+          </div>
           <div className="flex flex-wrap space-x-2 text-base">
             <label className="inline-flex items-center cursor-pointer" title="Verspätungen im Trend anzeigen">
               <input 
@@ -564,12 +575,21 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       {/* Wochentagsanalyse - Jetzt auch full width */}
       <div className={CARD_CLASSES}>
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            Wochentagsanalyse
-            <span className="text-sm font-normal ml-2 text-gray-500 dark:text-gray-400">
-              (Max. erfasste Fehlzeiten nach Wochentag - unabhängig von Zeitraumsauswahl)
-            </span>
-          </h3>
+          {/* NEU: Flex-Container für Titel und Info-Button */}
+          <div className="flex items-center">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+              Wochentagsanalyse
+              <span className="text-base font-normal ml-2 text-gray-500 dark:text-gray-400">
+                (Unabhängig von Zeitraumsauswahl)
+              </span>
+            </h3>
+            {/* NEU: Info-Button */}
+            <InfoButton 
+              title={CHART_EXPLANATIONS.weekdayAnalysis.title} 
+              content={CHART_EXPLANATIONS.weekdayAnalysis.content} 
+              className="ml-2"
+            />
+          </div>
           <div className="flex flex-wrap space-x-2 text-base">
             <label className="inline-flex items-center cursor-pointer" title="Verspätungen nach Wochentag anzeigen">
               <input 

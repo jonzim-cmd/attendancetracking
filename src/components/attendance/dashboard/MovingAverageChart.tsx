@@ -6,6 +6,8 @@ import {
   Tooltip, Legend, ResponsiveContainer, ReferenceDot
 } from 'recharts';
 import { CARD_CLASSES } from './styles';
+import InfoButton from '@/components/ui/InfoButton';
+import { CHART_EXPLANATIONS } from './chartExplanations';
 
 /**
  * Props for the Moving Average Chart component
@@ -397,14 +399,18 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
   
   return (
     <div className={`${CARD_CLASSES} ${className}`}>
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            {getTitleText()}
-          </h3>
-        </div>
-        
-        <div className="flex flex-wrap gap-3 items-center">
+     <div className="flex justify-between items-center mb-4">
+      <div className="flex items-center">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          {getTitleText()}
+        </h3>
+        <InfoButton 
+          title={CHART_EXPLANATIONS.movingAverage.title} 
+          content={CHART_EXPLANATIONS.movingAverage.content} 
+          className="ml-2"
+        />
+      </div>
+      <div className="flex flex-wrap gap-3 items-center">
           {/* Switch between tardiness and absences */}
           <div className="flex items-center gap-1">
             <label className="inline-flex items-center cursor-pointer">
@@ -514,11 +520,6 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
             </LineChart>
           </ResponsiveContainer>
         </div>
-      </div>
-      
-      <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-        <span className="font-medium">Gleitender Durchschnitt:</span> Glättet Schwankungen. Periode-Erhöhung verstärkt den Glättungseffekt. 
-        <span className="ml-2 font-medium">Ausreißer:</span> Markiert ungewöhnliche Werte, die deutlich vom Trend abweichen.
       </div>
     </div>
   );

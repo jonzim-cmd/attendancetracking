@@ -6,6 +6,8 @@ import {
   Tooltip, Legend, ResponsiveContainer, ReferenceDot, ReferenceLine
 } from 'recharts';
 import { CARD_CLASSES } from './styles';
+import InfoButton from '@/components/ui/InfoButton';
+import { CHART_EXPLANATIONS } from './chartExplanations';
 
 /**
  * Props für die Regressionsanalyse-Komponente
@@ -290,15 +292,21 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
   return (
     <div className={`${CARD_CLASSES} ${className}`}>
       <div className="flex justify-between items-center mb-3">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            {getTitleText()}
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {getDataSourceDescription()}
-          </p>
+        <div className="flex items-center">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+              {getTitleText()}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {getDataSourceDescription()}
+            </p>
+          </div>
+          <InfoButton 
+            title={CHART_EXPLANATIONS.regression.title} 
+            content={CHART_EXPLANATIONS.regression.content} 
+            className="ml-2"
+          />
         </div>
-        
         <div className="flex flex-wrap gap-3 items-center">
           {/* Umschaltung zwischen Verspätungen und Fehltagen */}
           <div className="flex items-center gap-1">

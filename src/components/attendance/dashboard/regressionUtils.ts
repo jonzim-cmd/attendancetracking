@@ -2,6 +2,11 @@
 import * as math from 'mathjs';
 import { AbsenceEntry } from '@/types';
 
+export function resetRegressionCache(): void {
+  // Reset any cached data here
+  // For now this is a placeholder until we fully implement the regression cache
+  console.log("Regression cache reset");
+}
 /**
  * Ergebnis der Regressionsberechnung
  */

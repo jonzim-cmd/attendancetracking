@@ -1,6 +1,6 @@
 // src/components/attendance/dashboard/MovingAverageChart.tsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { prepareMovingAverageData, aggregateAttendanceData } from './movingAverageUtils';
+import { prepareMovingAverageData, formatDataForMovingAverageChart } from './movingAverageUtils';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, ReferenceDot
@@ -8,26 +8,26 @@ import {
 import { CARD_CLASSES } from './styles';
 
 /**
- * Props für die Moving Average Chart Komponente
+ * Props for the Moving Average Chart component
  */
 interface MovingAverageChartProps {
-  // Hauptdaten und Kontext
-  attendanceOverTime: any[];                    // Zeitreihen-Daten aus dem Dashboard
-  schoolYearDetailedData: Record<string, any>;  // Detaillierte Daten für das ganze Schuljahr
-  weeklyDetailedData: Record<string, any>;      // Detaillierte Daten nach Wochen
-  allStudentStats: Record<string, any>;         // Statistiken für alle Schüler (für Klassenzuordnung)
+  // Main data and context
+  attendanceOverTime: any[];                    // Time series data from the dashboard
+  schoolYearDetailedData: Record<string, any>;  // Detailed data for the entire school year
+  weeklyDetailedData: Record<string, any>;      // Detailed data by week
+  allStudentStats: Record<string, any>;         // Statistics for all students
   
-  // Filter und Auswahl
-  selectedStudent?: string;                     // Ausgewählter Schüler (wenn vorhanden)
-  selectedClass?: string;                       // Ausgewählte Klasse (wenn vorhanden)
+  // Filters and selection
+  selectedStudent?: string;                     // Selected student (if any)
+  selectedClass?: string;                       // Selected class (if any)
   
   // Layout
-  className?: string;                           // Zusätzliche CSS-Klassen
+  className?: string;                           // Additional CSS classes
 }
 
 /**
- * Komponente zur Visualisierung des gleitenden Durchschnitts
- * für Schüler- oder Klassenauswertungen
+ * Component to visualize moving averages
+ * for student or class evaluations
  */
 const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
   attendanceOverTime,
@@ -38,19 +38,19 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
   selectedClass,
   className = ""
 }) => {
-  // State für Moving Average-Parameter
+  // State for Moving Average parameters
   const [dataType, setDataType] = useState<'verspaetungen' | 'fehlzeiten'>('verspaetungen');
   const [periodSize, setPeriodSize] = useState<number>(3);
   const [useSchoolYearData, setUseSchoolYearData] = useState<boolean>(true);
   const [groupBy, setGroupBy] = useState<'weekly' | 'monthly'>('weekly');
   
-  // Berechnete Daten für das Chart
+  // Calculated data for the chart
   const [chartData, setChartData] = useState<any[]>([]);
   
-  // Status für Daten
+  // Data status
   const [noDataAvailable, setNoDataAvailable] = useState<boolean>(false);
   
-  // Bestimmung des ausgewählten Entity (Schüler oder Klasse)
+  // Determine the selected entity (student or class)
   const selectedEntity = selectedStudent 
     ? selectedStudent 
     : selectedClass 
@@ -63,78 +63,69 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
       ? 'class' 
       : null;
   
-  // Daten für Moving Average aufbereiten, wenn sich Eingabedaten oder Parameter ändern
+  // Prepare data for the chart using the formatDataForMovingAverageChart function
+  const formattedData = useMemo(() => {
+    return formatDataForMovingAverageChart(
+      attendanceOverTime,
+      selectedStudent,
+      selectedClass
+    );
+  }, [attendanceOverTime, selectedStudent, selectedClass]);
+  
+  // Prepare moving average data when input data or parameters change
   useEffect(() => {
-    // Fallback auf attendanceOverTime, wenn keine detaillierten Daten vorhanden sind
-    if (!schoolYearDetailedData && !weeklyDetailedData && (!attendanceOverTime || attendanceOverTime.length === 0)) {
+    // Fall back to attendanceOverTime if no detailed data is available
+    if (!formattedData || formattedData.length === 0) {
       setChartData([]);
       setNoDataAvailable(true);
       return;
     }
     
-    let processedData: any[] = [];
-    
-    // Je nach Auswahl entweder schoolYearDetailedData oder attendanceOverTime verwenden
-    if (useSchoolYearData && (selectedStudent || selectedClass)) {
-      // Eigene Aggregation basierend auf detaillierten Daten durchführen
-      const detailedSource = schoolYearDetailedData || weeklyDetailedData;
-      
-      if (detailedSource) {
-        processedData = aggregateAttendanceData(
-          detailedSource,
-          selectedStudent,
-          selectedClass,
-          allStudentStats,
-          groupBy
-        );
-      }
-    } else {
-      // Existierende attendanceOverTime Daten verwenden
-      // Diese sind bereits gefiltert durch Dashboard und Filter-Kontext
-      processedData = [...attendanceOverTime];
-    }
-    
-    if (processedData.length === 0) {
+    // We need at least 3 data points for meaningful analysis
+    if (formattedData.length < 3) {
+      console.warn(`Not enough data points for ${selectedEntity || 'analysis'}: ${formattedData.length}`);
       setChartData([]);
       setNoDataAvailable(true);
       return;
     }
+
+    console.log(`Processing ${formattedData.length} data points for ${selectedEntity || 'analysis'}`);
     
-    // Moving Average berechnen und Ausreißer erkennen
+    // Calculate moving average and detect outliers
     const dataWithMA = prepareMovingAverageData(
-      processedData,
+      formattedData,
       dataType,
-      periodSize
+      periodSize,
+      selectedStudent,
+      selectedClass
     );
     
     setChartData(dataWithMA);
     setNoDataAvailable(false);
   }, [
-    attendanceOverTime, 
-    schoolYearDetailedData, 
-    weeklyDetailedData,
+    formattedData,
     selectedStudent, 
     selectedClass, 
     dataType, 
     periodSize, 
     useSchoolYearData,
     groupBy,
-    allStudentStats
+    selectedEntity
   ]);
   
-  // Optimierte Daten für die Anzeige vorbereiten
+  // Optimize chart data for display
   const optimizedChartData = useMemo(() => {
-    // Daten ohne NaN und null-Werte zurückgeben
+    // Return data without NaN and null values
     return chartData.map(point => ({
       ...point,
-      // Sicherstellen, dass movingAverage eine gültige Zahl ist oder undefined
+      // Ensure movingAverage is a valid number or undefined
       movingAverage: point.movingAverage !== null && !isNaN(point.movingAverage) 
         ? point.movingAverage 
         : undefined
     }));
   }, [chartData]);
   
-  // Keine Daten verfügbar
+  // No data available
   if (noDataAvailable || !optimizedChartData || optimizedChartData.length === 0) {
     return (
       <div className={`${CARD_CLASSES} ${className}`}>
@@ -153,14 +144,14 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
     );
   }
   
-  // Farben basierend auf dem Datentyp
+  // Colors based on data type
   const mainColor = dataType === 'verspaetungen' ? '#9333ea' : '#3b82f6';
   const maColor = dataType === 'verspaetungen' ? '#b980ed' : '#7facf5';
   const outlierColor = dataType === 'verspaetungen' ? '#d946ef' : '#60a5fa';
   
-  // Formatierung für X-Achse
+  // Formatting for X-axis
   const formatXAxis = (value: string) => {
-    // Wenn periodLabel vorhanden ist, diesen verwenden
+    // If periodLabel is available, use it
     const dataPoint = chartData.find(p => p.name === value);
     if (dataPoint?.periodLabel) {
       return dataPoint.periodLabel;
@@ -168,10 +159,10 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
     return value;
   };
   
-  // Benutzerdefinierter Tooltip mit formatierter Anzeige
+  // Custom tooltip with formatted display
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      // Finde den entsprechenden Datenpunkt anhand des Labels
+      // Find the corresponding data point based on the label
       const dataPoint = chartData.find(p => p.name === label);
       const dateRange = dataPoint?.dateRange || '';
       
@@ -184,7 +175,7 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
           
           <div className="flex flex-col space-y-1">
             {payload.map((entry: any, index: number) => {
-              // Formatierte Werte anzeigen
+              // Display formatted values
               const value = typeof entry.value === 'number' 
                 ? entry.value.toFixed(1) 
                 : entry.value;
@@ -200,7 +191,7 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
             })}
           </div>
           
-          {/* Ausreißer-Info, falls relevant */}
+          {/* Outlier info if relevant */}
           {dataPoint?.isOutlier && (
             <div className="mt-1 text-xs font-medium text-orange-500 dark:text-orange-400">
               Ausreißer: Ungewöhnlich {dataPoint[dataType] > (dataPoint.movingAverage || 0) ? 'hoher' : 'niedriger'} Wert
@@ -212,7 +203,7 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
     return null;
   };
   
-  // Titeltext basierend auf der Auswahl generieren
+  // Generate title text based on selection
   const getTitleText = () => {
     if (selectedStudent) {
       return `Gleitender Durchschnitt: ${selectedStudent.split(',')[0]} ${selectedStudent.split(',')[1]}`;
@@ -222,7 +213,7 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
     return 'Gleitender Durchschnitt';
   };
   
-  // Beschreibungstext für die verwendeten Daten
+  // Description text for data source
   const getDataSourceDescription = () => {
     if (useSchoolYearData) {
       return 'Daten: Gesamtes Schuljahr';
@@ -244,7 +235,7 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
         </div>
         
         <div className="flex flex-wrap gap-3 items-center">
-          {/* Umschaltung zwischen Verspätungen und Fehltagen */}
+          {/* Switch between tardiness and absences */}
           <div className="flex items-center gap-1">
             <label className="inline-flex items-center cursor-pointer">
               <input 
@@ -262,7 +253,7 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
             </label>
           </div>
           
-          {/* Periodengröße auswählen */}
+          {/* Period size selection */}
           <div className="flex items-center">
             <label className="text-sm mr-1 text-gray-700 dark:text-gray-300">Periode:</label>
             <select
@@ -277,7 +268,7 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
             </select>
           </div>
           
-          {/* Gruppierung auswählen */}
+          {/* Grouping selection */}
           <div className="flex items-center">
             <label className="text-sm mr-1 text-gray-700 dark:text-gray-300">Gruppierung:</label>
             <select
@@ -290,7 +281,7 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
             </select>
           </div>
           
-          {/* Option für Schuljahres- oder gefilterte Daten */}
+          {/* Option for school year or filtered data */}
           <label className="flex items-center cursor-pointer">
             <input
               type="checkbox"
@@ -331,7 +322,7 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
               wrapperStyle={{ paddingTop: '10px', fontSize: '14px' }}
             />
             
-            {/* Originaldaten */}
+            {/* Original data */}
             <Line 
               type="monotone" 
               dataKey={dataType} 
@@ -341,7 +332,7 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
               dot={{ r: 4 }}
             />
             
-            {/* Gleitender Durchschnitt */}
+            {/* Moving average */}
             <Line 
               type="monotone" 
               dataKey="movingAverage" 
@@ -353,7 +344,7 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
               strokeDasharray="5 5"
             />
             
-            {/* Ausreißer markieren */}
+            {/* Mark outliers */}
             {optimizedChartData
               .filter(point => point.isOutlier)
               .map((point, index) => (

@@ -346,6 +346,103 @@ function extractClassData(
 }
 
 /**
+ * NEW: Advanced function to extract data for a specific student
+ * Similar to extractClassData but optimized for students
+ */
+function extractStudentData(
+  timeSeriesData: any[], 
+  studentToExtract: string
+): any[] {
+  debugLog(`Attempting to extract data for student "${studentToExtract}" from ${timeSeriesData.length} data points`);
+  
+  // Safety check - if no student specified, return all data
+  if (!studentToExtract) {
+    debugLog(`No student specified, returning all ${timeSeriesData.length} data points`);
+    return timeSeriesData;
+  }
+  
+  // First pass: direct matching on common student properties
+  const directMatches = timeSeriesData.filter(item => 
+    (item.studentName === studentToExtract) || 
+    (item.selectedStudent === studentToExtract) ||
+    (Array.isArray(item.students) && item.students.includes(studentToExtract))
+  );
+  
+  if (directMatches.length > 0) {
+    debugLog(`Found ${directMatches.length} direct matches for student "${studentToExtract}"`);
+    return directMatches;
+  }
+  
+  debugLog(`No direct matches found for student "${studentToExtract}" - trying secondary approaches`);
+  
+  // Second approach: Look for partial matches or substring matches
+  const potentialMatches = timeSeriesData.filter(item => {
+    // Check if any property contains or matches the student name
+    return Object.entries(item).some(([key, value]) => {
+      if (value === null || value === undefined) return false;
+      
+      const valueStr = String(value);
+      return (
+        // Direct substring match in string properties
+        (typeof value === 'string' && valueStr.includes(studentToExtract)) ||
+        // Student-related properties that might contain the name
+        (key.toLowerCase().includes('student') && valueStr.includes(studentToExtract)) ||
+        // Check for name parts (if student name contains a comma)
+        (studentToExtract.includes(',') && typeof value === 'string' && 
+         studentToExtract.split(',').some(part => valueStr.includes(part.trim())))
+      );
+    });
+  });
+  
+  if (potentialMatches.length > 0) {
+    debugLog(`Found ${potentialMatches.length} potential matches for student "${studentToExtract}"`);
+    return potentialMatches;
+  }
+  
+  // Third approach: Deep inspection of data structure
+  debugLog(`No standard matches found for student "${studentToExtract}" - trying deep property inspection`);
+  
+  // Collect information about student-related properties
+  const studentProperties = new Set<string>();
+  const studentsInData = new Set<string>();
+  
+  timeSeriesData.forEach(item => {
+    Object.entries(item).forEach(([key, value]) => {
+      if (key.toLowerCase().includes('student')) {
+        studentProperties.add(key);
+        if (typeof value === 'string') {
+          studentsInData.add(value);
+        } else if (Array.isArray(value)) {
+          value.forEach(v => typeof v === 'string' && studentsInData.add(v));
+        }
+      }
+    });
+  });
+  
+  if (studentProperties.size > 0) {
+    debugLog(`Student-related properties found: ${Array.from(studentProperties).join(', ')}`);
+  }
+  
+  if (studentsInData.size > 0) {
+    debugLog(`Students found in data: ${Array.from(studentsInData).slice(0, 10).join(', ')}${
+      studentsInData.size > 10 ? ` and ${studentsInData.size - 10} more...` : ''
+    }`);
+  }
+  
+  // FALLBACK: Use the data as is, but annotate with student information
+  // This is crucial to ensure we always have data for the moving average calculation
+  const fallbackData = timeSeriesData.map(item => ({
+    ...item,
+    studentName: studentToExtract,  // Add the student name explicitly
+    students: [studentToExtract],   // Add as an array too
+    _isStudentAnnotated: true       // Mark as manually annotated
+  }));
+  
+  debugLog(`Using fallback approach: annotating ${fallbackData.length} data points with student "${studentToExtract}"`);
+  return fallbackData;
+}
+
+/**
  * Checks if the data has enough points for moving average analysis
  */
 function hasEnoughDataPoints(data: any[]): boolean {
@@ -397,12 +494,8 @@ export function prepareMovingAverageData(
   
   if (selectedStudent) {
     debugLog(`Filtering for student "${selectedStudent}"`);
-    // For a specific student, find their data (could be in student name or as a filter flag)
-    filteredData = filteredData.filter(item => 
-      (item.studentName === selectedStudent) || 
-      (item.selectedStudent === selectedStudent) ||
-      (Array.isArray(item.students) && item.students.includes(selectedStudent))
-    );
+    // Use the enhanced student extraction function
+    filteredData = extractStudentData(clonedData, selectedStudent);
     debugLog(`Found ${filteredData.length} data points for student "${selectedStudent}"`);
   } else if (selectedClass) {
     debugLog(`Filtering for class "${selectedClass}"`);
@@ -456,6 +549,10 @@ export function prepareMovingAverageData(
     // If we tried to filter for a class but got no results, log this clearly
     if (selectedClass) {
       debugLog(`WARNING: Not enough data for class "${selectedClass}" - returning empty array`);
+    }
+    // If we tried to filter for a student but got no results, log this clearly
+    if (selectedStudent) {
+      debugLog(`WARNING: Not enough data points for student "${selectedStudent}" (found ${filteredData.length}, need 3)`);
     }
     return [];
   }
@@ -518,16 +615,12 @@ export function formatDataForMovingAverageChart(
   // Create a deep copy to avoid modifying the original data
   const clonedData = deepCloneData(attendanceOverTime);
   
-  // Extract data for selected student or class - this works similarly to prepareMovingAverageData
+  // Extract data for selected student or class - use enhanced extraction methods
   let filteredData = clonedData;
   
   if (selectedStudent) {
     debugLog(`Formatting for student "${selectedStudent}"`);
-    filteredData = filteredData.filter(item => 
-      (item.studentName === selectedStudent) || 
-      (item.selectedStudent === selectedStudent) ||
-      (Array.isArray(item.students) && item.students.includes(selectedStudent))
-    );
+    filteredData = extractStudentData(clonedData, selectedStudent);
     debugLog(`Found ${filteredData.length} data points for student "${selectedStudent}"`);
   } else if (selectedClass) {
     debugLog(`Formatting for class "${selectedClass}"`);

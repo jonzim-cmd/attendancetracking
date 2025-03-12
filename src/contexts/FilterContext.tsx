@@ -80,7 +80,7 @@ export const FilterProvider: React.FC<{
   // Dashboard-Filter
   const [selectedDashboardClasses, setSelectedDashboardClasses] = useState<string[]>(propSelectedClasses);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
-  const [groupingOption, setGroupingOption] = useState<'weekly' | 'monthly'>('weekly');
+  const [groupingOption, setGroupingOption] = useState<'weekly' | 'monthly'>('monthly');
   
   // Neuer State für die Suche
   const [internalSearchQuery, setInternalSearchQuery] = useState<string>(propSearchQuery);
@@ -172,7 +172,7 @@ export const FilterProvider: React.FC<{
     if (resetTriggerId > 0) {
       // Alle internen Filter zurücksetzen
       setSelectedStudents([]);
-      setGroupingOption('weekly');
+      setGroupingOption('monthly');
     }
   }, [resetTriggerId]);
   

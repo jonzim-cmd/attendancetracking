@@ -37,8 +37,21 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
   const selectedStudent = selectedStudents.length === 1 ? selectedStudents[0] : undefined;
   const selectedClass = !selectedStudent && selectedDashboardClasses.length === 1 ? selectedDashboardClasses[0] : undefined;
   
+  // NEUE LOGIK: Prüfe, ob es nur eine einzige Klasse im gesamten Datensatz gibt
+  const uniqueClasses = new Set<string>();
+  Object.values(allStudentStats).forEach(stats => {
+    if (stats.klasse) {
+      uniqueClasses.add(stats.klasse);
+    }
+  });
+  const hasSingleClassOnly = uniqueClasses.size === 1;
+  const singleClassName = hasSingleClassOnly && uniqueClasses.size > 0 ? Array.from(uniqueClasses)[0] : undefined;
+  
   // Prüfen, ob eine Auswahl getroffen wurde
-  const hasSelection = selectedStudent || selectedClass;
+  const hasSelection = selectedStudent || selectedClass || 
+                       // NEUE BEDINGUNG: Auch true, wenn keine Klasse ausgewählt ist ("Alle Klassen") 
+                       // aber es gibt nur eine einzige Klasse im Datensatz
+                       (selectedDashboardClasses.length === 0 && hasSingleClassOnly);
   
   // Ermittle, ob der Benutzer Hilfestellung braucht
   const hasFilters = selectedStudents.length > 0 || selectedDashboardClasses.length > 0;
@@ -92,6 +105,10 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
     );
   }
   
+  // Bestimme den effektiven Class-Parameter für die Charts
+  // Wenn "Alle Klassen" ausgewählt ist und es nur eine Klasse gibt, verwende diese
+  const effectiveClass = selectedClass || (hasSingleClassOnly && selectedDashboardClasses.length === 0 ? singleClassName : undefined);
+  
   return (
     <div className={`space-y-6 ${className}`}>
       <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-0">
@@ -102,7 +119,7 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
         <span className="font-medium">
           {selectedStudent 
             ? `${selectedStudent.split(',')[0]} ${selectedStudent.split(',')[1]}`
-            : selectedClass}
+            : effectiveClass}
         </span>
       </p>
       
@@ -113,7 +130,7 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
         weeklyDetailedData={weeklyDetailedData}
         allStudentStats={allStudentStats}
         selectedStudent={selectedStudent}
-        selectedClass={selectedClass}
+        selectedClass={effectiveClass}
       />
       
       <RegressionChart 
@@ -122,7 +139,7 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
         weeklyDetailedData={weeklyDetailedData}
         allStudentStats={allStudentStats}
         selectedStudent={selectedStudent}
-        selectedClass={selectedClass}
+        selectedClass={effectiveClass}
       />
     </div>
   );

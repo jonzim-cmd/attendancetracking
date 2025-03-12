@@ -94,6 +94,10 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   // State to control if student comparison is enabled
   const [showStudentAverageComparison, setShowStudentAverageComparison] = useState<boolean>(false);
   
+  // NEW: Check if there's only one class in the dataset
+  const [hasSingleClassOnly, setHasSingleClassOnly] = useState<boolean>(false);
+  const [singleClassName, setSingleClassName] = useState<string | undefined>(undefined);
+  
   // Convert filtered students to a dictionary for easier access
   useEffect(() => {
     const students = getFilteredStudents();
@@ -102,6 +106,18 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       statsObj[student] = stats;
     });
     setStudentStats(statsObj);
+    
+    // NEW: Detect if there's only one class in the dataset
+    const uniqueClasses = new Set<string>();
+    Object.values(statsObj).forEach(stats => {
+      if (stats.klasse) {
+        uniqueClasses.add(stats.klasse);
+      }
+    });
+    
+    setHasSingleClassOnly(uniqueClasses.size === 1);
+    setSingleClassName(uniqueClasses.size === 1 ? Array.from(uniqueClasses)[0] : undefined);
+    
   }, [getFilteredStudents]);
   
   // Effect to prepare filtered students list based on current filters
@@ -145,16 +161,33 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     const effectiveStartDate = dashboardStartDate || startDate;
     const effectiveEndDate = dashboardEndDate || endDate;
     
+    // NEW: If there's only one class and no class is selected, use the single class
+    const effectiveSelectedClasses = selectedDashboardClasses.length === 0 && hasSingleClassOnly && singleClassName
+      ? [singleClassName] // Use the single class when no class is selected
+      : selectedDashboardClasses;
+    
     return prepareAttendanceOverTime(
       effectiveStartDate,
       effectiveEndDate,
       groupingOption,
       studentStats,
       weeklyDetailedData,
-      selectedDashboardClasses,
+      effectiveSelectedClasses, // Use effective classes
       selectedStudents
     );
-  }, [dashboardStartDate, dashboardEndDate, startDate, endDate, groupingOption, studentStats, weeklyDetailedData, selectedDashboardClasses, selectedStudents]);
+  }, [
+    dashboardStartDate, 
+    dashboardEndDate, 
+    startDate, 
+    endDate, 
+    groupingOption, 
+    studentStats, 
+    weeklyDetailedData, 
+    selectedDashboardClasses, 
+    selectedStudents,
+    hasSingleClassOnly,
+    singleClassName
+  ]);
   
   // Memoized function for individual student data
   const memoizedSingleStudentData = useCallback(() => {
@@ -344,8 +377,12 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     // Jetzt UNABHÄNGIG von der Anzahl ausgewählter Schüler, nur basierend auf dem Toggle
     const shouldShowStudentAvgs = showStudentAverageComparison || selectedStudents.length === 1;
     
-    // Ermittle, ob Class Averages gezeigt werden sollen
-    const shouldShowClassAvgs = shouldShowAverages(selectedDashboardClasses, selectedStudents);
+    // NEW: Modified to consider the single class case
+    const shouldShowClassAvgs = shouldShowAverages(
+      // Use the effective selected classes - if there's only one class and "All Classes" is selected, use that class
+      selectedDashboardClasses.length === 0 && hasSingleClassOnly ? [singleClassName!] : selectedDashboardClasses,
+      selectedStudents
+    );
     
     // WICHTIG: Wir können jetzt sowohl Student als auch Class Averages gleichzeitig anzeigen!
     let enhancedData = baseAttendanceData;
@@ -399,7 +436,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     allClassesData,
     allStudentsData,
     singleStudentData,
-    showStudentAverageComparison
+    showStudentAverageComparison,
+    hasSingleClassOnly,
+    singleClassName
   ]);
   
   if (!rawData) {
@@ -430,6 +469,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         showStudentAverageComparison={showStudentAverageComparison}
         setShowStudentAverageComparison={setShowStudentAverageComparison}
         classAverageAvailability={classAverageAvailability}
+        // Remove the props that are not defined in TrendChartsProps
+        // hasSingleClassOnly={hasSingleClassOnly}
+        // singleClassName={singleClassName}
       />
     </div>
   );

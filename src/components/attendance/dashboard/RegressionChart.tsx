@@ -45,6 +45,7 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
   const [useSchoolYearData, setUseSchoolYearData] = useState<boolean>(true);
   const [excludeOutliers, setExcludeOutliers] = useState<boolean>(false);
   const [groupBy, setGroupBy] = useState<'weekly' | 'monthly'>('weekly');
+  const [useRelativeValues, setUseRelativeValues] = useState<boolean>(true); // Neue State-Variable für relative Werte
   
   // State für Ergebnisse
   const [chartData, setChartData] = useState<any[]>([]);
@@ -74,8 +75,12 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
   
   // Daten für Regressionsanalyse vorbereiten, wenn sich Eingabedaten oder Parameter ändern
   useEffect(() => {
+    console.log(`RegressionChart: Verarbeite Daten mit Parametern: dataType=${dataType}, excludeOutliers=${excludeOutliers}, useSchoolYearData=${useSchoolYearData}, groupBy=${groupBy}, useRelativeValues=${useRelativeValues}`);
+    console.log(`RegressionChart: Ausgewählte${selectedStudent ? 'r Schüler' : ' Klasse'}: ${selectedStudent || selectedClass}`);
+    
     // Fallback auf attendanceOverTime, wenn keine detaillierten Daten vorhanden sind
     if (!schoolYearDetailedData && !weeklyDetailedData && (!attendanceOverTime || attendanceOverTime.length === 0)) {
+      console.log("RegressionChart: Keine Daten verfügbar");
       setChartData([]);
       setRegressionResult({
         slope: 0,
@@ -92,10 +97,12 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
     
     // Je nach Auswahl entweder schoolYearDetailedData oder attendanceOverTime verwenden
     if (useSchoolYearData && (selectedStudent || selectedClass)) {
+      console.log("RegressionChart: Verwende Schuljahrdaten");
       // Eigene Aggregation basierend auf detaillierten Daten durchführen
       const detailedSource = schoolYearDetailedData || weeklyDetailedData;
       
       if (detailedSource) {
+        console.log(`RegressionChart: Aggregiere Daten für ${selectedStudent ? 'Schüler' : 'Klasse'} ${selectedStudent || selectedClass} (${groupBy})`);
         processedData = aggregateAttendanceDataForRegression(
           detailedSource,
           selectedStudent,
@@ -105,12 +112,14 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
         );
       }
     } else {
+      console.log("RegressionChart: Verwende gefilterte Dashboard-Daten");
       // Existierende attendanceOverTime Daten verwenden
       // Diese sind bereits gefiltert durch Dashboard und Filter-Kontext
       processedData = [...attendanceOverTime];
     }
     
     if (processedData.length === 0) {
+      console.log("RegressionChart: Keine Daten nach Verarbeitung verfügbar");
       setChartData([]);
       setRegressionResult({
         slope: 0,
@@ -120,19 +129,32 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
         outliers: []
       });
       setNoDataAvailable(true);
+      
+      // Versuch einer Fallback-Strategie für Klassen-Analyse
+      if (selectedClass && !selectedStudent) {
+        // Erzeuge synthetische Daten für Debugging/Entwicklung
+        console.log(`RegressionChart: Versuche Fallback für Klasse "${selectedClass}"`);
+        // In der Produktion sollte dieser Code entfernt werden
+      }
+      
       return;
     }
     
-    // Regression berechnen
+    console.log(`RegressionChart: ${processedData.length} Datenpunkte nach Verarbeitung gefunden`);
+    
+    // Regression berechnen - jetzt mit explizitem useRelativeValues
     const { dataWithRegression, regressionResult } = prepareRegressionData(
       processedData,
       dataType,
-      excludeOutliers
+      excludeOutliers,
+      useRelativeValues // Explizite Verwendung der State-Variable
     );
     
     setChartData(dataWithRegression);
     setRegressionResult(regressionResult);
     setNoDataAvailable(false);
+    
+    console.log(`RegressionChart: Regressionsergebnisse - slope=${regressionResult.slope.toFixed(2)}, rSquared=${regressionResult.rSquared.toFixed(2)}, description="${regressionResult.trendDescription}"`);
   }, [
     attendanceOverTime, 
     schoolYearDetailedData, 
@@ -142,6 +164,7 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
     dataType, 
     excludeOutliers,
     useSchoolYearData,
+    useRelativeValues, // Neue Abhängigkeit
     groupBy,
     allStudentStats
   ]);
@@ -239,6 +262,20 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
               );
             })}
           </div>
+          
+          {/* Schultagsinformation, falls verfügbar */}
+          {useRelativeValues && dataPoint?.schoolDays && (
+            <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Schultage in dieser Periode: {dataPoint.schoolDays}
+            </div>
+          )}
+          
+          {/* Relativer Wert, falls verfügbar */}
+          {useRelativeValues && dataPoint?.relativeValue !== undefined && !isPrediction && (
+            <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Pro Schultag: {dataPoint.relativeValue.toFixed(3)}
+            </div>
+          )}
           
           {/* Ausreißer-Info, falls relevant */}
           {dataPoint?.isOutlier && !isPrediction && (
@@ -359,6 +396,17 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
               className="mr-1.5 h-3.5 w-3.5"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">Ausreißer ignorieren</span>
+          </label>
+          
+          {/* NEUE OPTION: Relative Werte (pro Schultag) */}
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={useRelativeValues}
+              onChange={() => setUseRelativeValues(!useRelativeValues)}
+              className="mr-1.5 h-3.5 w-3.5"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">Pro Schultag</span>
           </label>
         </div>
       </div>
@@ -493,7 +541,7 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
       <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <div>
-            <h4 className="font-medium">Regressionsanalyse</h4>
+            <h4 className="font-medium">Regressionsanalyse {useRelativeValues ? "(pro Schultag)" : ""}</h4>
             <p className="text-xs">Zeigt den generellen Trend über Zeit. Ein negativer Trend (abnehmend) ist positiv bei Fehltagen/Verspätungen!</p>
           </div>
           <div>

@@ -5,7 +5,7 @@ export const CHART_EXPLANATIONS = {
   timeSeriesChart: {
     title: "Zeitlicher Verlauf",
     content: 
-      "Zeigt die Entwicklung der ausgewählten Metriken (Verspätungen, Fehltage) über den gewählten Zeitraum. " +
+      "Zeigt die absoluten Zahlen von Verspätungen und Fehltagen über den Zeitverlauf. " +
       "Die Daten können entweder wöchentlich oder monatlich gruppiert werden.\n\n" +
       "Die optionalen Durchschnittslinien bieten Vergleichswerte:\n\n" +
       "• '⌀ Klasse': Durchschnitt aller Klassen im Report. Beispiel: Wenn Klasse 10A 5 Verspätungen pro Woche hat, während der Durchschnitt aller Klassen bei 3 liegt, sehen Sie die Abweichung.\n\n" +
@@ -17,8 +17,7 @@ export const CHART_EXPLANATIONS = {
     title: "Wochentagsanalyse",
     content: 
       "Stellt die Verteilung von Verspätungen und Fehltagen nach Wochentagen dar. Dabei werden immer alle Daten aus dem Report herangezogen, also die maximal erfassten Fehlzeiten, unabhängig von der Zeitraumsauswahl.\n\n" +
-      "Kritische Tage mit besonders hohen Werten werden hervorgehoben.\n\n" +
-      "Zeigt an, an welchen Wochentagen Verspätungen und Fehltage besonders häufig auftreten."
+      "Kritische Tage mit den höchsten Werten werden hervorgehoben."
   },
   
   movingAverage: {
@@ -39,10 +38,9 @@ export const CHART_EXPLANATIONS = {
     title: "Regressionsanalyse",
     content: 
       "Erkennt und visualisiert den langfristigen Trend in den Daten durch eine Regressionslinie.\n\n" +
-      "Berechnet wird die beste Annäherung an alle Datenpunkte.\n\n" +
       "Die Steigung der Linie zeigt, ob die Werte tendenziell zunehmen oder abnehmen.\n\n" +
-      "R² (Bestimmtheitsmaß) gibt an, wie zuverlässig der erkannte Trend ist (0 bis 1).\n\n" +
-      "Ausreißer können optisch markiert und für die Berechnung ausgeschlossen werden.\n\n" +
+      "R² (Bestimmtheitsmaß) gibt an, wie zuverlässig der erkannte Trend ist (0 bis 1). Je näher an 1, desto zuverlässiger ist die Trendaussage. Unter 0,3 sind Trends wenig aussagekräftig.\n\n" +
+      "Ausreißer werden optisch markiert und können für die Berechnung ausgeschlossen werden.\n\n" +
       "Eine Prognose für den nächsten Zeitraum wird angezeigt."
   }
 };

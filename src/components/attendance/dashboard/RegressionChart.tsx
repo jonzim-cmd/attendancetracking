@@ -42,9 +42,7 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
 }) => {
   // State für die Regressionsanalyse
   const [dataType, setDataType] = useState<'verspaetungen' | 'fehlzeiten'>('fehlzeiten');
-  const [useSchoolYearData, setUseSchoolYearData] = useState<boolean>(true);
   const [excludeOutliers, setExcludeOutliers] = useState<boolean>(false);
-  const [groupBy, setGroupBy] = useState<'weekly' | 'monthly'>('weekly');
   const [useRelativeValues, setUseRelativeValues] = useState<boolean>(true); // Neue State-Variable für relative Werte
   
   // State für Ergebnisse
@@ -75,7 +73,7 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
   
   // Daten für Regressionsanalyse vorbereiten, wenn sich Eingabedaten oder Parameter ändern
   useEffect(() => {
-    console.log(`RegressionChart: Verarbeite Daten mit Parametern: dataType=${dataType}, excludeOutliers=${excludeOutliers}, useSchoolYearData=${useSchoolYearData}, groupBy=${groupBy}, useRelativeValues=${useRelativeValues}`);
+    console.log(`RegressionChart: Verarbeite Daten mit Parametern: dataType=${dataType}, excludeOutliers=${excludeOutliers}, useRelativeValues=${useRelativeValues}`);
     console.log(`RegressionChart: Ausgewählte${selectedStudent ? 'r Schüler' : ' Klasse'}: ${selectedStudent || selectedClass}`);
     
     // Fallback auf attendanceOverTime, wenn keine detaillierten Daten vorhanden sind
@@ -95,28 +93,9 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
     
     let processedData: any[] = [];
     
-    // Je nach Auswahl entweder schoolYearDetailedData oder attendanceOverTime verwenden
-    if (useSchoolYearData && (selectedStudent || selectedClass)) {
-      console.log("RegressionChart: Verwende Schuljahrdaten");
-      // Eigene Aggregation basierend auf detaillierten Daten durchführen
-      const detailedSource = schoolYearDetailedData || weeklyDetailedData;
-      
-      if (detailedSource) {
-        console.log(`RegressionChart: Aggregiere Daten für ${selectedStudent ? 'Schüler' : 'Klasse'} ${selectedStudent || selectedClass} (${groupBy})`);
-        processedData = aggregateAttendanceDataForRegression(
-          detailedSource,
-          selectedStudent,
-          selectedClass,
-          allStudentStats,
-          groupBy
-        );
-      }
-    } else {
-      console.log("RegressionChart: Verwende gefilterte Dashboard-Daten");
-      // Existierende attendanceOverTime Daten verwenden
-      // Diese sind bereits gefiltert durch Dashboard und Filter-Kontext
-      processedData = [...attendanceOverTime];
-    }
+    // Immer die attendanceOverTime Daten verwenden
+    // Diese sind bereits gefiltert durch Dashboard und Filter-Kontext
+    processedData = [...attendanceOverTime];
     
     if (processedData.length === 0) {
       console.log("RegressionChart: Keine Daten nach Verarbeitung verfügbar");
@@ -129,14 +108,6 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
         outliers: []
       });
       setNoDataAvailable(true);
-      
-      // Versuch einer Fallback-Strategie für Klassen-Analyse
-      if (selectedClass && !selectedStudent) {
-        // Erzeuge synthetische Daten für Debugging/Entwicklung
-        console.log(`RegressionChart: Versuche Fallback für Klasse "${selectedClass}"`);
-        // In der Produktion sollte dieser Code entfernt werden
-      }
-      
       return;
     }
     
@@ -163,9 +134,7 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
     selectedClass, 
     dataType, 
     excludeOutliers,
-    useSchoolYearData,
-    useRelativeValues, // Neue Abhängigkeit
-    groupBy,
+    useRelativeValues, // Abhängigkeit
     allStudentStats
   ]);
   
@@ -315,15 +284,6 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
     return 'Regressionsanalyse';
   };
   
-  // Beschreibungstext für die verwendeten Daten
-  const getDataSourceDescription = () => {
-    if (useSchoolYearData) {
-      return 'Daten: Gesamtes Schuljahr';
-    } else {
-      return 'Daten: Ausgewählter Zeitraum';
-    }
-  };
-  
   const hasPrediction = optimizedChartData.some(item => item.isPrediction);
   
   return (
@@ -334,9 +294,6 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
               {getTitleText()}
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {getDataSourceDescription()}
-            </p>
           </div>
           <InfoButton 
             title={CHART_EXPLANATIONS.regression.title} 
@@ -363,30 +320,6 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
             </label>
           </div>
           
-          {/* Gruppierung auswählen */}
-          <div className="flex items-center">
-            <label className="text-sm mr-1 text-gray-700 dark:text-gray-300">Gruppierung:</label>
-            <select
-              value={groupBy}
-              onChange={(e) => setGroupBy(e.target.value as 'weekly' | 'monthly')}
-              className="bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm rounded px-1 py-0.5"
-            >
-              <option value="weekly">Wöchentlich</option>
-              <option value="monthly">Monatlich</option>
-            </select>
-          </div>
-          
-          {/* Option für Schuljahres- oder gefilterte Daten */}
-          <label className="flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={useSchoolYearData}
-              onChange={() => setUseSchoolYearData(!useSchoolYearData)}
-              className="mr-1.5 h-3.5 w-3.5"
-            />
-            <span className="text-sm text-gray-700 dark:text-gray-300">Schuljahr</span>
-          </label>
-          
           {/* Option für Ausreißer auszuschließen */}
           <label className="flex items-center cursor-pointer">
             <input
@@ -398,7 +331,7 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
             <span className="text-sm text-gray-700 dark:text-gray-300">Ausreißer ignorieren</span>
           </label>
           
-          {/* NEUE OPTION: Relative Werte (pro Schultag) */}
+          {/* OPTION: Relative Werte (pro Schultag) */}
           <label className="flex items-center cursor-pointer">
             <input
               type="checkbox"
@@ -413,21 +346,21 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
       
       {/* Regressionsergebnisse */}
       <div className="mb-3 grid grid-cols-1 md:grid-cols-3 gap-2">
-        <div className="bg-gray-100 dark:bg-gray-800 rounded p-2 text-center">
+        <div className="bg-gray-100 dark:bg-transparent border border-gray-200 dark:border-gray-700 rounded rounded p-2 text-center">
           <p className="text-xs text-gray-600 dark:text-gray-400">Trend</p>
           <p className={`text-sm font-medium ${getTrendColor(regressionResult.slope, dataType === 'verspaetungen')}`}>
             {regressionResult.trendDescription}
           </p>
         </div>
         
-        <div className="bg-gray-100 dark:bg-gray-800 rounded p-2 text-center">
+        <div className="bg-gray-100 dark:bg-transparent border border-gray-200 dark:border-gray-700 rounded rounded p-2 text-center">
           <p className="text-xs text-gray-600 dark:text-gray-400">Steigung</p>
           <p className={`text-sm font-medium ${getTrendColor(regressionResult.slope, dataType === 'verspaetungen')}`}>
             {formatSlope(regressionResult.slope)} pro Zeitraum
           </p>
         </div>
         
-        <div className="bg-gray-100 dark:bg-gray-800 rounded p-2 text-center">
+        <div className="bg-gray-100 dark:bg-transparent p-2 border border-gray-200 dark:border-gray-700 rounded rounded p-2 text-center">
           <p className="text-xs text-gray-600 dark:text-gray-400">Bestimmtheitsmaß</p>
           <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
             R² = {regressionResult.rSquared.toFixed(2)}
@@ -536,19 +469,6 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
               ))}
           </LineChart>
         </ResponsiveContainer>
-      </div>
-      
-      <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div>
-            <h4 className="font-medium">Regressionsanalyse {useRelativeValues ? "(pro Schultag)" : ""}</h4>
-            <p className="text-xs">Zeigt den generellen Trend über Zeit. Ein negativer Trend (abnehmend) ist positiv bei Fehltagen/Verspätungen!</p>
-          </div>
-          <div>
-            <h4 className="font-medium">R² (Bestimmtheitsmaß)</h4>
-            <p className="text-xs">Wert zwischen 0-1. Je näher an 1, desto zuverlässiger ist die Trendaussage. Unter 0,3 sind Trends wenig aussagekräftig.</p>
-          </div>
-        </div>
       </div>
     </div>
   );

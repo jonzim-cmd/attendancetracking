@@ -4,9 +4,8 @@ import { AbsenceEntry } from '@/types';
 
 export function resetRegressionCache(): void {
   // Reset any cached data here
-  // For now this is a placeholder until we fully implement the regression cache
-  console.log("Regression cache reset");
 }
+
 /**
  * Ergebnis der Regressionsberechnung
  */
@@ -41,18 +40,12 @@ export const SCHOOL_DAYS_PER_WEEK = 5;
 /**
  * Berechnet eine lineare Regression für Zeitreihendaten
  * Verwendet mathjs für die eigentlichen Berechnungen
- * 
- * @param data Array mit Zeitreihendaten
- * @param valueKey Schlüssel für den zu analysierenden Wert (absolut oder relativ)
- * @param excludeOutliers Ob Ausreißer von der Berechnung ausgeschlossen werden sollen
- * @param useRelativeValues Ob relative Werte (pro Schultag) verwendet werden sollen
- * @returns Regressionsergebnis mit Steigung, y-Achsenabschnitt und R²
  */
 export function calculateLinearRegression(
   data: any[],
   valueKey: string = 'value',
   excludeOutliers: boolean = false,
-  useRelativeValues: boolean = true  // Neue Option für relative Werte
+  useRelativeValues: boolean = true
 ): RegressionResult {
   if (!data || data.length < 2) {
     return { 
@@ -88,13 +81,12 @@ export function calculateLinearRegression(
     const xValues = analysisData.map((_, i) => i);
     
     // y-Werte extrahieren und sicherstellen, dass es Zahlen sind
-    // Bei relativen Werten verwenden wir den relativKey, falls verfügbar
     const yValues = analysisData.map(point => {
       // Standard-Wert abrufen
       let value = typeof point[valueKey] === 'number' ? point[valueKey] : 0;
       
       // Wenn relative Werte verwendet werden sollen und relative Werte verfügbar sind,
-      // verwende diese stattdessen (relativeValue wird in prepareRegressionData berechnet)
+      // verwende diese stattdessen
       if (useRelativeValues && typeof point.relativeValue === 'number') {
         value = point.relativeValue;
       }
@@ -178,11 +170,6 @@ export function calculateLinearRegression(
 
 /**
  * Identifiziert Ausreißer in einem Datensatz mit dem IQR-Verfahren
- * 
- * @param data Die zu analysierenden Daten
- * @param valueKey Schlüssel für den zu analysierenden Wert
- * @param outlierThreshold Multiplikator für die IQR-Grenze (üblich: 1.5)
- * @returns Indizes der identifizierten Ausreißer
  */
 function findOutliers(
   data: any[],
@@ -222,7 +209,6 @@ function findOutliers(
     // Extremwerte als Ausreißer betrachten
     if (value < lowerBound || value > upperBound) {
       // Zusätzliche Prüfung: Ist der Wert drastisch anders als der Durchschnitt?
-      // Dies verhindert, dass zu viele Datenpunkte als Ausreißer markiert werden
       const average = values.reduce((sum, val) => sum + val, 0) / values.length;
       const deviation = Math.abs(value - average) / Math.max(1, average);
       
@@ -238,7 +224,6 @@ function findOutliers(
 
 /**
  * Erzeugt eine textuelle Beschreibung des Trends
- * Berücksichtigt auch, ob relative Werte verwendet werden
  */
 function getTrendDescription(slope: number, rSquared: number, isRelative: boolean = false): string {
   // Bei sehr geringem R² ist die Trendaussage unzuverlässig
@@ -252,7 +237,6 @@ function getTrendDescription(slope: number, rSquared: number, isRelative: boolea
   }
   
   // Die Richtung des Trends - bei Abwesenheiten ist ein Rückgang positiv
-  // Bei relativen Werten ist die Interpretation präziser
   const directionText = slope > 0 ? 'Ansteigend' : 'Abnehmend';
   
   // Stärke des Trends
@@ -286,18 +270,14 @@ function getTrendDescription(slope: number, rSquared: number, isRelative: boolea
 /**
  * Bereitet Zeitreihendaten für die Regressionsanalyse vor
  * und fügt Regressionslinienpunkte hinzu
- * 
- * @param timeSeriesData Zeitreihendaten aus dem Dashboard
- * @param dataType 'verspaetungen' oder 'fehlzeiten'
- * @param excludeOutliers Ob Ausreißer von der Berechnung ausgeschlossen werden sollen
- * @param useRelativeValues Ob relative Werte (pro Schultag) verwendet werden sollen
- * @returns Daten mit Regressionslinie und Ergebnissen
  */
+// Die korrigierte prepareRegressionData Funktion:
+
 export function prepareRegressionData(
   timeSeriesData: any[],
   dataType: 'verspaetungen' | 'fehlzeiten' = 'verspaetungen',
   excludeOutliers: boolean = false,
-  useRelativeValues: boolean = true  // Neue Option für relative Werte
+  useRelativeValues: boolean = true
 ): {
   dataWithRegression: any[];
   regressionResult: RegressionResult;
@@ -315,8 +295,12 @@ export function prepareRegressionData(
     };
   }
   
-  // Stellen Sie sicher, dass die Daten vollständig sind (alle Zeiträume)
-  const completedData = ensureCompleteTimeSeriesData(timeSeriesData, dataType);
+  // Wenn wir bereits genügend Datenpunkte haben, überspringen wir das Vervollständigen
+  let completedData = timeSeriesData;
+  if (timeSeriesData.length < 3) {
+    // Nur wenn wir weniger als 3 Datenpunkte haben, vervollständigen wir die Daten
+    completedData = ensureCompleteTimeSeriesData(timeSeriesData, dataType);
+  }
   
   // Bei zu wenig Datenpunkten (<3) entsprechende Fehlermeldung zurückgeben
   if (completedData.length < 3) {
@@ -434,11 +418,22 @@ export function prepareRegressionData(
 function extractMonthFromName(name: string): string | null {
   if (!name) return null;
   
-  // Versuche, einen Monatsnamen zu extrahieren
-  const monthPattern = /(Jan|Feb|Mar|Apr|Mai|Jun|Jul|Aug|Sep|Okt|Nov|Dez)(?:\s+\d{4})?/;
+  // Erweitere den Monatspattern um beide Formate zu erkennen (z.B. "Sep" und "Sept.")
+  const monthPattern = /(Jan|Feb|Mar|Apr|Mai|Jun|Jul|Aug|Sep|Sept\.|Okt|Okt\.|Nov|Nov\.|Dez|Dez\.)(?:\s+\d{4})?/;
   const match = String(name).match(monthPattern);
   
-  return match ? match[1] : null;
+  if (!match) return null;
+  
+  // Normalisieren des Monatsnamens
+  const monthName = match[1];
+  
+  // Umwandeln in das kurze Format
+  if (monthName === 'Sept.') return 'Sep';
+  if (monthName === 'Okt.') return 'Okt';
+  if (monthName === 'Nov.') return 'Nov';
+  if (monthName === 'Dez.') return 'Dez';
+  
+  return monthName;
 }
 
 /**
@@ -464,12 +459,48 @@ function ensureCompleteTimeSeriesData(
 ): any[] {
   if (!data || data.length === 0) return [];
   
+  // Wenn wir bereits mehr als 5 Datenpunkte haben, keine Ergänzung mehr notwendig
+  if (data.length >= 5) {
+    return data;
+  }
+  
   // Bestimme den Typ der Daten (wöchentlich oder monatlich)
   const isWeeklyData = data.some(item => item.name && String(item.name).includes('KW'));
   
-  // Ermittle alle vorhandenen Perioden
-  const existingPeriods = new Set(data.map(item => item.name));
+  // Ermittle alle vorhandenen Perioden - mit Normalisierung für Monate
+  const existingPeriods = new Set<string>();
+  data.forEach(item => {
+    if (item.name) {
+      // Für Monate, normalisiere den Namen
+      const monthName = extractMonthFromName(item.name);
+      const yearMatch = String(item.name).match(/\d{4}/);
+      
+      if (monthName && yearMatch) {
+        // Speichere in normalisiertem Format
+        existingPeriods.add(`${monthName} ${yearMatch[0]}`);
+      } else {
+        // Für andere Formate (z.B. KW)
+        existingPeriods.add(item.name);
+      }
+    }
+  });
   const result = [...data];
+  
+  // Jahre aus den vorhandenen Daten extrahieren
+  let dataYears = new Set<number>();
+  data.forEach(item => {
+    if (item.name) {
+      const yearMatch = String(item.name).match(/\d{4}/);
+      if (yearMatch) {
+        dataYears.add(parseInt(yearMatch[0]));
+      }
+    }
+  });
+  
+  // Jahre aus dem Datensatz sortieren und verwenden
+  const sortedYears = Array.from(dataYears).sort();
+  const startYear = sortedYears[0] || new Date().getFullYear();
+  const endYear = sortedYears[sortedYears.length - 1] || startYear;
   
   if (isWeeklyData) {
     // Wöchentliche Daten - finde min/max Wochennummern
@@ -529,7 +560,7 @@ function ensureCompleteTimeSeriesData(
     }
   } else {
     // Monatliche Daten
-    const currentYear = new Date().getFullYear();
+    // Schuljahr-Monate in der richtigen Reihenfolge
     const months = [
       { key: 'Sep', index: 0 },
       { key: 'Okt', index: 1 },
@@ -562,11 +593,22 @@ function ensureCompleteTimeSeriesData(
     // Wenn keine Monate gefunden wurden, Original-Daten zurückgeben
     if (minMonthIndex > maxMonthIndex) return data;
     
-    // Füge fehlende Monate hinzu
+    // Basierend auf den vorhandenen Daten Jahre bestimmen
+    let firstHalfYear = startYear;
+    let secondHalfYear = firstHalfYear;
+    
+    // Wenn Jan-Jul vorkommt und höheres Jahr hat, ist es das zweite Halbjahr
+    if (minMonthIndex >= 4 && maxMonthIndex >= 4 && endYear > startYear) {
+      secondHalfYear = endYear;
+    }
+    
+    // Füge fehlende Monate hinzu - nur für den Zeitraum, der Daten enthält
     for (let i = minMonthIndex; i <= maxMonthIndex; i++) {
       const month = months[i];
+      
       // Das Jahr hängt von der Position im Schuljahr ab
-      const year = i < 4 ? currentYear : currentYear + 1;
+      // Sep-Dez = erstes Halbjahr, Jan-Aug = zweites Halbjahr
+      const year = i < 4 ? firstHalfYear : secondHalfYear;
       const monthWithYear = `${month.key} ${year}`;
       
       if (!existingPeriods.has(monthWithYear)) {
@@ -582,7 +624,58 @@ function ensureCompleteTimeSeriesData(
   }
   
   // Sortiere das Ergebnis nach sortKey oder Name
-  return result.sort((a, b) => {
+  // Deduplizierung: Entferne alle Null-Datenpunkte, wenn es bereits einen nicht-Null-Datenpunkt gibt
+  const nameToIndexMap = new Map<string, number[]>();
+
+  // Gruppiere Indizes nach normalisierten Namen
+  result.forEach((item, index) => {
+    const monthName = extractMonthFromName(item.name);
+    const yearMatch = String(item.name).match(/\d{4}/);
+    
+    if (monthName && yearMatch) {
+      const normalizedName = `${monthName} ${yearMatch[0]}`;
+      if (!nameToIndexMap.has(normalizedName)) {
+        nameToIndexMap.set(normalizedName, []);
+      }
+      nameToIndexMap.get(normalizedName)!.push(index);
+    } else {
+      // Für nicht-monatliche Daten
+      if (!nameToIndexMap.has(item.name)) {
+        nameToIndexMap.set(item.name, []);
+      }
+      nameToIndexMap.get(item.name)!.push(index);
+    }
+  });
+  
+  // Behalte nur die Daten-reichsten Einträge
+  const indicesToKeep = new Set<number>();
+  nameToIndexMap.forEach((indices) => {
+    if (indices.length > 1) {
+      // Finde den Eintrag mit den meisten Daten
+      let bestIndex = indices[0];
+      let bestValue = result[bestIndex][dataType] || 0;
+      
+      for (let i = 1; i < indices.length; i++) {
+        const index = indices[i];
+        const value = result[index][dataType] || 0;
+        if (value > bestValue) {
+          bestIndex = index;
+          bestValue = value;
+        }
+      }
+      
+      indicesToKeep.add(bestIndex);
+    } else {
+      // Wenn es nur einen Eintrag gibt, behalte ihn
+      indicesToKeep.add(indices[0]);
+    }
+  });
+  
+  // Filtere das Ergebnis
+  const dedupedResult = result.filter((_, index) => indicesToKeep.has(index));
+  
+  // Sortiere das deduplizierte Ergebnis nach sortKey oder Name
+  return dedupedResult.sort((a, b) => {
     if (a.sortKey !== undefined && b.sortKey !== undefined) {
       return a.sortKey - b.sortKey;
     }
@@ -592,14 +685,7 @@ function ensureCompleteTimeSeriesData(
 
 /**
  * Aggregiert wöchentliche/monatliche Abwesenheitseinträge für einen bestimmten Schüler oder eine Klasse
- * für die Regressionsanalyse. Berücksichtigt nun auch die indirekten Schätzungen (Schultagsbasis).
- * 
- * @param detailedData Detaillierte Abwesenheitseinträge für das gesamte Schuljahr
- * @param selectedStudent Ausgewählter Schüler (optional)
- * @param selectedClass Ausgewählte Klasse (optional)
- * @param allStudentStats Alle Schülerstatistiken für Klassenzuordnung
- * @param groupBy 'weekly' oder 'monthly' für Gruppierung (Standard: 'weekly')
- * @returns Aggregierte Zeitreihendaten für Regressionsanalyse
+ * für die Regressionsanalyse.
  */
 export function aggregateAttendanceDataForRegression(
   detailedData: Record<string, { 
@@ -611,11 +697,8 @@ export function aggregateAttendanceDataForRegression(
   allStudentStats?: Record<string, { klasse: string }>,
   groupBy: 'weekly' | 'monthly' = 'weekly'
 ): any[] {
-  console.log(`Regression: Starting aggregation for ${selectedStudent ? 'student' : 'class'} "${selectedStudent || selectedClass}"`);
-  
   // Wenn kein Schüler oder Klasse ausgewählt ist, leere Daten zurückgeben
   if (!selectedStudent && !selectedClass) {
-    console.log("Regression: No student or class selected, returning empty data");
     return [];
   }
   
@@ -625,7 +708,6 @@ export function aggregateAttendanceDataForRegression(
   if (selectedStudent) {
     // Einzelner Schüler ausgewählt
     relevantStudents = [selectedStudent];
-    console.log(`Regression: Analyzing data for student "${selectedStudent}"`);
   } else if (selectedClass && allStudentStats) {
     // Schüler nach Klasse filtern - verbesserte Klassennamenzuordnung
     relevantStudents = Object.entries(allStudentStats)
@@ -637,20 +719,8 @@ export function aggregateAttendanceDataForRegression(
       })
       .map(([student]) => student);
     
-    console.log(`Regression: ${relevantStudents.length} students found for class "${selectedClass}"`);
-    
     // Wenn keine Schüler gefunden wurden, versuche eine flexiblere Zuordnung
     if (relevantStudents.length === 0) {
-      // Alle verfügbaren Klassen auflisten
-      const availableClasses = new Set<string>();
-      Object.values(allStudentStats).forEach(stats => {
-        if (stats.klasse) {
-          availableClasses.add(stats.klasse);
-        }
-      });
-      
-      console.log(`Regression: No students for class "${selectedClass}" found. Available classes: ${Array.from(availableClasses).join(', ')}`);
-      
       // Flexiblere Zuordnung versuchen
       relevantStudents = Object.entries(allStudentStats)
         .filter(([_, stats]) => {
@@ -661,13 +731,10 @@ export function aggregateAttendanceDataForRegression(
                  selectedClass.toUpperCase().includes(stats.klasse.toUpperCase());
         })
         .map(([student]) => student);
-      
-      console.log(`Regression: After flexible matching, ${relevantStudents.length} students found for class "${selectedClass}"`);
     }
   }
   
   if (relevantStudents.length === 0) {
-    console.log(`Regression: No relevant students found, returning empty data`);
     return [];
   }
   
@@ -685,68 +752,19 @@ export function aggregateAttendanceDataForRegression(
 
   const timeGroups: Record<string, TimeGroupData> = {};
   
-  // Aktuelles Datum für Jahr/Woche-Bestimmung
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  
-  // Daten aggregieren
-  let totalDataPoints = 0;
-  
   // WICHTIG: Prüfe, ob die relevanten Schüler überhaupt im detailedData vorhanden sind
   const availableStudents = relevantStudents.filter(student => !!detailedData[student]);
-  console.log(`Regression: ${availableStudents.length} of ${relevantStudents.length} students have data in detailedData`);
   
   if (availableStudents.length === 0) {
-    console.log("Regression: None of the selected students have data in detailedData!");
-    
-    // Fallback: Erzeugen von Dummy-Daten für Debugging/Entwicklung
-    if (process.env.NODE_ENV !== 'production') {
-      console.log("Regression: Creating mock data points for development");
-      
-      // Zeiträume für Schuljahr Sep-Feb
-      const months = ['Sep', 'Okt', 'Nov', 'Dez', 'Jan', 'Feb'];
-      
-      months.forEach((month, index) => {
-        const year = index < 4 ? currentYear : currentYear + 1;
-        const groupKey = `${month} ${year}`;
-        
-        // Erzeuge Dummy-Daten
-        timeGroups[groupKey] = {
-          verspaetungen: Math.floor(Math.random() * 10) * relevantStudents.length,
-          fehlzeiten: Math.floor(Math.random() * 5) * relevantStudents.length,
-          timestamp: new Date(`${year}-${index < 4 ? index + 9 : index - 3}-15`),
-          studentCount: relevantStudents.length,
-          rawEntries: {
-            verspaetungen: [],
-            fehlzeiten: []
-          }
-        };
-        totalDataPoints += 2; // 1 für Verspätungen, 1 für Fehlzeiten
-      });
-    }
+    return [];
   }
   
   // Versuche, mit den verfügbaren Daten zu arbeiten
   availableStudents.forEach(student => {
     const studentData = detailedData[student];
-    if (!studentData) {
-      console.log(`Regression: No data for student "${student}"`);
-      return;
-    }
-    
-    // Prüfe und logge Datenstruktur für den ersten Schüler
-    if (student === availableStudents[0]) {
-      console.log(`Regression: Data structure for first student:`, {
-        hasVerspaetungen: Array.isArray(studentData.verspaetungen_unentsch),
-        verspaetungenCount: studentData.verspaetungen_unentsch?.length || 0,
-        hasFehlzeiten: Array.isArray(studentData.fehlzeiten_unentsch),
-        fehlzeitenCount: studentData.fehlzeiten_unentsch?.length || 0
-      });
-    }
+    if (!studentData) return;
     
     // Verspätungen verarbeiten
-    let verspaetungenProcessed = 0;
-    
     if (Array.isArray(studentData.verspaetungen_unentsch) && studentData.verspaetungen_unentsch.length > 0) {
       studentData.verspaetungen_unentsch.forEach(entry => {
         try {
@@ -784,8 +802,6 @@ export function aggregateAttendanceDataForRegression(
           // Verspätung zählen
           timeGroups[groupKey].verspaetungen += 1;
           timeGroups[groupKey].rawEntries.verspaetungen.push(entry);
-          verspaetungenProcessed++;
-          totalDataPoints++;
           
           // Studentenzähler initialisieren, wenn er noch nicht gesetzt ist
           if (!timeGroups[groupKey].studentCount) {
@@ -798,8 +814,6 @@ export function aggregateAttendanceDataForRegression(
     }
     
     // Fehlzeiten verarbeiten
-    let fehlzeitenProcessed = 0;
-    
     if (Array.isArray(studentData.fehlzeiten_unentsch) && studentData.fehlzeiten_unentsch.length > 0) {
       studentData.fehlzeiten_unentsch.forEach(entry => {
         try {
@@ -837,8 +851,6 @@ export function aggregateAttendanceDataForRegression(
           // Fehlzeit zählen
           timeGroups[groupKey].fehlzeiten += 1;
           timeGroups[groupKey].rawEntries.fehlzeiten.push(entry);
-          fehlzeitenProcessed++;
-          totalDataPoints++;
           
           // Studentenzähler initialisieren, wenn er noch nicht gesetzt ist
           if (!timeGroups[groupKey].studentCount) {
@@ -849,35 +861,11 @@ export function aggregateAttendanceDataForRegression(
         }
       });
     }
-    
-    // Log details für den ersten Schüler
-    if (student === availableStudents[0]) {
-      console.log(`Regression: Processed ${verspaetungenProcessed} tardiness and ${fehlzeitenProcessed} absence entries for first student`);
-    }
   });
   
   // Wenn keine Daten vorhanden sind, leere Liste zurückgeben
   if (Object.keys(timeGroups).length === 0) {
-    console.log("Regression: No data after aggregation, returning empty array");
     return [];
-  }
-  
-  console.log(`Regression: Aggregated ${totalDataPoints} data points into ${Object.keys(timeGroups).length} time periods`);
-  
-  // Neue Funktion: Sortkey für Wochennummern unter Berücksichtigung des Schuljahrs
-  function getSchoolYearWeekSortKey(weekNum: number, date: Date): number {
-    // Bestimme das Schuljahr basierend auf dem Monat
-    // Schuljahr beginnt im September (Monat 8)
-    const month = date.getMonth();
-    
-    // Für Wochennummern im ersten Teil des Schuljahrs (Sept-Dez): 100-152
-    if (month >= 8) { // September-Dezember
-      return weekNum + 100;
-    }
-    // Für Wochennummern im zweiten Teil des Schuljahrs (Jan-Aug): 200-236
-    else {
-      return weekNum + 200;
-    }
   }
   
   // Sortierlogik für Wochennummern oder Monatsnamen mit Jahr
@@ -905,6 +893,22 @@ export function aggregateAttendanceDataForRegression(
     // Fallback: Einfach 0
     return 0;
   }
+
+  // Sortkey für Wochennummern unter Berücksichtigung des Schuljahrs
+  function getSchoolYearWeekSortKey(weekNum: number, date: Date): number {
+    // Bestimme das Schuljahr basierend auf dem Monat
+    // Schuljahr beginnt im September (Monat 8)
+    const month = date.getMonth();
+    
+    // Für Wochennummern im ersten Teil des Schuljahrs (Sept-Dez): 100-152
+    if (month >= 8) { // September-Dezember
+      return weekNum + 100;
+    }
+    // Für Wochennummern im zweiten Teil des Schuljahrs (Jan-Aug): 200-236
+    else {
+      return weekNum + 200;
+    }
+  }
   
   // In Array umwandeln und sortieren
   const sortedGroups = Object.entries(timeGroups)
@@ -912,15 +916,8 @@ export function aggregateAttendanceDataForRegression(
       // Bei Klassenauswahl Durchschnitt pro Schüler berechnen
       const isClassData = selectedClass && !selectedStudent;
       
-      // KRITISCHE ÄNDERUNG: Divisor nur anwenden, wenn es eine Klassenauswahl ist
-      // UND die studentCount tatsächlich > 1 ist
-      // Für single-student oder bei studentCount = 0 nicht dividieren (divisor = 1)
+      // Divisor nur anwenden, wenn es eine Klassenauswahl ist UND studentCount > 1
       const divisor = isClassData ? Math.max(data.studentCount, 1) : 1;
-      
-      // Debug-Log für die ersten paar Datenpunkte
-      if (Object.keys(timeGroups).indexOf(key) < 5) {
-        console.log(`Regression: Time period ${key}: verspaetungen=${data.verspaetungen}, divisor=${divisor}, result=${data.verspaetungen/divisor}`);
-      }
       
       // Schultagszahl pro Zeiteinheit ermitteln
       let schoolDays = SCHOOL_DAYS_PER_WEEK; // Standard für wöchentliche Gruppierung
@@ -961,37 +958,19 @@ export function aggregateAttendanceDataForRegression(
         fehlzeiten: data.fehlzeiten / divisor,
         timestamp: data.timestamp,
         studentCount: data.studentCount,
-        // Labels für die Anzeige
         periodLabel,
         dateRange,
-        // Sortkey für korrekte Sortierung
         sortKey,
-        // Relative Werte (pro Schultag)
         verspaetungenProTag,
         fehlzeitenProTag,
-        // Anzahl der Schultage
         schoolDays,
-        // Rohdaten für eventuelle weitere Analysen
         rawEntries: data.rawEntries
       };
     })
     .sort((a, b) => a.sortKey - b.sortKey);
   
-  // Log nach der Sortierung
-  console.log(`Regression: Processed ${sortedGroups.length} data points after sorting`);
-  
   // Sorge für ausreichend Datenpunkte durch Lückenfüllung
   const finalResult = ensureCompleteTimeSeriesData(sortedGroups, groupBy === 'weekly' ? 'verspaetungen' : 'fehlzeiten');
-  
-  // Final logging
-  console.log(`Regression: Final result has ${finalResult.length} data points`);
-  if (finalResult.length > 0) {
-    console.log("Regression: First data point:", {
-      name: finalResult[0].name,
-      verspaetungen: finalResult[0].verspaetungen,
-      fehlzeiten: finalResult[0].fehlzeiten
-    });
-  }
   
   return finalResult;
 }

@@ -15,6 +15,10 @@ interface AnalyticsSectionProps {
   weeklyDetailedData: Record<string, any>;      // Detaillierte Daten nach Wochen
   allStudentStats: Record<string, any>;         // Statistiken für alle Schüler
 
+  // Neue Props für Single-Class-Erkennung
+  hasSingleClassOnly?: boolean;
+  singleClassName?: string;
+
   // Layout
   className?: string;                           // Zusätzliche CSS-Klassen
 }
@@ -28,7 +32,10 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
   schoolYearDetailedData,
   weeklyDetailedData,
   allStudentStats,
-  className = ""
+  className = "",
+  // Füge diese Zeilen hinzu:
+  hasSingleClassOnly = false,
+  singleClassName
 }) => {
   // Hole die aktuellen Filtereinstellungen aus dem Context
   const { selectedStudents, selectedDashboardClasses } = useFilters();
@@ -36,16 +43,6 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
   // Bestimme den ausgewählten Schüler oder die ausgewählte Klasse
   const selectedStudent = selectedStudents.length === 1 ? selectedStudents[0] : undefined;
   const selectedClass = !selectedStudent && selectedDashboardClasses.length === 1 ? selectedDashboardClasses[0] : undefined;
-  
-  // NEUE LOGIK: Prüfe, ob es nur eine einzige Klasse im gesamten Datensatz gibt
-  const uniqueClasses = new Set<string>();
-  Object.values(allStudentStats).forEach(stats => {
-    if (stats.klasse) {
-      uniqueClasses.add(stats.klasse);
-    }
-  });
-  const hasSingleClassOnly = uniqueClasses.size === 1;
-  const singleClassName = hasSingleClassOnly && uniqueClasses.size > 0 ? Array.from(uniqueClasses)[0] : undefined;
   
   // Prüfen, ob eine Auswahl getroffen wurde
   const hasSelection = selectedStudent || selectedClass || 

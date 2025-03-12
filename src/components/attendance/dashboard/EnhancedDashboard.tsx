@@ -469,9 +469,12 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         showStudentAverageComparison={showStudentAverageComparison}
         setShowStudentAverageComparison={setShowStudentAverageComparison}
         classAverageAvailability={classAverageAvailability}
-        // Remove the props that are not defined in TrendChartsProps
-        // hasSingleClassOnly={hasSingleClassOnly}
-        // singleClassName={singleClassName}
+        // Diese Zeilen sind auskommentiert und müssen aktiviert werden:
+        hasSingleClassOnly={hasSingleClassOnly}
+        singleClassName={singleClassName}
+        // Zusätzlich benötigte Props für AnalyticsSection:
+        weeklyDetailedData={weeklyDetailedData}
+        allStudentStats={studentStats}
       />
     </div>
   );

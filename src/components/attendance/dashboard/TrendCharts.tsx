@@ -69,6 +69,9 @@ interface TrendChartsProps {
   schoolYearDetailedData?: Record<string, any>;
   weeklyDetailedData?: Record<string, any>;
   allStudentStats?: Record<string, any>;
+  // Neue Props für Single-Class-Erkennung
+  hasSingleClassOnly?: boolean;
+  singleClassName?: string;
 }
 
 const TrendCharts: React.FC<TrendChartsProps> = memo(({
@@ -88,6 +91,8 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   // Neue Prop mit Default-Wert
   classAverageAvailability = { isAvailable: true, tooltip: "", classCount: 0 },
   // Daten für statistische Analysen
+  hasSingleClassOnly = false,
+  singleClassName,
   schoolYearDetailedData = {},
   weeklyDetailedData = {},
   allStudentStats = {}
@@ -688,6 +693,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         weeklyDetailedData={weeklyDetailedData}
         allStudentStats={allStudentStats}
         className="mt-6"
+        hasSingleClassOnly={hasSingleClassOnly}
+        singleClassName={singleClassName}
       />
     </>
   );

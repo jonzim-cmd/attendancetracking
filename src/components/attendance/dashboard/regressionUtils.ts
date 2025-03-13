@@ -517,22 +517,24 @@ function ensureCompleteTimeSeriesData(
     const minWeek = Math.min(...weekNumbers);
     const maxWeek = Math.max(...weekNumbers);
     
-    // Prüfen, ob der Datensatz über den Jahreswechsel geht
-    const spansNewYear = weekNumbers.some(week => week < 10) && 
-                       weekNumbers.some(week => week > 40);
+  // Wenn Wochennummern im Schuljahr-Pattern überspannt werden (KW40 im Vorjahr, KW3 in diesem Jahr)
+  // Die erste Woche des Schuljahres ist typischerweise KW37 (September)
+  const spansNewYear = weekNumbers.some(week => week < 10) && 
+                     weekNumbers.some(week => week > 35);
     
     if (spansNewYear) {
       // Schuljahr: KW37 bis KW36
       const startWeek = weekNumbers.find(week => week > 35) || 37;
       const endWeek = weekNumbers.find(week => week < 10) || 5;
       
-      // Fülle Lücken: startWeek bis 52, dann 1 bis endWeek
       for (let week = startWeek; week <= 52; week++) {
         if (!existingPeriods.has(`KW ${week}`)) {
           result.push({
             name: `KW ${week}`,
             [dataType]: 0,
-            sortKey: week + 100 // Wochen im ersten Halbjahr (KW37-KW52)
+            sortKey: week + 100, // Wochen im ersten Halbjahr (KW37-KW52)
+            // Zusätzliche Metadaten für bessere Anzeige
+            periodLabel: `KW ${week}`
           });
         }
       }
@@ -542,7 +544,9 @@ function ensureCompleteTimeSeriesData(
           result.push({
             name: `KW ${week}`,
             [dataType]: 0,
-            sortKey: week + 200 // Wochen im zweiten Halbjahr (KW1-KW36)
+            sortKey: week + 200, // Wochen im zweiten Halbjahr (KW1-KW36)
+            // Zusätzliche Metadaten für bessere Anzeige
+            periodLabel: `KW ${week}`
           });
         }
       }
@@ -550,10 +554,17 @@ function ensureCompleteTimeSeriesData(
       // Normaler sequentieller Bereich
       for (let week = minWeek; week <= maxWeek; week++) {
         if (!existingPeriods.has(`KW ${week}`)) {
+          // Berechnen des korrekten sortKey basierend auf Schuljahr-Pattern
+          // Wochen 37-52 gehören zum ersten Teil des Schuljahres
+          // Wochen 1-36 gehören zum zweiten Teil des Schuljahres
+          const sortKey = week >= 37 ? week + 100 : week + 200;
+          
           result.push({
             name: `KW ${week}`,
             [dataType]: 0,
-            sortKey: week
+            sortKey: sortKey,
+            // Zusätzliche Metadaten für bessere Anzeige
+            periodLabel: `KW ${week}`
           });
         }
       }

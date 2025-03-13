@@ -1,5 +1,5 @@
 // src/components/attendance/dashboard/RegressionChart.tsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { prepareRegressionData, RegressionResult, aggregateAttendanceDataForRegression } from './regressionUtils';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
@@ -57,6 +57,9 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
   
   // Status für Daten
   const [noDataAvailable, setNoDataAvailable] = useState<boolean>(false);
+  
+  // Ref für den scrollbaren Container
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Bestimmung des ausgewählten Entity (Schüler oder Klasse)
   const selectedEntity = selectedStudent 
@@ -138,6 +141,17 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
     allStudentStats
   ]);
   
+  // Effect für initiales Scrollen zum Ende des Charts
+  useEffect(() => {
+    if (scrollContainerRef.current && chartData.length > 0) {
+      const container = scrollContainerRef.current;
+      // Scrollen zum Ende des Containers
+      setTimeout(() => {
+        container.scrollLeft = container.scrollWidth - container.clientWidth;
+      }, 100); // Leichte Verzögerung, um sicherzustellen, dass das Rendering abgeschlossen ist
+    }
+  }, [chartData]);
+  
   // Optimierte Daten für die Anzeige vorbereiten
   const optimizedChartData = useMemo(() => {
     // Sicherstellen, dass die Regressionslinie keine NaN oder null-Werte enthält
@@ -149,8 +163,37 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
     }));
   }, [chartData]);
   
+  // Explizite Sortierung nach sortKey für korrektes Schuljahr-Pattern (KW37-KW52, dann KW1-KW36)
+  const sortedChartData = useMemo(() => {
+    return [...optimizedChartData].sort((a, b) => {
+      // Wenn sortKey definiert ist, verwende diese
+      if (a.sortKey !== undefined && b.sortKey !== undefined) {
+        return a.sortKey - b.sortKey;
+      }
+      
+      // Alternativ versuche Wochen zu extrahieren
+      const weekA = a.name?.match(/KW\s*(\d+)/i)?.[1];
+      const weekB = b.name?.match(/KW\s*(\d+)/i)?.[1];
+      
+      if (weekA && weekB) {
+        const weekNumA = parseInt(weekA);
+        const weekNumB = parseInt(weekB);
+        
+        // KW37-KW52 kommen vor KW1-KW36
+        if (weekNumA >= 37 && weekNumB < 37) return -1;
+        if (weekNumA < 37 && weekNumB >= 37) return 1;
+        
+        // Innerhalb der gleichen Periode normal sortieren
+        return weekNumA - weekNumB;
+      }
+      
+      // Fallback: nach Name sortieren
+      return String(a.name).localeCompare(String(b.name));
+    });
+  }, [optimizedChartData]);
+  
   // Keine Daten verfügbar
-  if (noDataAvailable || !optimizedChartData || optimizedChartData.length === 0) {
+  if (noDataAvailable || !sortedChartData || sortedChartData.length === 0) {
     return (
       <div className={`${CARD_CLASSES} ${className}`}>
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
@@ -174,9 +217,22 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
   const outlierColor = dataType === 'verspaetungen' ? '#f472b6' : '#93c5fd';
   const predictionColor = dataType === 'verspaetungen' ? '#c026d3' : '#3b82f6';
   
+  // Funktion zur Kontrolle, welche Labels auf der X-Achse angezeigt werden sollen
+  const shouldShowLabel = (value: string, index: number): boolean => {
+    // Bei breiten Displays oder wenigen Datenpunkten alle Labels anzeigen
+    if (chartData.length <= 15) return true;
+    
+    // Ansonsten jedes n-te Label anzeigen, abhängig von der Datenmenge
+    const showEvery = chartData.length > 30 ? 4 : chartData.length > 20 ? 3 : 2;
+    return index % showEvery === 0;
+  };
+  
   // Formatierung für X-Achse
-  const formatXAxis = (value: string) => {
+  const formatXAxis = (value: string, index: number) => {
     if (value === 'Prognose') return 'Prognose';
+    
+    // Labels überspringen wenn nötig, um Überlappungen zu vermeiden
+    if (!shouldShowLabel(value, index)) return '';
     
     // Wenn periodLabel vorhanden ist, diesen verwenden
     const dataPoint = chartData.find(p => p.name === value);
@@ -201,7 +257,7 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
       return (
         <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
           <p className="text-gray-700 dark:text-gray-300 font-medium mb-1 text-base">
-            {isPrediction ? 'Prognose (nächste Periode)' : formatXAxis(label)}
+            {isPrediction ? 'Prognose (nächste Periode)' : formatXAxis(label, 0)}
           </p>
           {dateRange && (
             <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">{dateRange}</p>
@@ -284,7 +340,24 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
     return 'Regressionsanalyse';
   };
   
-  const hasPrediction = optimizedChartData.some(item => item.isPrediction);
+  const hasPrediction = sortedChartData.some(item => item.isPrediction);
+  
+  // Berechne die geeignete Breite für das Chart basierend auf den Datenpunkten
+  const getChartWidth = () => {
+    if (!sortedChartData || sortedChartData.length === 0) return '100%';
+    
+    // Für viele Datenpunkte, scrollbar machen
+    const minWidth = 800; // Minimale Breite in Pixeln
+    const pointWidth = 60; // Breite pro Datenpunkt in Pixeln
+    
+    // Immer scrollbar machen, wenn wir genug Datenpunkte haben
+    if (sortedChartData.length > 8) {
+      return `${Math.max(sortedChartData.length * pointWidth, minWidth)}px`;
+    }
+    
+    // Für wenige Datenpunkte, an Container anpassen
+    return '100%';
+  };
   
   return (
     <div className={`${CARD_CLASSES} ${className}`}>
@@ -368,107 +441,115 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
         </div>
       </div>
       
-      <div className="h-72 w-full overflow-x-auto">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={optimizedChartData}
-            margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#777" opacity={0.2} />
-            <XAxis 
-              dataKey="name" 
-              tick={{ fill: 'currentColor', fontSize: 14 }}
-              axisLine={{ stroke: '#777' }}
-              tickLine={{ stroke: '#777' }}
-              height={30}
-              tickFormatter={formatXAxis}
-            />
-            <YAxis 
-              tick={{ fill: 'currentColor', fontSize: 14 }}
-              axisLine={{ stroke: '#777' }}
-              tickLine={{ stroke: '#777' }}
-              allowDecimals={false}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend 
-              verticalAlign="bottom" 
-              height={36} 
-              wrapperStyle={{ paddingTop: '10px', fontSize: '14px' }}
-            />
-            
-            {/* Horizontale Nulllinie */}
-            <ReferenceLine y={0} stroke="#777" strokeDasharray="3 3" />
-            
-            {/* Vertikale Linie für Prognose */}
-            {hasPrediction && (
-              <ReferenceLine 
-                x="Prognose" 
-                stroke="#999" 
-                strokeDasharray="5 5" 
-                label={{ 
-                  value: "Prognose", 
-                  position: "insideTopRight",
-                  fill: 'currentColor'
-                }} 
+      <div className="h-72 w-full overflow-x-auto" ref={scrollContainerRef}>
+        <div style={{ 
+          width: getChartWidth(),
+          minWidth: '100%', 
+          height: '100%' 
+        }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={sortedChartData}
+              margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#777" opacity={0.2} />
+              <XAxis 
+                dataKey="name" 
+                tick={{ fill: 'currentColor', fontSize: 14 }}
+                axisLine={{ stroke: '#777' }}
+                tickLine={{ stroke: '#777' }}
+                height={30}
+                tickFormatter={formatXAxis}
+                interval={0} // Erzwingt die Anzeige aller Labels, unser angepasster Formatter übernimmt das Filtern
+                type="category" // Diese Eigenschaft ist der Schlüssel
               />
-            )}
-            
-            {/* Originaldaten */}
-            <Line 
-              type="monotone" 
-              dataKey={dataType} 
-              name={dataType === 'verspaetungen' ? 'Verspätungen' : 'Fehltage'} 
-              stroke={mainColor} 
-              activeDot={{ r: 8 }}
-              dot={{ r: 4 }}
-              // Prognosebereich nicht mit normaler Linie verbinden
-              connectNulls={false}
-            />
-            
-            {/* Regressionslinie */}
-            <Line 
-              type="monotone" 
-              dataKey="regressionLine" 
-              name="Regressionslinie" 
-              stroke={regressionColor} 
-              strokeWidth={3}
-              activeDot={false}
-              dot={false}
-              // Verbinden über Nullwerte hinweg für durchgängige Linie
-              connectNulls={true}
-            />
-            
-            {/* Ausreißer markieren */}
-            {optimizedChartData
-              .filter(point => point.isOutlier && !point.isPrediction)
-              .map((point, index) => (
-                <ReferenceDot
-                  key={`outlier-${index}`}
-                  x={point.name}
-                  y={point[dataType]}
-                  r={6}
-                  fill={outlierColor}
-                  stroke="white"
-                  strokeWidth={1}
+              <YAxis 
+                tick={{ fill: 'currentColor', fontSize: 14 }}
+                axisLine={{ stroke: '#777' }}
+                tickLine={{ stroke: '#777' }}
+                allowDecimals={false}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend 
+                verticalAlign="bottom" 
+                height={36} 
+                wrapperStyle={{ paddingTop: '10px', fontSize: '14px' }}
+              />
+              
+              {/* Horizontale Nulllinie */}
+              <ReferenceLine y={0} stroke="#777" strokeDasharray="3 3" />
+              
+              {/* Vertikale Linie für Prognose */}
+              {hasPrediction && (
+                <ReferenceLine 
+                  x="Prognose" 
+                  stroke="#999" 
+                  strokeDasharray="5 5" 
+                  label={{ 
+                    value: "Prognose", 
+                    position: "insideTopRight",
+                    fill: 'currentColor'
+                  }} 
                 />
-              ))}
-            
-            {/* Prognosepunkt */}
-            {optimizedChartData
-              .filter(point => point.isPrediction)
-              .map((point, index) => (
-                <ReferenceDot
-                  key={`prediction-${index}`}
-                  x={point.name}
-                  y={point.regressionLine}
-                  r={7}
-                  fill={predictionColor}
-                  stroke="white"
-                  strokeWidth={2}
-                />
-              ))}
-          </LineChart>
-        </ResponsiveContainer>
+              )}
+              
+              {/* Originaldaten */}
+              <Line 
+                type="monotone" 
+                dataKey={dataType} 
+                name={dataType === 'verspaetungen' ? 'Verspätungen' : 'Fehltage'} 
+                stroke={mainColor} 
+                activeDot={{ r: 8 }}
+                dot={{ r: 4 }}
+                // Prognosebereich nicht mit normaler Linie verbinden
+                connectNulls={false}
+              />
+              
+              {/* Regressionslinie */}
+              <Line 
+                type="monotone" 
+                dataKey="regressionLine" 
+                name="Regressionslinie" 
+                stroke={regressionColor} 
+                strokeWidth={3}
+                activeDot={false}
+                dot={false}
+                // Verbinden über Nullwerte hinweg für durchgängige Linie
+                connectNulls={true}
+              />
+              
+              {/* Ausreißer markieren */}
+              {sortedChartData
+                .filter(point => point.isOutlier && !point.isPrediction)
+                .map((point, index) => (
+                  <ReferenceDot
+                    key={`outlier-${index}`}
+                    x={point.name}
+                    y={point[dataType]}
+                    r={6}
+                    fill={outlierColor}
+                    stroke="white"
+                    strokeWidth={1}
+                  />
+                ))}
+              
+              {/* Prognosepunkt */}
+              {sortedChartData
+                .filter(point => point.isPrediction)
+                .map((point, index) => (
+                  <ReferenceDot
+                    key={`prediction-${index}`}
+                    x={point.name}
+                    y={point.regressionLine}
+                    r={7}
+                    fill={predictionColor}
+                    stroke="white"
+                    strokeWidth={2}
+                  />
+                ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );

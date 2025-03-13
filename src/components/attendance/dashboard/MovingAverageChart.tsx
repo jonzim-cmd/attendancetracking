@@ -188,7 +188,14 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
           // School year ordering: KW37-KW52 comes before KW1-KW36
           // We use sortKey 100-152 for KW1-KW52 of the first year
           // and sortKey 200-236 for KW1-KW36 of the second year
-          const sortKey = weekNum >= 37 ? weekNum + 100 : weekNum + 200;
+          let sortKey;
+          if (weekNum >= 35 && weekNum <= 36) {
+            sortKey = weekNum;
+          } else if (weekNum >= 37) {
+            sortKey = weekNum + 100;
+          } else {
+            sortKey = weekNum + 200;
+          }
           return { ...item, sortKey };
         }
       }

@@ -50,6 +50,27 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
     { key: 'jul', label: 'Jul', index: 6, schoolYearIndex: 10 },
   ], []);
   
+  // Funktion, um den zweiten Montag im September zu bekommen
+  const getSecondMondayOfMonth = (year: number, month: number): Date => {
+    // Erstelle ein Datum für den ersten Tag des Monats
+    const firstDayOfMonth = new Date(Date.UTC(year, month, 1));
+    
+    // Ermittle den Wochentag des ersten Tags (0 = Sonntag, 1 = Montag, usw.)
+    const firstDayOfWeek = firstDayOfMonth.getDay();
+    
+    // Berechne die Tage bis zum ersten Montag
+    // Wenn der 1. ein Montag ist, dann 0 Tage, sonst (8 - Wochentag) % 7
+    const daysUntilFirstMonday = firstDayOfWeek === 1 ? 0 : (8 - firstDayOfWeek) % 7;
+    
+    // Berechne das Datum des ersten Montags
+    const firstMonday = 1 + daysUntilFirstMonday;
+    
+    // Berechne das Datum des zweiten Montags (7 Tage nach dem ersten)
+    const secondMonday = firstMonday + 7;
+    
+    return new Date(Date.UTC(year, month, secondMonday));
+  };
+  
   // Die originalen Quick-Select-Optionen behalten wir für Kompatibilität
   
   // Format date for display
@@ -111,9 +132,15 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
     const startYear = firstMonth.index < 8 ? schoolStartYear + 1 : schoolStartYear;
     const endYear = lastMonth.index < 8 ? schoolStartYear + 1 : schoolStartYear;
     
-    // Erstelle die Datum-Objekte für deutschen Zeitzonenkontext
-    // Erster Tag des ersten ausgewählten Monats - garantiert der 1. des Monats
-    const startDate = new Date(Date.UTC(startYear, firstMonth.index, 1, 0, 0, 0));
+    let startDate;
+    
+    // Spezialbehandlung für September: Starte mit dem zweiten Montag
+    if (firstMonth.key === 'sep') {
+      startDate = getSecondMondayOfMonth(startYear, firstMonth.index);
+    } else {
+      // Für andere Monate: Erster Tag des Monats
+      startDate = new Date(Date.UTC(startYear, firstMonth.index, 1, 0, 0, 0));
+    }
     
     // Letzter Tag des letzten ausgewählten Monats
     // Trick: Tag 0 des nächsten Monats ist der letzte Tag des aktuellen Monats
@@ -208,9 +235,12 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
   };
 
   const handleMouseLeave = () => {
+    // Kommentiert, um das sofortige Schließen zu verhindern
+    /*
     dropdownHoverTimer.current = setTimeout(() => {
       setIsDateDropdownOpen(false);
     }, 300); // Verzögerung zum Schließen
+    */
   };
   
   return (
@@ -221,7 +251,10 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
       onMouseLeave={handleMouseLeave}
     >
       <button
-        onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsDateDropdownOpen(!isDateDropdownOpen);
+        }}
         className="flex items-center gap-1 px-3 py-1.5 bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark rounded text-chatGray-textLight dark:text-chatGray-textDark text-sm"
         title="Zeitraum auswählen"
       >
@@ -233,7 +266,11 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
       </button>
       
       {isDateDropdownOpen && (
-        <div className="absolute top-full left-0 mt-1 z-50 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark border border-gray-200 dark:border-gray-600 rounded-md shadow-lg w-72 max-w-[300px]">
+        <div 
+          className="absolute top-full left-0 mt-1 z-50 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark border border-gray-200 dark:border-gray-600 rounded-md shadow-lg w-72 max-w-[300px]"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
           <div className="p-3 space-y-3">
             {/* Schuljahr-Monate */}
             <div className="space-y-1">
@@ -247,7 +284,11 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
                       ? 'bg-header-btn-selected dark:bg-header-btn-selected-dark'
                       : 'bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark'
                   } text-chatGray-textLight dark:text-chatGray-textDark`}
-                  onClick={toggleAllMonths}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleAllMonths();
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
                 >
                   Alle
                 </button>
@@ -263,7 +304,11 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
                         ? 'bg-header-btn-selected dark:bg-header-btn-selected-dark'
                         : 'bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark'
                     } text-chatGray-textLight dark:text-chatGray-textDark`}
-                    onClick={() => selectSingleMonth(month.key)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      selectSingleMonth(month.key);
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
                   >
                     {month.label}
                   </button>
@@ -274,7 +319,11 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
               <div className="pt-2">
                 <button
                   className="w-full mt-1 px-2 py-1 bg-header-btn-selected dark:bg-header-btn-selected-dark text-chatGray-textLight dark:text-chatGray-textDark rounded text-xs hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark"
-                  onClick={applyMonthSelection}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    applyMonthSelection();
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
                   disabled={selectedMonths.length === 0}
                 >
                   Monate anwenden
@@ -293,6 +342,8 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
                     value={dashboardStartDate}
                     onChange={(e) => onDashboardStartDateChange(e.target.value)}
                     className="w-full px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs"
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -302,12 +353,18 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
                     value={dashboardEndDate}
                     onChange={(e) => onDashboardEndDateChange(e.target.value)}
                     className="w-full px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs"
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
                   />
                 </div>
               </div>
               <button
                 className="w-full mt-2 px-2 py-1 bg-header-btn-selected dark:bg-header-btn-selected-dark text-chatGray-textLight dark:text-chatGray-textDark rounded text-xs hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark"
-                onClick={() => setIsDateDropdownOpen(false)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDateDropdownOpen(false);
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
               >
                 Anwenden
               </button>

@@ -34,8 +34,25 @@ export const SCHOOL_DAYS_PER_MONTH: Record<string, number> = {
   'Dez': 15
 };
 
-// Durchschnittliche Schultage pro Woche (typischweise 5)
-export const SCHOOL_DAYS_PER_WEEK = 5;
+// Durchschnittliche Schultage pro Woche, aufgeschlüsselt nach Monaten
+// Basierend auf den monatlichen Schultagen und 4,33 Wochen pro Monat
+export const WEEKLY_SCHOOL_DAYS_BY_MONTH: Record<string, number> = {
+  'Sep': 3.46, 
+  'Okt': 4.39, 
+  'Nov': 4.62, 
+  'Dez': 3.46,
+  'Jan': 4.39, // Beispielwerte basierend auf monatlichen Daten
+  'Feb': 4.62, 
+  'Mar': 3.70, // Weniger Schultage wegen Osterferien möglich
+  'Apr': 2.77, // Osterferien fallen oft komplett hier rein
+  'Mai': 4.62, // Pfingstferien können Einfluss haben
+  'Jun': 2.54, // Pfingstferien oft hier
+  'Jul': 5.31, 
+  'Aug': 0.00  // Ferienmonat
+};
+
+// Fallback für den Fall, dass kein Monat zugeordnet werden kann
+export const DEFAULT_SCHOOL_DAYS_PER_WEEK = 5;
 
 /**
  * Berechnet eine lineare Regression für Zeitreihendaten
@@ -268,11 +285,68 @@ function getTrendDescription(slope: number, rSquared: number, isRelative: boolea
 }
 
 /**
+ * Gibt die durchschnittliche Anzahl von Schultagen pro Woche für einen bestimmten Monat zurück
+ * 
+ * @param month Der Monatsname (z.B. 'Jan', 'Feb', etc.)
+ * @returns Die durchschnittliche Anzahl von Schultagen pro Woche für diesen Monat
+ */
+function getWeeklySchoolDaysForMonth(month: string | null): number {
+  if (!month) return DEFAULT_SCHOOL_DAYS_PER_WEEK;
+  
+  // Normalisierter Monatsname
+  const normalizedMonth = month.substring(0, 3);
+  
+  // Rückgabe des entsprechenden Werts oder des Standardwerts
+  return WEEKLY_SCHOOL_DAYS_BY_MONTH[normalizedMonth] || DEFAULT_SCHOOL_DAYS_PER_WEEK;
+}
+
+/**
+ * Extrahiert den Monat aus einer Wochenbezeichnung (z.B. "KW 12") oder einem Zeitstempel
+ * 
+ * @param weekLabel Die Wochenbezeichnung (z.B. "KW 12")
+ * @param timestamp Optionaler Zeitstempel für genauere Zuordnung
+ * @returns Der abgeleitete Monatsname oder null
+ */
+function extractMonthFromWeekDate(weekLabel: string, timestamp?: Date): string | null {
+  // Wenn ein Zeitstempel vorhanden ist, verwende diesen zur Bestimmung des Monats
+  if (timestamp && timestamp instanceof Date) {
+    return getMonthName(timestamp.getMonth());
+  }
+  
+  // Versuche, den Monat aus dem Wochenlabel zu extrahieren, falls es Datumsbestandteile enthält
+  const monthPattern = /(Jan|Feb|Mar|Apr|Mai|Jun|Jul|Aug|Sep|Okt|Nov|Dez)/;
+  const match = String(weekLabel).match(monthPattern);
+  if (match) return match[1];
+  
+  // Versuch, die KW-Nummer zu extrahieren und daraus einen ungefähren Monat abzuleiten
+  const weekMatch = weekLabel.match(/KW\s*(\d+)/i);
+  if (weekMatch) {
+    const weekNum = parseInt(weekMatch[1]);
+    
+    // Grobe Zuordnung von Kalenderwoche zu Monat
+    // Dies ist nur eine Annäherung - die genaue Zuordnung hängt vom Jahr ab
+    if (weekNum >= 1 && weekNum <= 4) return 'Jan';
+    if (weekNum >= 5 && weekNum <= 8) return 'Feb';
+    if (weekNum >= 9 && weekNum <= 13) return 'Mar';
+    if (weekNum >= 14 && weekNum <= 17) return 'Apr';
+    if (weekNum >= 18 && weekNum <= 22) return 'Mai';
+    if (weekNum >= 23 && weekNum <= 26) return 'Jun';
+    if (weekNum >= 27 && weekNum <= 30) return 'Jul';
+    if (weekNum >= 31 && weekNum <= 35) return 'Aug';
+    if (weekNum >= 36 && weekNum <= 39) return 'Sep';
+    if (weekNum >= 40 && weekNum <= 44) return 'Okt';
+    if (weekNum >= 45 && weekNum <= 48) return 'Nov';
+    if (weekNum >= 49 && weekNum <= 53) return 'Dez';
+  }
+  
+  // Standardwert, wenn keine Zuordnung möglich ist
+  return null;
+}
+
+/**
  * Bereitet Zeitreihendaten für die Regressionsanalyse vor
  * und fügt Regressionslinienpunkte hinzu
  */
-// Die korrigierte prepareRegressionData Funktion:
-
 export function prepareRegressionData(
   timeSeriesData: any[],
   dataType: 'verspaetungen' | 'fehlzeiten' = 'verspaetungen',
@@ -332,13 +406,28 @@ export function prepareRegressionData(
     const month = extractMonthFromName(point.name);
     const week = extractWeekFromName(point.name);
     
-    let schoolDays = SCHOOL_DAYS_PER_WEEK; // Default für wöchentliche Daten
+    let schoolDays;
     
     if (month) {
       // Für monatliche Daten
       schoolDays = SCHOOL_DAYS_PER_MONTH[month] || 20; // Default 20 Tage, falls nicht gefunden
     } else if (week) {
-      // Für wöchentliche Daten bleiben wir bei SCHOOL_DAYS_PER_WEEK
+      // Für wöchentliche Daten: Monatsbasierte durchschnittliche Schultage pro Woche verwenden
+      // Versuche, den Monat aus den Metadaten zu extrahieren, falls vorhanden
+      const dateStr = point.dateRange || '';
+      const dateMonth = extractMonthFromName(dateStr);
+      
+      // Wenn ein Monat aus dem Datumsbereich gefunden wurde, verwende diesen
+      if (dateMonth) {
+        schoolDays = getWeeklySchoolDaysForMonth(dateMonth);
+      } else {
+        // Versuche, den Monat aus dem Zeitstempel abzuleiten
+        const monthFromWeekLabel = extractMonthFromWeekDate(point.name, point.timestamp);
+        schoolDays = getWeeklySchoolDaysForMonth(monthFromWeekLabel);
+      }
+    } else {
+      // Fallback
+      schoolDays = DEFAULT_SCHOOL_DAYS_PER_WEEK;
     }
     
     // Berechnung des relativen Wertes (pro Schultag)
@@ -931,12 +1020,23 @@ export function aggregateAttendanceDataForRegression(
       const divisor = isClassData ? Math.max(data.studentCount, 1) : 1;
       
       // Schultagszahl pro Zeiteinheit ermitteln
-      let schoolDays = SCHOOL_DAYS_PER_WEEK; // Standard für wöchentliche Gruppierung
+      let schoolDays;
       
       // Für monatliche Gruppierung spezifische Tage aus der Konfiguration holen
       if (groupBy === 'monthly') {
         const month = key.split(' ')[0]; // Extrahiere den Monatsnamen
         schoolDays = SCHOOL_DAYS_PER_MONTH[month] || 20; // Default 20 Tage, falls nicht konfiguriert
+      } else {
+        // Für wöchentliche Gruppierung: Monatsbasierte durchschnittliche Schultage verwenden
+        // Versuche, den Monat aus dem Zeitstempel abzuleiten
+        const monthFromDate = data.timestamp ? getMonthName(data.timestamp.getMonth()) : null;
+        
+        // Alternativer Versuch: Monat aus der Wochenbezeichnung ableiten
+        const monthFromWeekLabel = extractMonthFromWeekDate(key, data.timestamp);
+        
+        // Verwende den ersten verfügbaren Monat oder den Standardwert
+        const month = monthFromDate || monthFromWeekLabel;
+        schoolDays = getWeeklySchoolDaysForMonth(month);
       }
       
       // Relative Werte pro Schultag berechnen

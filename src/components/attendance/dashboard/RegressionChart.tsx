@@ -296,28 +296,31 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
           )}
           
           <div className="flex flex-col space-y-1">
-            {payload.map((entry: any, index: number) => {
-              // Formatierte Werte anzeigen - Nur wenn sie existieren
-              if (entry.value === null || entry.value === undefined) return null;
+          {payload.map((entry: any, index: number) => {
+            // Formatierte Werte anzeigen - Nur wenn sie existieren
+            if (entry.value === null || entry.value === undefined) return null;
+            
+            // Angepasste Formatierung basierend auf dem Modus (relativ/absolut)
+            const value = typeof entry.value === 'number' 
+              ? (entry.dataKey === 'displayValue' && dataPoint?.isRelativeMode
+                ? entry.value.toFixed(3)  // Mehr Dezimalstellen für relative Werte
+                : entry.value.toFixed(1)) // Standardformat für absolute Werte
+              : entry.value;
+            
+            let displayName = entry.name;
+            if (entry.dataKey === 'regressionLine' && isPrediction) {
+              displayName = 'Prognosewert';
+            }
               
-              const value = typeof entry.value === 'number' 
-                ? entry.value.toFixed(1) 
-                : entry.value;
-              
-              let displayName = entry.name;
-              if (entry.dataKey === 'regressionLine' && isPrediction) {
-                displayName = 'Prognosewert';
-              }
-                
-              return (
-                <div key={`item-${index}`} className="flex items-center">
-                  <div className="w-3 h-3 mr-2" style={{ backgroundColor: entry.color }}></div>
-                  <span className="text-gray-700 dark:text-gray-300 text-sm">
-                    {displayName}: {value}
-                  </span>
-                </div>
-              );
-            })}
+            return (
+              <div key={`item-${index}`} className="flex items-center">
+                <div className="w-3 h-3 mr-2" style={{ backgroundColor: entry.color }}></div>
+                <span className="text-gray-700 dark:text-gray-300 text-sm">
+                  {displayName}: {value}
+                </span>
+              </div>
+            );
+          })}
           </div>
           
           {/* Schultagsinformation, falls verfügbar */}
@@ -499,7 +502,14 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
                 tick={{ fill: 'currentColor', fontSize: 14 }}
                 axisLine={{ stroke: '#777' }}
                 tickLine={{ stroke: '#777' }}
-                allowDecimals={false}
+                allowDecimals={useRelativeValues} // Dezimalstellen nur für relative Werte
+                tickFormatter={(value) => {
+                  if (useRelativeValues) {
+                    // Bei relativen Werten zeigen wir bis zu 2 Dezimalstellen an
+                    return value.toFixed(2);
+                  }
+                  return Math.round(value).toString();
+                }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend 
@@ -525,15 +535,16 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
                 />
               )}
               
-              {/* Originaldaten */}
+              {/* Originaldaten - Verwende displayValue anstelle von dataType */}
               <Line 
                 type="monotone" 
-                dataKey={dataType} 
-                name={dataType === 'verspaetungen' ? 'Verspätungen' : 'Fehltage'} 
+                dataKey="displayValue" 
+                name={dataType === 'verspaetungen' ? 
+                  (useRelativeValues ? 'Verspätungen pro Schultag' : 'Verspätungen') : 
+                  (useRelativeValues ? 'Fehltage pro Schultag' : 'Fehltage')} 
                 stroke={mainColor} 
                 activeDot={{ r: 8 }}
                 dot={{ r: 4 }}
-                // Prognosebereich nicht mit normaler Linie verbinden
                 connectNulls={false}
               />
               

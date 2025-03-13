@@ -453,10 +453,19 @@ export function prepareRegressionData(
     const regressionValue = regressionResult.intercept + (regressionResult.slope * index);
     const isOutlier = regressionResult.outliers.includes(index);
     
+    // Neue Eigenschaft für die Anzeige:
+    // Wenn useRelativeValues aktiviert ist, zeigen wir auch die ursprünglichen 
+    // Datenpunkte relativ zu Schultagen an (für konsistente Skalierung)
+    const displayValue = useRelativeValues 
+      ? point.relativeValue || 0  // Wenn relativ aktiviert, verwende relativeValue
+      : point[dataType];          // Sonst die ursprünglichen absoluten Werte
+    
     return {
       ...point,
+      displayValue,               // Neues Feld für die einheitliche Anzeige
       regressionLine: regressionValue,
-      isOutlier
+      isOutlier,
+      isRelativeMode: useRelativeValues // Marker für die Anzeige
     };
   });
   

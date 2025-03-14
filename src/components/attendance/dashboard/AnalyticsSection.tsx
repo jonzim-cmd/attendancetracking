@@ -21,6 +21,9 @@ interface AnalyticsSectionProps {
 
   // Layout
   className?: string;                           // Zusätzliche CSS-Klassen
+  
+  // NEUE PROP: Chart-Modus
+  chartMode?: 'both' | 'movingAverage' | 'regression';
 }
 
 /**
@@ -35,7 +38,8 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
   className = "",
   // Füge diese Zeilen hinzu:
   hasSingleClassOnly = false,
-  singleClassName
+  singleClassName,
+  chartMode = 'both' // Default: beide Charts anzeigen
 }) => {
   // Hole die aktuellen Filtereinstellungen aus dem Context
   const { selectedStudents, selectedDashboardClasses } = useFilters();
@@ -108,36 +112,67 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
   
   return (
     <div className={`space-y-6 ${className}`}>
-      <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-0">
-        Statistische Analysen
-      </h2>
-      <p className="text-sm text-gray-600 dark:text-gray-400 -mt-4 mb-2">
-        Für {selectedStudent ? 'Schüler/in: ' : 'Klasse: '}
-        <span className="font-medium">
-          {selectedStudent 
-            ? `${selectedStudent.split(',')[0]} ${selectedStudent.split(',')[1]}`
-            : effectiveClass}
-        </span>
-      </p>
+      {chartMode !== 'regression' && (
+        <>
+          {chartMode !== 'movingAverage' && (
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-0">
+              Statistische Analysen
+            </h2>
+          )}
+          {selectedStudent || selectedClass ? (
+            <p className="text-sm text-gray-600 dark:text-gray-400 -mt-4 mb-2">
+              Für {selectedStudent ? 'Schüler/in: ' : 'Klasse: '}
+              <span className="font-medium">
+                {selectedStudent 
+                  ? `${selectedStudent.split(',')[0]} ${selectedStudent.split(',')[1]}`
+                  : effectiveClass}
+              </span>
+            </p>
+          ) : null}
+          
+          <MovingAverageChart 
+            attendanceOverTime={attendanceOverTime} 
+            schoolYearDetailedData={schoolYearDetailedData}
+            weeklyDetailedData={weeklyDetailedData}
+            allStudentStats={allStudentStats}
+            selectedStudent={selectedStudent}
+            selectedClass={effectiveClass}
+          />
+        </>
+      )}
       
-      {/* Beide Chart-Komponenten mit allen notwendigen Daten versorgen */}
-      <MovingAverageChart 
-        attendanceOverTime={attendanceOverTime} 
-        schoolYearDetailedData={schoolYearDetailedData}
-        weeklyDetailedData={weeklyDetailedData}
-        allStudentStats={allStudentStats}
-        selectedStudent={selectedStudent}
-        selectedClass={effectiveClass}
-      />
+      {chartMode !== 'movingAverage' && chartMode === 'both' && <div className="h-6"></div>}
       
-      <RegressionChart 
-        attendanceOverTime={attendanceOverTime} 
-        schoolYearDetailedData={schoolYearDetailedData}
-        weeklyDetailedData={weeklyDetailedData}
-        allStudentStats={allStudentStats}
-        selectedStudent={selectedStudent}
-        selectedClass={effectiveClass}
-      />
+      {chartMode !== 'movingAverage' && (
+        <>
+          {chartMode === 'both' && (
+            <>
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-0">
+                Regressionsanalyse
+              </h2>
+              {selectedStudent || selectedClass ? (
+                <p className="text-sm text-gray-600 dark:text-gray-400 -mt-4 mb-2">
+                  Für {selectedStudent ? 'Schüler/in: ' : 'Klasse: '}
+                  <span className="font-medium">
+                    {selectedStudent 
+                      ? `${selectedStudent.split(',')[0]} ${selectedStudent.split(',')[1]}`
+                      : effectiveClass}
+                  </span>
+                </p>
+              ) : null}
+            </>
+          )}
+          
+          <RegressionChart 
+            attendanceOverTime={attendanceOverTime} 
+            schoolYearDetailedData={schoolYearDetailedData}
+            weeklyDetailedData={weeklyDetailedData}
+            allStudentStats={allStudentStats}
+            selectedStudent={selectedStudent}
+            selectedClass={effectiveClass}
+          />
+        </>
+      )}
     </div>
   );
 };

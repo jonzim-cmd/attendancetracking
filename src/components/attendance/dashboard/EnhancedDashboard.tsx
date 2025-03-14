@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useFilters } from '@/contexts/FilterContext';
 import TrendCharts from './TrendCharts';
+import DraggableDashboard from './DraggableDashboard';
+import ChartContainer from './ChartContainer';
 import { 
   prepareWeeklyTrends, 
   prepareAbsenceTypes, 
@@ -10,7 +12,7 @@ import {
 import { 
   calculateClassAverages, 
   shouldShowAverages, 
-  updateAllClassesCache, 
+  updateAllClassesCache,
   clearAllClassesCache 
 } from './classAverages';
 import {
@@ -21,6 +23,7 @@ import {
 } from './studentAverages';
 import { StudentStats } from '@/types';
 import { getClassAverageAvailability, setTotalClassCount } from './classAverageUtils';
+import AnalyticsSection from './AnalyticsSection';
 
 interface EnhancedDashboardProps {
   getFilteredStudents: () => [string, StudentStats][];
@@ -42,6 +45,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   endDate,
   selectedWeeks,
   weeklyStats = {},
+  schoolYearStats = {},
   weeklyDetailedData = {},
 }) => {
   const {
@@ -97,6 +101,16 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   // NEW: Check if there's only one class in the dataset
   const [hasSingleClassOnly, setHasSingleClassOnly] = useState<boolean>(false);
   const [singleClassName, setSingleClassName] = useState<string | undefined>(undefined);
+  
+  // NEW: State für draggable Dashboard
+  const [useDraggableDashboard, setUseDraggableDashboard] = useState(() => {
+    try {
+      const saved = localStorage.getItem('useDraggableDashboard');
+      return saved === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
   
   // Convert filtered students to a dictionary for easier access
   useEffect(() => {
@@ -452,30 +466,144 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   // Berechne die Verfügbarkeit der Klassenvergleichsfunktion - OHNE Parameter!
   const classAverageAvailability = getClassAverageAvailability();
   
+  // Toggle-Funktion für das Dashboard
+  const toggleDraggableDashboard = () => {
+    const newValue = !useDraggableDashboard;
+    setUseDraggableDashboard(newValue);
+    localStorage.setItem('useDraggableDashboard', String(newValue));
+  };
+  
   return (
     <div className="space-y-4"> 
-      <TrendCharts 
-        weeklyTrends={weeklyTrends}
-        attendanceOverTime={attendanceOverTime}
-        dayOfWeekData={dayOfWeekData}
-        absenceTypes={absenceTypes}
-        groupingOption={groupingOption}
-        chartVisibility={trendChartVisibility}
-        setChartVisibility={setTrendChartVisibility}
-        weekdayChartVisibility={weekdayChartVisibility}
-        setWeekdayChartVisibility={setWeekdayChartVisibility}
-        // Pass student-specific props
-        selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
-        showStudentAverageComparison={showStudentAverageComparison}
-        setShowStudentAverageComparison={setShowStudentAverageComparison}
-        classAverageAvailability={classAverageAvailability}
-        // Diese Zeilen sind auskommentiert und müssen aktiviert werden:
-        hasSingleClassOnly={hasSingleClassOnly}
-        singleClassName={singleClassName}
-        // Zusätzlich benötigte Props für AnalyticsSection:
-        weeklyDetailedData={weeklyDetailedData}
-        allStudentStats={studentStats}
-      />
+      {/* Toggle-Button für Draggable Mode */}
+      <div className="flex justify-end mb-2">
+        <button 
+          onClick={toggleDraggableDashboard}
+          className="px-3 py-1 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm rounded-md flex items-center"
+        >
+          <span>{useDraggableDashboard ? 'Standard-Layout' : 'Anpassbares Layout'}</span>
+          <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            {useDraggableDashboard ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+            )}
+          </svg>
+        </button>
+      </div>
+
+      {useDraggableDashboard ? (
+        <DraggableDashboard>
+          {/* Zeitlicher Verlauf */}
+          <ChartContainer 
+            title="Zeitlicher Verlauf" 
+            subtitle={`(${groupingOption === 'weekly' ? 'Wöchentliche Gruppierung' : 'Monatliche Gruppierung'})`}
+          >
+            <TrendCharts
+              weeklyTrends={weeklyTrends}
+              attendanceOverTime={attendanceOverTime}
+              dayOfWeekData={dayOfWeekData}
+              absenceTypes={absenceTypes}
+              groupingOption={groupingOption}
+              chartVisibility={trendChartVisibility}
+              setChartVisibility={setTrendChartVisibility}
+              weekdayChartVisibility={weekdayChartVisibility}
+              setWeekdayChartVisibility={setWeekdayChartVisibility}
+              selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
+              showStudentAverageComparison={showStudentAverageComparison}
+              setShowStudentAverageComparison={setShowStudentAverageComparison}
+              classAverageAvailability={classAverageAvailability}
+              hasSingleClassOnly={hasSingleClassOnly}
+              singleClassName={singleClassName}
+              weeklyDetailedData={weeklyDetailedData}
+              allStudentStats={studentStats}
+              chartMode="timeSeries"
+              schoolYearDetailedData={schoolYearStats}
+            />
+          </ChartContainer>
+
+          {/* Wochentagsanalyse */}
+          <ChartContainer 
+            title="Wochentagsanalyse" 
+            subtitle="(Unabhängig von Zeitraumsauswahl)"
+          >
+            <TrendCharts
+              weeklyTrends={weeklyTrends}
+              attendanceOverTime={attendanceOverTime}
+              dayOfWeekData={dayOfWeekData}
+              absenceTypes={absenceTypes}
+              groupingOption={groupingOption}
+              chartVisibility={trendChartVisibility}
+              setChartVisibility={setTrendChartVisibility}
+              weekdayChartVisibility={weekdayChartVisibility}
+              setWeekdayChartVisibility={setWeekdayChartVisibility}
+              selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
+              showStudentAverageComparison={showStudentAverageComparison}
+              setShowStudentAverageComparison={setShowStudentAverageComparison}
+              classAverageAvailability={classAverageAvailability}
+              hasSingleClassOnly={hasSingleClassOnly}
+              singleClassName={singleClassName}
+              weeklyDetailedData={weeklyDetailedData}
+              allStudentStats={studentStats}
+              chartMode="weekday"
+              schoolYearDetailedData={schoolYearStats}
+            />
+          </ChartContainer>
+
+          {/* Gleitender Durchschnitt */}
+          <ChartContainer 
+            title="Gleitender Durchschnitt"
+          >
+            <AnalyticsSection 
+              attendanceOverTime={attendanceOverTime}
+              schoolYearDetailedData={schoolYearStats}
+              weeklyDetailedData={weeklyDetailedData}
+              allStudentStats={studentStats}
+              className="h-full"
+              hasSingleClassOnly={hasSingleClassOnly}
+              singleClassName={singleClassName}
+              chartMode="movingAverage"
+            />
+          </ChartContainer>
+
+          {/* Regressionsanalyse */}
+          <ChartContainer 
+            title="Regressionsanalyse"
+          >
+            <AnalyticsSection 
+              attendanceOverTime={attendanceOverTime}
+              schoolYearDetailedData={schoolYearStats}
+              weeklyDetailedData={weeklyDetailedData}
+              allStudentStats={studentStats}
+              className="h-full"
+              hasSingleClassOnly={hasSingleClassOnly}
+              singleClassName={singleClassName}
+              chartMode="regression"
+            />
+          </ChartContainer>
+        </DraggableDashboard>
+      ) : (
+        <TrendCharts 
+          weeklyTrends={weeklyTrends}
+          attendanceOverTime={attendanceOverTime}
+          dayOfWeekData={dayOfWeekData}
+          absenceTypes={absenceTypes}
+          groupingOption={groupingOption}
+          chartVisibility={trendChartVisibility}
+          setChartVisibility={setTrendChartVisibility}
+          weekdayChartVisibility={weekdayChartVisibility}
+          setWeekdayChartVisibility={setWeekdayChartVisibility}
+          selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
+          showStudentAverageComparison={showStudentAverageComparison}
+          setShowStudentAverageComparison={setShowStudentAverageComparison}
+          classAverageAvailability={classAverageAvailability}
+          hasSingleClassOnly={hasSingleClassOnly}
+          singleClassName={singleClassName}
+          weeklyDetailedData={weeklyDetailedData}
+          allStudentStats={studentStats}
+          schoolYearDetailedData={schoolYearStats}
+        />
+      )}
     </div>
   );
 };

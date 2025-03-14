@@ -23,6 +23,7 @@ interface TrendChartsProps {
   dayOfWeekData: any[];
   absenceTypes: any[];
   groupingOption: 'weekly' | 'monthly';
+  chartMode?: 'all' | 'timeSeries' | 'weekday'; // Neue Prop für selektives Rendering
   chartVisibility: {
     verspaetungen: boolean;
     fehlzeitenEntsch: boolean;
@@ -80,6 +81,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   dayOfWeekData,
   absenceTypes,
   groupingOption,
+  chartMode,
   chartVisibility,
   setChartVisibility,
   weekdayChartVisibility,
@@ -317,111 +319,171 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   }
 
   // Custom tooltip for attendance chart
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    // Find the corresponding data entry to get the date range
-    const dataEntry = timeSeriesData.find(entry => entry.name === label);
-    const dateRange = dataEntry?.dateRange || '';
-    
-    // Group entries to display normal values, class averages, and student averages
-    const normalEntries: any[] = [];
-    const classAvgEntries: any[] = [];
-    const studentAvgEntries: any[] = [];
-    
-    // Sort entries into appropriate groups
-    payload.forEach((entry: any) => {
-      if (entry.dataKey.includes('StudentAvg')) {
-        studentAvgEntries.push(entry);
-      } else if (entry.dataKey.includes('Avg')) {
-        classAvgEntries.push(entry);
-      } else {
-        normalEntries.push(entry);
-      }
-    });
-    
-    return (
-      <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
-        <p className="text-gray-700 dark:text-gray-300 font-medium mb-1 text-base">{formatDate(label)}</p>
-        {dateRange && (
-          <p className="text-gray-600 dark:text-gray-400 text-base mb-1">{dateRange}</p>
-        )}
-        
-        {/* Student name if available */}
-        {dataEntry?.studentName && (
-          <p className="text-gray-700 dark:text-gray-300 text-sm mb-1">
-            Schüler: {dataEntry.studentName}
-          </p>
-        )}
-        
-        {/* Class metadata if available */}
-        {classAvgEntries.length > 0 && dataEntry?.totalClassCount && (
-          <p className="text-gray-500 dark:text-gray-400 text-xs mb-2">
-            Durchschnitte basierend auf {dataEntry.totalClassCount} Klassen
-          </p>
-        )}
-        
-        {/* Student average metadata if available */}
-        {studentAvgEntries.length > 0 && dataEntry?.totalStudentCount && (
-          <p className="text-gray-500 dark:text-gray-400 text-xs mb-2">
-            Durchschnitte basierend auf {dataEntry.totalStudentCount} Schülern
-          </p>
-        )}
-        
-        {/* Student data */}
-        <div className="flex flex-col space-y-1">
-          {normalEntries.map((entry: any, index: number) => (
-            <div key={`item-${index}`} className="flex items-center">
-              <div className="w-3 h-3 mr-2" style={{ backgroundColor: entry.color }}></div>
-              <span className="text-gray-700 dark:text-gray-300 text-base">
-                {entry.name}: {entry.value}
-              </span>
-            </div>
-          ))}
-          
-          {/* Class averages if available */}
-          {classAvgEntries.length > 0 && (
-            <>
-              <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-              {classAvgEntries.map((entry: any, index: number) => (
-                <div key={`class-avg-${index}`} className="flex items-center">
-                  <div className="w-3 h-3 mr-2" style={{ 
-                    backgroundColor: entry.color,
-                    opacity: 0.7,
-                    backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.4) 2px, rgba(255,255,255,0.4) 4px)'
-                  }}></div>
-                  <span className="text-gray-700 dark:text-gray-300 text-base">
-                    {entry.name}: {entry.value.toFixed(1)}
-                  </span>
-                </div>
-              ))}
-            </>
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      // Find the corresponding data entry to get the date range
+      const dataEntry = timeSeriesData.find(entry => entry.name === label);
+      const dateRange = dataEntry?.dateRange || '';
+      
+      // Group entries to display normal values, class averages, and student averages
+      const normalEntries: any[] = [];
+      const classAvgEntries: any[] = [];
+      const studentAvgEntries: any[] = [];
+      
+      // Sort entries into appropriate groups
+      payload.forEach((entry: any) => {
+        if (entry.dataKey.includes('StudentAvg')) {
+          studentAvgEntries.push(entry);
+        } else if (entry.dataKey.includes('Avg')) {
+          classAvgEntries.push(entry);
+        } else {
+          normalEntries.push(entry);
+        }
+      });
+      
+      return (
+        <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
+          <p className="text-gray-700 dark:text-gray-300 font-medium mb-1 text-base">{formatDate(label)}</p>
+          {dateRange && (
+            <p className="text-gray-600 dark:text-gray-400 text-base mb-1">{dateRange}</p>
           )}
           
-          {/* Student averages if available */}
-          {studentAvgEntries.length > 0 && (
-            <>
-              <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-              {studentAvgEntries.map((entry: any, index: number) => (
-                <div key={`student-avg-${index}`} className="flex items-center">
-                  <div className="w-3 h-3 mr-2" style={{ 
-                    backgroundColor: entry.color,
-                    opacity: 0.8,
-                    backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.4) 2px, rgba(255,255,255,0.4) 4px)'
-                  }}></div>
-                  <span className="text-gray-700 dark:text-gray-300 text-base">
-                    {entry.name}: {entry.value.toFixed(1)}
-                  </span>
-                </div>
-              ))}
-            </>
+          {/* Student name if available */}
+          {dataEntry?.studentName && (
+            <p className="text-gray-700 dark:text-gray-300 text-sm mb-1">
+              Schüler: {dataEntry.studentName}
+            </p>
           )}
+          
+          {/* Class metadata if available */}
+          {classAvgEntries.length > 0 && dataEntry?.totalClassCount && (
+            <p className="text-gray-500 dark:text-gray-400 text-xs mb-2">
+              Durchschnitte basierend auf {dataEntry.totalClassCount} Klassen
+            </p>
+          )}
+          
+          {/* Student average metadata if available */}
+          {studentAvgEntries.length > 0 && dataEntry?.totalStudentCount && (
+            <p className="text-gray-500 dark:text-gray-400 text-xs mb-2">
+              Durchschnitte basierend auf {dataEntry.totalStudentCount} Schülern
+            </p>
+          )}
+          
+          {/* Student data */}
+          <div className="flex flex-col space-y-1">
+            {normalEntries.map((entry: any, index: number) => (
+              <div key={`item-${index}`} className="flex items-center">
+                <div className="w-3 h-3 mr-2" style={{ backgroundColor: entry.color }}></div>
+                <span className="text-gray-700 dark:text-gray-300 text-base">
+                  {entry.name}: {entry.value}
+                </span>
+              </div>
+            ))}
+            
+            {/* Class averages if available */}
+            {classAvgEntries.length > 0 && (
+              <>
+                <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                {classAvgEntries.map((entry: any, index: number) => (
+                  <div key={`class-avg-${index}`} className="flex items-center">
+                    <div className="w-3 h-3 mr-2" style={{ 
+                      backgroundColor: entry.color,
+                      opacity: 0.7,
+                      backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.4) 2px, rgba(255,255,255,0.4) 4px)'
+                    }}></div>
+                    <span className="text-gray-700 dark:text-gray-300 text-base">
+                      {entry.name}: {entry.value.toFixed(1)}
+                    </span>
+                  </div>
+                ))}
+              </>
+            )}
+            
+            {/* Student averages if available */}
+            {studentAvgEntries.length > 0 && (
+              <>
+                <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                {studentAvgEntries.map((entry: any, index: number) => (
+                  <div key={`student-avg-${index}`} className="flex items-center">
+                    <div className="w-3 h-3 mr-2" style={{ 
+                      backgroundColor: entry.color,
+                      opacity: 0.8,
+                      backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.4) 2px, rgba(255,255,255,0.4) 4px)'
+                    }}></div>
+                    <span className="text-gray-700 dark:text-gray-300 text-base">
+                      {entry.name}: {entry.value.toFixed(1)}
+                    </span>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
         </div>
+      );
+    }
+    
+    return null;
+  };
+  
+  // Diese Funktion bestimmt, welcher Chart-Typ angezeigt werden soll
+  const shouldRenderChart = (chartType: string) => {
+    if (!chartMode || chartMode === 'all') return true;
+    return chartMode === chartType;
+  };
+
+  // Im Einzel-Chart-Modus nur den angeforderten Chart-Typ rendern
+  if (chartMode === 'timeSeries') {
+    return (
+      <div className="h-full">
+        <div className="overflow-x-auto h-full" ref={scrollContainerRef}>
+          <div style={{ 
+            width: attendanceOverTime.length > 8 ? `${Math.max(attendanceOverTime.length * 80, 800)}px` : '100%', 
+            minWidth: '100%',
+            height: '100%' 
+          }}>
+            <AttendanceLineChart 
+              data={attendanceOverTime}
+              lines={visibleLines}
+              formatXAxis={formatDate}
+              yAxisMax={maxAttendanceValue > 0 ? undefined : 10}
+              customTooltip={CustomTooltip}
+            />
+          </div>
+        </div>
+        {attendanceOverTime.length === 0 && (
+          <div className="text-center text-gray-500 dark:text-gray-400 mt-4 text-base">
+            Keine Daten für den ausgewählten Zeitraum verfügbar.
+          </div>
+        )}
       </div>
     );
   }
   
-  return null;
-};
+  // Einzelner Wochentagsanalyse-Chart
+  if (chartMode === 'weekday') {
+    return (
+      <div className="h-full">
+        <div className="overflow-x-auto h-full">
+          <div style={{ 
+            width: '100%',
+            height: '100%' 
+          }}>
+            <AttendanceBarChart 
+              data={dayOfWeekData}
+              bars={dayOfWeekBars}
+              criticalDays={{
+                verspaetungen: maxVerspaetungenTag?.name,
+                fehlzeitenUnentsch: maxFehlzeitenUnentschTag?.name,
+                fehlzeitenGesamt: dayOfWeekData.reduce((max, day) => 
+                  day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
+                  dayOfWeekData[0])?.name
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <>

@@ -357,6 +357,26 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       clearAllStudentsCache();
     };
   }, []);
+
+  // Event-Listener für den Toggle-Button in der HeaderBar
+  useEffect(() => {
+    const handleToggleDraggableDashboard = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.value !== undefined) {
+        setUseDraggableDashboard(customEvent.detail.value);
+      } else {
+        // Fallback-Toggle-Logik
+        const newValue = !useDraggableDashboard;
+        setUseDraggableDashboard(newValue);
+      }
+    };
+
+    window.addEventListener('toggleDraggableDashboard', handleToggleDraggableDashboard);
+    
+    return () => {
+      window.removeEventListener('toggleDraggableDashboard', handleToggleDraggableDashboard);
+    };
+  }, [useDraggableDashboard, setUseDraggableDashboard]);
   
   // Effect to prepare all data when filters change
   useEffect(() => {
@@ -467,32 +487,10 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   
   // Berechne die Verfügbarkeit der Klassenvergleichsfunktion - OHNE Parameter!
   const classAverageAvailability = getClassAverageAvailability();
-  
-  // Toggle-Funktion für das Dashboard
-  const toggleDraggableDashboard = () => {
-    const newValue = !useDraggableDashboard;
-    setUseDraggableDashboard(newValue);
-    localStorage.setItem('useDraggableDashboard', String(newValue));
-  };
-  
+
   return (
     <div className="space-y-4"> 
-      {/* Toggle-Button für Draggable Mode */}
-      <div className="flex justify-end mb-2">
-        <button 
-          onClick={toggleDraggableDashboard}
-          className="px-3 py-1 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm rounded-md flex items-center"
-        >
-          <span>{useDraggableDashboard ? 'Standard-Layout' : 'Anpassbares Layout'}</span>
-          <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            {useDraggableDashboard ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-            )}
-          </svg>
-        </button>
-      </div>
+      {/* Toggle-Button wurde in die HeaderBar verschoben */}
 
       {useDraggableDashboard ? (
         <DraggableDashboard>

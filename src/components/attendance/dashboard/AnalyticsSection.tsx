@@ -120,7 +120,7 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
           allStudentStats={allStudentStats}
           selectedStudent={selectedStudent}
           selectedClass={effectiveClass}
-          className="w-full"
+          className={`w-full ${CARD_CLASSES} mb-4`}
         />
       )}
       
@@ -132,7 +132,7 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
           allStudentStats={allStudentStats}
           selectedStudent={selectedStudent}
           selectedClass={effectiveClass}
-          className="w-full"
+          className={`w-full ${CARD_CLASSES} mb-4`}
         />
       )}
     </div>

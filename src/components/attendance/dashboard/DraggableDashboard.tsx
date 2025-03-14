@@ -20,7 +20,7 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
     return {
       lg: [
         // First component - Zeitlicher Verlauf (Time Series) - Full width
-        { i: '0', x: 0, y: 0, w: 12, h: 6 },
+        { i: '0', x: 0, y: 18, w: 12, h: 6 },
         
         // Second component - Wochentagsanalyse (Weekday Analysis) - Full width
         { i: '1', x: 0, y: 6, w: 12, h: 6 },
@@ -29,7 +29,7 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
         { i: '2', x: 0, y: 12, w: 12, h: 6 },
         
         // Fourth component - Regressionsanalyse (Regression Analysis) - Full width
-        { i: '3', x: 0, y: 18, w: 12, h: 6 },
+        { i: '3', x: 0, y: 0, w: 12, h: 6 },
       ]
     };
   };
@@ -75,11 +75,11 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
       isDraggable={true}
       isResizable={true}
       containerPadding={[0, 0]}
-      margin={[16, 8]}
+      margin={[8, 8]}
     >
       {children.map((child, i) => (
         <div key={i.toString()} className={`${CARD_CLASSES} p-0 overflow-hidden border-0 w-full`}>
-          <div className="p-1 h-full w-full">
+          <div className="pt-0 px-1 pb-1 h-full w-full">
             {child}
           </div>
         </div>

@@ -31,9 +31,8 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
 }) => {
   const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
-  // State für ausgewählte Monate
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   
   // Alle Monate des Schuljahrs (September bis Juli)
   const schoolYearMonths: Month[] = useMemo(() => [
@@ -235,14 +234,22 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
   };
 
   const handleMouseLeave = () => {
-    // Kommentiert, um das sofortige Schließen zu verhindern
-    /*
-    dropdownHoverTimer.current = setTimeout(() => {
-      setIsDateDropdownOpen(false);
-    }, 300); // Verzögerung zum Schließen
-    */
+    if (!isInputFocused) {
+      dropdownHoverTimer.current = setTimeout(() => {  // Timer startet, um Dropdown nach Verzögerung zu schließen
+        setIsDateDropdownOpen(false);                  // Dropdown wird geschlossen
+      }, 300);
+    }
   };
   
+  // Neu: Handler für Fokus und Verlassen der Eingabefelder
+  const handleInputFocus = () => {
+    setIsInputFocused(true);                        // Eingabefeld ist fokussiert
+  };
+
+  const handleInputBlur = () => {
+    setIsInputFocused(false);                       // Eingabefeld verliert Fokus
+  };
+
   return (
     <div 
       className={`relative ${className}`} 
@@ -270,6 +277,8 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
           className="absolute top-full left-0 mt-1 z-50 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark border border-gray-200 dark:border-gray-600 rounded-md shadow-lg w-72 max-w-[300px]"
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
+          onMouseEnter={handleMouseEnter}              // Neu: Hält Dropdown offen, wenn Maus ins Dropdown geht
+          onMouseLeave={handleMouseLeave}              // Neu: Startet Timer zum Schließen, wenn Maus Dropdown verlässt
         >
           <div className="p-3 space-y-3">
             {/* Schuljahr-Monate */}
@@ -341,6 +350,8 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
                     type="date"
                     value={dashboardStartDate}
                     onChange={(e) => onDashboardStartDateChange(e.target.value)}
+                    onFocus={handleInputFocus}              // Hinzufügen: Setzt isInputFocused auf true
+                    onBlur={handleInputBlur} // Hinzufügen: Setzt isInputFocused auf false
                     className="w-full px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs"
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
@@ -352,6 +363,8 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
                     type="date"
                     value={dashboardEndDate}
                     onChange={(e) => onDashboardEndDateChange(e.target.value)}
+                    onFocus={handleInputFocus}              // Hinzufügen: Setzt isInputFocused auf true
+                    onBlur={handleInputBlur}                // Hinzufügen: Setzt isInputFocused auf false
                     className="w-full px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs"
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}

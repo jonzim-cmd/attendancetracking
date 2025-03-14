@@ -108,6 +108,12 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   // NEU: Timer für Dashboard-Filter Dropdowns
   const dashboardClassDropdownTimer = useRef<NodeJS.Timeout | null>(null);
 
+  const [isGroupingDropdownOpen, setIsGroupingDropdownOpen] = useState(false);
+ 
+  const groupingDropdownRef = useRef<HTMLDivElement>(null);
+  
+  const groupingDropdownTimer = useRef<NodeJS.Timeout | null>(null);
+
   // Quick select options
 
   // Click-Outside Handler für die Dropdowns
@@ -132,6 +138,9 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       if (dateDropdownRef.current && !dateDropdownRef.current.contains(event.target as Node)) {
         setIsDateDropdownOpen(false);
       }
+      if (groupingDropdownRef.current && !groupingDropdownRef.current.contains(event.target as Node)) {
+        setIsGroupingDropdownOpen(false);
+      }
     };
     
     document.addEventListener('mousedown', handleClickOutside);
@@ -139,6 +148,20 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [columnDropdownRef, classDropdownRef, dashboardClassDropdownRef, dateDropdownRef]);
+
+  const handleMouseEnterGroupingDropdown = () => {
+    if (groupingDropdownTimer.current) {
+      clearTimeout(groupingDropdownTimer.current);
+      groupingDropdownTimer.current = null;
+    }
+    setIsGroupingDropdownOpen(true);
+  };
+
+  const handleMouseLeaveGroupingDropdown = () => {
+    groupingDropdownTimer.current = setTimeout(() => {
+      setIsGroupingDropdownOpen(false);
+    }, 300); // Verzögerung zum Schließen
+  };
 
   // Hilfsfunktionen für Dropdowns
   const handleMouseEnterColumnDropdown = () => {
@@ -500,17 +523,43 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
               mode="dashboard"
             />
             
-            {/* Gruppierungsoption für Dashboard */}
-            <div className="min-w-[120px]">
-              <select
-                value={groupingOption}
-                onChange={(e) => setGroupingOption(e.target.value as 'weekly' | 'monthly')}
-                className="w-full rounded px-2 py-1 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm"
+            {/* 🔴 NEU: Gruppierungsoption für Dashboard mit Hover (ersetzt das alte <select>) */}
+            <div
+              className="relative min-w-[120px]"
+              ref={groupingDropdownRef}
+              onMouseEnter={handleMouseEnterGroupingDropdown}
+              onMouseLeave={handleMouseLeaveGroupingDropdown}
+            >
+              {/* 🔴 NEU: Dropdown-Trigger */}
+              <div
+                className="w-full rounded px-2 py-1 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm flex items-center justify-between cursor-pointer"
                 title="Gruppierung der Daten für Trendanalysen"
               >
-                <option value="weekly">Wöchentlich</option>
-                <option value="monthly">Monatlich</option>
-              </select>
+                <span className="truncate whitespace-nowrap mr-1">
+                  {groupingOption === 'weekly' ? 'Wöchentlich' : 'Monatlich'}
+                </span>
+                <ChevronDown className="w-4 h-4 ml-1 flex-shrink-0" />
+              </div>
+
+              {/* 🔴 NEU: Dropdown-Inhalt */}
+              {isGroupingDropdownOpen && (
+                <div className="absolute top-full left-0 mt-1 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark shadow-lg rounded-md overflow-hidden border border-tableBorder-light dark:border-tableBorder-dark z-50 min-w-[120px]">
+                  <div className="p-2 space-y-1">
+                    <div
+                      className="px-2 py-1 hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark rounded cursor-pointer text-sm text-chatGray-textLight dark:text-chatGray-textDark"
+                      onClick={() => setGroupingOption('weekly')}
+                    >
+                      Wöchentlich
+                    </div>
+                    <div
+                      className="px-2 py-1 hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark rounded cursor-pointer text-sm text-chatGray-textLight dark:text-chatGray-textDark"
+                      onClick={() => setGroupingOption('monthly')}
+                    >
+                      Monatlich
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* NEU: Verwenden der verbesserten DateRangeButton-Komponente */}
@@ -554,6 +603,33 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       </div>
       <div className="flex items-center gap-2 mr-2">
         <ResetButton onReset={onReset} />
+        
+        {/* Neuer Layout-Toggle Button (nur im Dashboard-Modus anzeigen) */}
+        {viewMode === 'dashboard' && (
+          <button
+            onClick={() => {
+              // Toggle-Logik hier direkt in der HeaderBar
+              const newValue = typeof window !== 'undefined' && localStorage.getItem('useDraggableDashboard') === 'true' ? false : true;
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('useDraggableDashboard', String(newValue));
+              }
+              // Das Event verbreiten für alle Komponenten, die zuhören
+              const event = new CustomEvent('toggleDraggableDashboard', { detail: { value: newValue } });
+              window.dispatchEvent(event);
+            }}
+            className="p-1.5 rounded-full bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors"
+            title={typeof window !== 'undefined' && localStorage.getItem('useDraggableDashboard') === 'true' ? 'Zum Standard-Layout wechseln' : 'Zum anpassbaren Layout wechseln'}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              {typeof window !== 'undefined' && localStorage.getItem('useDraggableDashboard') === 'true' ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+              )}
+            </svg>
+          </button>
+        )}
+
         <button
           onClick={toggleDarkMode}
           className="p-1.5 rounded-full bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors"

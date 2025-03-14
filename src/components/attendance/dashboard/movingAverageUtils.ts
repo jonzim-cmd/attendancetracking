@@ -626,6 +626,10 @@ export function formatDataForMovingAverageChart(
     debugLog(`Formatting for class "${selectedClass}"`);
     filteredData = extractClassData(clonedData, selectedClass);
     debugLog(`Found ${filteredData.length} data points for class "${selectedClass}"`);
+  } else {
+    // NEU: Bei Mehrfachauswahl oder keiner Klassenauswahl alle Daten verwenden
+    debugLog(`Using all data for multiple classes or 'All Classes' selection`);
+    // behalte clonedData wie es ist (alle Daten)
   }
   
   // If no data after filtering, return an empty array
@@ -635,6 +639,8 @@ export function formatDataForMovingAverageChart(
       debugLog(`WARNING: Not enough data points for class "${selectedClass}" (found ${filteredData.length}, need 3)`);
     } else if (selectedStudent) {
       debugLog(`WARNING: Not enough data points for student "${selectedStudent}" (found ${filteredData.length}, need 3)`);
+    } else {
+      debugLog(`WARNING: Not enough data points across all classes (found ${filteredData.length}, need 3)`);
     }
     return [];
   }

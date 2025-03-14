@@ -111,67 +111,29 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
   const effectiveClass = selectedClass || (hasSingleClassOnly && selectedDashboardClasses.length === 0 ? singleClassName : undefined);
   
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={`${className}`}>
       {chartMode !== 'regression' && (
-        <>
-          {chartMode !== 'movingAverage' && (
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-0">
-              Statistische Analysen
-            </h2>
-          )}
-          {selectedStudent || selectedClass ? (
-            <p className="text-sm text-gray-600 dark:text-gray-400 -mt-4 mb-2">
-              Für {selectedStudent ? 'Schüler/in: ' : 'Klasse: '}
-              <span className="font-medium">
-                {selectedStudent 
-                  ? `${selectedStudent.split(',')[0]} ${selectedStudent.split(',')[1]}`
-                  : effectiveClass}
-              </span>
-            </p>
-          ) : null}
-          
-          <MovingAverageChart 
-            attendanceOverTime={attendanceOverTime} 
-            schoolYearDetailedData={schoolYearDetailedData}
-            weeklyDetailedData={weeklyDetailedData}
-            allStudentStats={allStudentStats}
-            selectedStudent={selectedStudent}
-            selectedClass={effectiveClass}
-          />
-        </>
+        <MovingAverageChart 
+          attendanceOverTime={attendanceOverTime} 
+          schoolYearDetailedData={schoolYearDetailedData}
+          weeklyDetailedData={weeklyDetailedData}
+          allStudentStats={allStudentStats}
+          selectedStudent={selectedStudent}
+          selectedClass={effectiveClass}
+          className="w-full"
+        />
       )}
       
-      {chartMode !== 'movingAverage' && chartMode === 'both' && <div className="h-6"></div>}
-      
       {chartMode !== 'movingAverage' && (
-        <>
-          {chartMode === 'both' && (
-            <>
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-0">
-                Regressionsanalyse
-              </h2>
-              {selectedStudent || selectedClass ? (
-                <p className="text-sm text-gray-600 dark:text-gray-400 -mt-4 mb-2">
-                  Für {selectedStudent ? 'Schüler/in: ' : 'Klasse: '}
-                  <span className="font-medium">
-                    {selectedStudent 
-                      ? `${selectedStudent.split(',')[0]} ${selectedStudent.split(',')[1]}`
-                      : effectiveClass}
-                  </span>
-                </p>
-              ) : null}
-            </>
-          )}
-          
-          <RegressionChart 
-            attendanceOverTime={attendanceOverTime} 
-            schoolYearDetailedData={schoolYearDetailedData}
-            weeklyDetailedData={weeklyDetailedData}
-            allStudentStats={allStudentStats}
-            selectedStudent={selectedStudent}
-            selectedClass={effectiveClass}
-          />
-        </>
+        <RegressionChart 
+          attendanceOverTime={attendanceOverTime} 
+          schoolYearDetailedData={schoolYearDetailedData}
+          weeklyDetailedData={weeklyDetailedData}
+          allStudentStats={allStudentStats}
+          selectedStudent={selectedStudent}
+          selectedClass={effectiveClass}
+          className="w-full"
+        />
       )}
     </div>
   );

@@ -298,18 +298,63 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
   // No data available - render early if no data
   if (noDataAvailable || !optimizedChartData || optimizedChartData.length === 0) {
     return (
-      <div className={`${CARD_CLASSES} ${className}`}>
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
-          Gleitender Durchschnitt
-        </h3>
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          {selectedEntity 
-            ? `Keine Daten verfügbar für ${entityType === 'student' ? 'den Schüler' : 'die Klasse'} "${selectedEntity}".`
-            : 'Bitte wählen Sie einen Schüler oder eine Klasse aus, um den gleitenden Durchschnitt anzuzeigen.'}
-          <p className="mt-2 text-sm">
-            Die Analyse benötigt mindestens 3 Datenpunkte.
-          </p>
+      <div className={`${className} w-full h-full`}>
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+              Gleitender Durchschnitt
+              {selectedEntity && (
+                <span className="text-base font-normal ml-2 text-gray-500 dark:text-gray-400">
+                  {selectedStudent 
+                    ? `(${selectedStudent.split(',')[0]} ${selectedStudent.split(',')[1]})`
+                    : selectedClass ? `(Klasse ${selectedClass})` : ''}
+                </span>
+              )}
+            </h3>
+            <InfoButton 
+              title={CHART_EXPLANATIONS.movingAverage.title} 
+              content={CHART_EXPLANATIONS.movingAverage.content} 
+              className="ml-2"
+            />
+          </div>
+          <div className="flex flex-wrap gap-x-2 text-sm items-center">
+            {/* Switch between tardiness and absences */}
+            <div className="flex items-center gap-1">
+              <label className="inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={dataType === 'verspaetungen'} 
+                  onChange={() => setDataType(dataType === 'verspaetungen' ? 'fehlzeiten' : 'verspaetungen')}
+                  className="sr-only"
+                />
+                <div className={`relative inline-flex h-5 w-10 items-center rounded-full ${dataType === 'verspaetungen' ? 'bg-purple-600' : 'bg-blue-600'}`}>
+                  <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition ${dataType === 'verspaetungen' ? 'translate-x-1' : 'translate-x-6'}`}></span>
+                </div>
+                <span className="ml-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {dataType === 'verspaetungen' ? 'Verspätungen' : 'Fehltage'}
+                </span>
+              </label>
+            </div>
+            
+            {/* Period size selection */}
+            <div className="flex items-center">
+              <label className="text-sm mr-1 text-gray-700 dark:text-gray-300">Periode:</label>
+              <select
+                value={periodSize}
+                onChange={(e) => setPeriodSize(parseInt(e.target.value))}
+                className="bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark text-chatGray-textLight dark:text-chatGray-textDark text-sm rounded px-1 py-0.5"
+                title="Anzahl der Perioden für die Berechnung des gleitenden Durchschnitts"
+              >
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="6">6</option>
+              </select>
+            </div>
+          </div>
         </div>
+        
+        {/* Chart content remains the same */}
       </div>
     );
   }
@@ -405,7 +450,7 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
   };
   
   return (
-    <div className={`${CARD_CLASSES} ${className}`}>
+    <div className={`${className} w-full h-full`}>
      <div className="flex justify-between items-center mb-4">
       <div className="flex items-center">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
@@ -463,7 +508,7 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={optimizedChartData}
-              margin={{ top: 5, right: 50, left: 20, bottom: 25 }}
+              margin={{ top: 5, right: 50, left: 20, bottom: 0 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#777" opacity={0.2} />
               <XAxis 

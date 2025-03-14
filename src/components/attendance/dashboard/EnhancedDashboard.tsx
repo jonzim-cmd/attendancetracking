@@ -24,6 +24,8 @@ import {
 import { StudentStats } from '@/types';
 import { getClassAverageAvailability, setTotalClassCount } from './classAverageUtils';
 import AnalyticsSection from './AnalyticsSection';
+import MovingAverageChart from './MovingAverageChart';
+import RegressionChart from './RegressionChart';
 
 interface EnhancedDashboardProps {
   getFilteredStudents: () => [string, StudentStats][];
@@ -545,34 +547,32 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
           </ChartContainer>
 
           {/* Gleitender Durchschnitt */}
-          <ChartContainer 
-            title="Gleitender Durchschnitt"
-          >
-            <AnalyticsSection 
-              attendanceOverTime={attendanceOverTime}
+          <ChartContainer title="" subtitle="">
+            <MovingAverageChart 
+              attendanceOverTime={attendanceOverTime} 
               schoolYearDetailedData={schoolYearStats}
               weeklyDetailedData={weeklyDetailedData}
               allStudentStats={studentStats}
-              className="h-full"
-              hasSingleClassOnly={hasSingleClassOnly}
-              singleClassName={singleClassName}
-              chartMode="movingAverage"
+              selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
+              selectedClass={selectedDashboardClasses.length === 1 ? 
+                            selectedDashboardClasses[0] : 
+                            (hasSingleClassOnly && selectedDashboardClasses.length === 0 ? singleClassName : undefined)}
+              className="w-full h-full"
             />
           </ChartContainer>
 
           {/* Regressionsanalyse */}
-          <ChartContainer 
-            title="Regressionsanalyse"
-          >
-            <AnalyticsSection 
-              attendanceOverTime={attendanceOverTime}
+          <ChartContainer title="" subtitle="">
+            <RegressionChart 
+              attendanceOverTime={attendanceOverTime} 
               schoolYearDetailedData={schoolYearStats}
               weeklyDetailedData={weeklyDetailedData}
               allStudentStats={studentStats}
-              className="h-full"
-              hasSingleClassOnly={hasSingleClassOnly}
-              singleClassName={singleClassName}
-              chartMode="regression"
+              selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
+              selectedClass={selectedDashboardClasses.length === 1 ? 
+                            selectedDashboardClasses[0] : 
+                            (hasSingleClassOnly && selectedDashboardClasses.length === 0 ? singleClassName : undefined)}
+              className="w-full h-full"
             />
           </ChartContainer>
         </DraggableDashboard>

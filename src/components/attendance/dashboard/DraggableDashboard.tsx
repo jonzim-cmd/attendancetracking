@@ -75,11 +75,11 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
       isDraggable={true}
       isResizable={true}
       containerPadding={[0, 0]}
-      margin={[16, 16]}
+      margin={[16, 8]}
     >
       {children.map((child, i) => (
         <div key={i.toString()} className={`${CARD_CLASSES} p-0 overflow-hidden border-0 w-full`}>
-          <div className="p-3 h-full w-full">
+          <div className="p-1 h-full w-full">
             {child}
           </div>
         </div>

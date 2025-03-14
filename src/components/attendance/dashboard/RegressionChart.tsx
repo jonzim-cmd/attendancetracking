@@ -339,21 +339,26 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
   };
   
   return (
-    <div className={`${CARD_CLASSES} ${className}`}>
-      <div className="flex justify-between items-center mb-3">
+    <div className={`${className} w-full h-full`}>
+      <div className="flex justify-between items-center mb-3 w-full relative z-10 bg-inherit">
         <div className="flex items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-              {getTitleText()}
-            </h3>
-          </div>
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+            Regressionsanalyse
+            {selectedEntity && (
+              <span className="text-base font-normal ml-2 text-gray-500 dark:text-gray-400">
+                {selectedStudent 
+                  ? `(${selectedStudent.split(',')[0]} ${selectedStudent.split(',')[1]})`
+                  : selectedClass ? `(Klasse ${selectedClass})` : ''}
+              </span>
+            )}
+          </h3>
           <InfoButton 
             title={CHART_EXPLANATIONS.regression.title} 
             content={CHART_EXPLANATIONS.regression.content} 
             className="ml-2"
           />
         </div>
-        <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex flex-wrap gap-x-2 text-sm items-center">
           {/* Umschaltung zwischen Verspätungen und Fehltagen */}
           <div className="flex items-center gap-1">
             <label className="inline-flex items-center cursor-pointer">
@@ -429,7 +434,7 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={sortedChartData}
-              margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
+              margin={{ top: 5, right: 30, left: 20, bottom: 0 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#777" opacity={0.2} />
               <XAxis 
@@ -439,17 +444,16 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
                 tickLine={{ stroke: '#777' }}
                 height={30}
                 tickFormatter={formatXAxis}
-                interval={0} // Erzwingt die Anzeige aller Labels, unser angepasster Formatter übernimmt das Filtern
-                type="category" // Diese Eigenschaft ist der Schlüssel
+                interval={0}
+                type="category"
               />
               <YAxis 
                 tick={{ fill: 'currentColor', fontSize: 14 }}
                 axisLine={{ stroke: '#777' }}
                 tickLine={{ stroke: '#777' }}
-                allowDecimals={useRelativeValues} // Dezimalstellen nur für relative Werte
+                allowDecimals={useRelativeValues}
                 tickFormatter={(value) => {
                   if (useRelativeValues) {
-                    // Bei relativen Werten zeigen wir bis zu 2 Dezimalstellen an
                     return value.toFixed(2);
                   }
                   return Math.round(value).toString();
@@ -501,7 +505,6 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
                 strokeWidth={3}
                 activeDot={false}
                 dot={false}
-                // Verbinden über Nullwerte hinweg für durchgängige Linie
                 connectNulls={true}
               />
               
@@ -512,7 +515,7 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
                   <ReferenceDot
                     key={`outlier-${index}`}
                     x={point.name}
-                    y={point[dataType]}
+                    y={point.displayValue}
                     r={6}
                     fill={outlierColor}
                     stroke="white"

@@ -17,12 +17,6 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
 }) => {
   // Define standard layout that matches exactly the vertical stacking in the standard view
   const getDefaultLayout = () => {
-    // The default layout mimics the standard layout:
-    // - First component (Time Series): Full width at top
-    // - Second component (Weekday Analysis): Full width below first
-    // - Third component (Moving Average): Full width below second
-    // - Fourth component (Regression): Full width below third
-    
     return {
       lg: [
         // First component - Zeitlicher Verlauf (Time Series) - Full width
@@ -84,8 +78,10 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
       margin={[16, 16]}
     >
       {children.map((child, i) => (
-        <div key={i.toString()} className={`${CARD_CLASSES} p-0 overflow-hidden border-0`}>
-          {child}
+        <div key={i.toString()} className={`${CARD_CLASSES} p-0 overflow-hidden border-0 w-full`}>
+          <div className="p-3 h-full w-full">
+            {child}
+          </div>
         </div>
       ))}
     </ResponsiveGridLayout>

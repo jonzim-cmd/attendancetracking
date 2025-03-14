@@ -495,10 +495,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       {useDraggableDashboard ? (
         <DraggableDashboard>
           {/* Zeitlicher Verlauf */}
-          <ChartContainer 
-            title="Zeitlicher Verlauf" 
-            subtitle={`(${groupingOption === 'weekly' ? 'Wöchentliche Gruppierung' : 'Monatliche Gruppierung'})`}
-          >
+          <ChartContainer title="" subtitle="">
             <TrendCharts
               weeklyTrends={weeklyTrends}
               attendanceOverTime={attendanceOverTime}
@@ -523,10 +520,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
           </ChartContainer>
 
           {/* Wochentagsanalyse */}
-          <ChartContainer 
-            title="Wochentagsanalyse" 
-            subtitle="(Unabhängig von Zeitraumsauswahl)"
-          >
+          <ChartContainer title="" subtitle="">
             <TrendCharts
               weeklyTrends={weeklyTrends}
               attendanceOverTime={attendanceOverTime}

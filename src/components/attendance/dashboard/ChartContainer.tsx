@@ -48,23 +48,27 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
   const explanationKey = getExplanationKey();
   
   return (
-    <div className={`p-4 h-full flex flex-col ${className}`}>
+    <div className={`p-2 h-full flex flex-col ${className}`}>
       <div className="chart-drag-handle cursor-move flex items-center justify-between mb-4">
         <div className="flex items-center">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            {title}
-            {subtitle && (
-              <span className="text-base font-normal ml-2 text-gray-500 dark:text-gray-400">
-                {subtitle}
-              </span>
-            )}
-          </h3>
-          {explanationKey && TYPED_CHART_EXPLANATIONS[explanationKey] && (
-            <InfoButton 
-              title={TYPED_CHART_EXPLANATIONS[explanationKey].title} 
-              content={TYPED_CHART_EXPLANATIONS[explanationKey].content} 
-              className="ml-2"
-            />
+          {title && (
+            <>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                {title}
+                {subtitle && (
+                  <span className="text-base font-normal ml-2 text-gray-500 dark:text-gray-400">
+                    {subtitle}
+                  </span>
+                )}
+              </h3>
+              {explanationKey && TYPED_CHART_EXPLANATIONS[explanationKey] && (
+                <InfoButton 
+                  title={TYPED_CHART_EXPLANATIONS[explanationKey].title} 
+                  content={TYPED_CHART_EXPLANATIONS[explanationKey].content} 
+                  className="ml-2"
+                />
+              )}
+            </>
           )}
         </div>
         <div className="text-gray-500 dark:text-gray-400">

@@ -390,16 +390,8 @@ export function prepareRegressionData(
     };
   }
   
-  // Daten sortieren, falls noch nicht geschehen
-  const sortedData = [...completedData].sort((a, b) => {
-    if (a.sortKey !== undefined && b.sortKey !== undefined) {
-      return a.sortKey - b.sortKey;
-    }
-    if (a.timestamp && b.timestamp) {
-      return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
-    }
-    return String(a.name).localeCompare(String(b.name));
-  });
+  // Daten konsistent sortieren - verwende die gleiche Sortierlogik wie in der Visualisierung
+  const sortedData = sortDataConsistently(completedData);
   
   // Relative Werte berechnen (Ereignisse pro Schultag)
   const dataWithRelativeValues = sortedData.map(point => {
@@ -1115,4 +1107,70 @@ function getISOWeek(date: Date): number {
 function getMonthName(monthIndex: number): string {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
   return months[monthIndex] || '';
+}
+
+/**
+ * Sorts data consistently for both regression calculation and visualization
+ * to ensure the regression line appears correctly without kinks
+ */
+export function sortDataConsistently(data: any[]): any[] {
+  if (!data || data.length === 0) return [];
+  
+  return [...data].sort((a, b) => {
+    // Prüfe zuerst, ob einer der Punkte ein Vorhersagepunkt ist
+    if (a.isPrediction && !b.isPrediction) return 1;
+    if (!a.isPrediction && b.isPrediction) return -1;
+    
+    // Versuche, Wochennummern zu extrahieren
+    const weekA = a.name?.match(/KW\s*(\d+)/i)?.[1];
+    const weekB = b.name?.match(/KW\s*(\d+)/i)?.[1];
+    
+    if (weekA && weekB) {
+      const weekNumA = parseInt(weekA);
+      const weekNumB = parseInt(weekB);
+      
+      // Schuljahr-Sortierlogik:
+      // KW35-KW36 kommen ZUERST (35-36)
+      // KW37-KW52 kommen als ZWEITES (137-152)
+      // KW1-KW34 kommen als DRITTES (201-234)
+      let sortKeyA, sortKeyB;
+      
+      if (weekNumA >= 35 && weekNumA <= 36) sortKeyA = weekNumA;
+      else if (weekNumA >= 37) sortKeyA = weekNumA + 100;
+      else sortKeyA = weekNumA + 200;
+      
+      if (weekNumB >= 35 && weekNumB <= 36) sortKeyB = weekNumB;
+      else if (weekNumB >= 37) sortKeyB = weekNumB + 100;
+      else sortKeyB = weekNumB + 200;
+      
+      return sortKeyA - sortKeyB;
+    }
+    
+    // Falls es sich um Monate handelt, sortiere basierend auf dem Schuljahr (Sep-Aug)
+    const monthA = a.name?.match(/^(Jan|Feb|Mar|Apr|Mai|Jun|Jul|Aug|Sep|Okt|Nov|Dez)/)?.[1];
+    const monthB = b.name?.match(/^(Jan|Feb|Mar|Apr|Mai|Jun|Jul|Aug|Sep|Okt|Nov|Dez)/)?.[1];
+    
+    if (monthA && monthB) {
+      const monthOrder: Record<string, number> = {
+        'Sep': 1, 'Okt': 2, 'Nov': 3, 'Dez': 4,
+        'Jan': 5, 'Feb': 6, 'Mar': 7, 'Apr': 8,
+        'Mai': 9, 'Jun': 10, 'Jul': 11, 'Aug': 12
+      };
+      
+      return (monthOrder[monthA] || 0) - (monthOrder[monthB] || 0);
+    }
+    
+    // Wenn weder Wochen noch Monate, verwende sortKey falls vorhanden
+    if (a.sortKey !== undefined && b.sortKey !== undefined) {
+      return a.sortKey - b.sortKey;
+    }
+    
+    // Fallback: verwende Timestamps, falls vorhanden
+    if (a.timestamp && b.timestamp) {
+      return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+    }
+    
+    // Letzte Möglichkeit: nach Namen sortieren
+    return String(a.name).localeCompare(String(b.name));
+  });
 }

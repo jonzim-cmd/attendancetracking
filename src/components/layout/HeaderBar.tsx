@@ -113,6 +113,10 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   const groupingDropdownRef = useRef<HTMLDivElement>(null);
   
   const groupingDropdownTimer = useRef<NodeJS.Timeout | null>(null);
+  
+  const [isDraggableDashboard, setIsDraggableDashboard] = useState(() => {
+    return typeof window !== 'undefined' && localStorage.getItem('useDraggableDashboard') === 'true';
+  });
 
   // Quick select options
 
@@ -604,29 +608,42 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       <div className="flex items-center gap-2 mr-2">
         <ResetButton onReset={onReset} />
         
-        {/* Neuer Layout-Toggle Button (nur im Dashboard-Modus anzeigen) */}
+        {/* Layout toggle button - correctly implementing state and events */}
         {viewMode === 'dashboard' && (
           <button
             onClick={() => {
-              // Toggle-Logik hier direkt in der HeaderBar
-              const newValue = typeof window !== 'undefined' && localStorage.getItem('useDraggableDashboard') === 'true' ? false : true;
+              // Toggle the dashboard layout
+              const newValue = !isDraggableDashboard;
+              setIsDraggableDashboard(newValue);
+              
+              // Update localStorage
               if (typeof window !== 'undefined') {
                 localStorage.setItem('useDraggableDashboard', String(newValue));
               }
-              // Das Event verbreiten für alle Komponenten, die zuhören
-              const event = new CustomEvent('toggleDraggableDashboard', { detail: { value: newValue } });
+              
+              // Dispatch event for components listening
+              const event = new CustomEvent('toggleDraggableDashboard', { 
+                detail: { value: newValue } 
+              });
               window.dispatchEvent(event);
             }}
             className="p-1.5 rounded-full bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors"
-            title={typeof window !== 'undefined' && localStorage.getItem('useDraggableDashboard') === 'true' ? 'Zum Standard-Layout wechseln' : 'Zum anpassbaren Layout wechseln'}
+            title={isDraggableDashboard 
+              ? 'Derzeit: Anpassbares Layout (zum festen Layout wechseln)' 
+              : 'Derzeit: Festes Layout (zum anpassbaren Layout wechseln)'}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              {typeof window !== 'undefined' && localStorage.getItem('useDraggableDashboard') === 'true' ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-              )}
-            </svg>
+            {/* Icons that represent static vs. draggable layout */}
+            {isDraggableDashboard ? (
+              // Icon for draggable layout - a "move/drag" icon
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            ) : (
+              // Icon for static layout - a "grid/fixed" icon
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+              </svg>
+            )}
           </button>
         )}
 

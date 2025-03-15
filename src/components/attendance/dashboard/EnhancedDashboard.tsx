@@ -110,7 +110,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       const saved = localStorage.getItem('useDraggableDashboard');
       return saved === 'true';
     } catch (e) {
-      return true;
+      return false;
     }
   });
   

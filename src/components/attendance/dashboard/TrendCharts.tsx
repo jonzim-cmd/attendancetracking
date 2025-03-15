@@ -99,6 +99,9 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   weeklyDetailedData = {},
   allStudentStats = {}
 }) => {
+  // NEU: Zugriff auf den visibleDashboardTiles-State
+  const { visibleDashboardTiles } = useFilters();
+  
   // Zugriff auf den FilterContext
   const {
     selectedDashboardClasses,
@@ -701,8 +704,10 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   
   return (
     <>
-    <div className={CARD_CLASSES}>
-      <div className="flex justify-between items-center mb-4 w-full pr-2">
+    {/* NEU: Prüfen, ob die Zeitreihen-Kachel sichtbar sein soll */}
+    {visibleDashboardTiles.timeSeries && (
+      <div className={CARD_CLASSES}>
+        <div className="flex justify-between items-center mb-4 w-full pr-2">
           {/* NEU: Flex-Container für Titel und Info-Button */}
           <div className="flex items-center">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
@@ -852,8 +857,10 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
           </div>
         )}
       </div>
+    )}
       
-      {/* Wochentagsanalyse - Jetzt auch full width */}
+    {/* Wochentagsanalyse - Jetzt auch full width */}
+    {visibleDashboardTiles.weekday && (
       <div className={CARD_CLASSES}>
         <div className="flex justify-between items-center mb-4 w-full pr-2">
           {/* NEU: Flex-Container für Titel und Info-Button */}
@@ -961,17 +968,20 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
           </div>
         )}
       </div>
+    )}
       
-      {/* Neue Sektion für statistische Analysen */}
-      <AnalyticsSection 
-        attendanceOverTime={attendanceOverTime}
-        schoolYearDetailedData={schoolYearDetailedData}
-        weeklyDetailedData={weeklyDetailedData}
-        allStudentStats={allStudentStats}
-        className="mt-6"
-        hasSingleClassOnly={hasSingleClassOnly}
-        singleClassName={singleClassName}
-      />
+    {/* Neue Sektion für statistische Analysen */}
+    <AnalyticsSection 
+      attendanceOverTime={attendanceOverTime}
+      schoolYearDetailedData={schoolYearDetailedData}
+      weeklyDetailedData={weeklyDetailedData}
+      allStudentStats={allStudentStats}
+      className="mt-6"
+      hasSingleClassOnly={hasSingleClassOnly}
+      singleClassName={singleClassName}
+      chartMode={`${!visibleDashboardTiles.movingAverage && visibleDashboardTiles.regression ? 'regression' : 
+                    visibleDashboardTiles.movingAverage && !visibleDashboardTiles.regression ? 'movingAverage' : 'both'}`}
+    />
     </>
   );
 });

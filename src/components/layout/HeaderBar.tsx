@@ -8,6 +8,7 @@ import ResetButton from '@/components/attendance/ResetButton';
 import { useFilters } from '@/contexts/FilterContext';
 import StudentSearchSelect from '@/components/ui/StudentSearchSelect';
 import DateRangeButton from '@/components/ui/DateRangeButton';
+import TileVisibilityDropdown from '@/components/ui/TileVisibilityDropdown';
 
 interface HeaderBarProps {
   filterUnexcusedLate: boolean;
@@ -607,6 +608,11 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       </div>
       <div className="flex items-center gap-2 mr-2">
         <ResetButton onReset={onReset} />
+        
+        {/* NEU: Kachel-Visibility Dropdown - nur im Dashboard-Modus anzeigen */}
+        {viewMode === 'dashboard' && (
+          <TileVisibilityDropdown className="mr-1" />
+        )}
         
         {/* Layout toggle button - correctly implementing state and events */}
         {viewMode === 'dashboard' && (

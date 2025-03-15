@@ -38,6 +38,12 @@ interface FilterContextType {
   
   // NEUE FUNKTION: Zugriff auf alle Schüler, ohne nach selectedStudents zu filtern
   getAllStudents: () => [string, StudentStats][];
+  
+  // NEU: Dashboard-Kachel-Sichtbarkeit
+  visibleDashboardTiles: Record<string, boolean>;
+  setVisibleDashboardTiles: (tiles: Record<string, boolean>) => void;
+  toggleDashboardTile: (tileId: string) => void;
+  toggleAllDashboardTiles: (visible: boolean) => void;
 }
 
 // Context erstellen
@@ -93,6 +99,32 @@ export const FilterProvider: React.FC<{
   const [internalDashboardStartDate, setInternalDashboardStartDate] = useState<string>(dashboardStartDate);
   const [internalDashboardEndDate, setInternalDashboardEndDate] = useState<string>(dashboardEndDate);
   const [isUpdatingDashboardDates, setIsUpdatingDashboardDates] = useState(false);
+  
+  // NEU: State für die Sichtbarkeit der Dashboard-Kacheln
+  const [visibleDashboardTiles, setVisibleDashboardTiles] = useState<Record<string, boolean>>({
+    timeSeries: true,
+    weekday: true,
+    movingAverage: true,
+    regression: true
+  });
+  
+  // NEU: Funktion zum Umschalten der Sichtbarkeit einer einzelnen Kachel
+  const toggleDashboardTile = useCallback((tileId: string) => {
+    setVisibleDashboardTiles(prev => ({
+      ...prev,
+      [tileId]: !prev[tileId]
+    }));
+  }, []);
+  
+  // NEU: Funktion zum Umschalten der Sichtbarkeit aller Kacheln
+  const toggleAllDashboardTiles = useCallback((visible: boolean) => {
+    setVisibleDashboardTiles({
+      timeSeries: visible,
+      weekday: visible,
+      movingAverage: visible,
+      regression: visible
+    });
+  }, []);
   
   // Memoized setSearchQuery um Endlosschleifen zu vermeiden
   const setSearchQuery = useCallback((query: string) => {
@@ -173,8 +205,31 @@ export const FilterProvider: React.FC<{
       // Alle internen Filter zurücksetzen
       setSelectedStudents([]);
       setGroupingOption('monthly');
+      // NEU: Alle Kacheln wieder sichtbar machen
+      toggleAllDashboardTiles(true);
     }
-  }, [resetTriggerId]);
+  }, [resetTriggerId, toggleAllDashboardTiles]);
+  
+  // NEU: Laden der gespeicherten Kachel-Sichtbarkeit aus dem localStorage, wenn die Komponente geladen wird
+  useEffect(() => {
+    try {
+      const savedVisibility = localStorage.getItem('dashboardTilesVisibility');
+      if (savedVisibility) {
+        setVisibleDashboardTiles(JSON.parse(savedVisibility));
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Kachel-Sichtbarkeit:', error);
+    }
+  }, []);
+  
+  // NEU: Speichern der Kachel-Sichtbarkeit im localStorage, wenn sie sich ändert
+  useEffect(() => {
+    try {
+      localStorage.setItem('dashboardTilesVisibility', JSON.stringify(visibleDashboardTiles));
+    } catch (error) {
+      console.error('Fehler beim Speichern der Kachel-Sichtbarkeit:', error);
+    }
+  }, [visibleDashboardTiles]);
   
   const contextValue = {
     selectedDashboardClasses,
@@ -194,6 +249,12 @@ export const FilterProvider: React.FC<{
     isDashboardMode: viewMode === 'dashboard',
     quickSelectValue,
     handleQuickSelect,
+    
+    // NEU: Dashboard Tile Visibility
+    visibleDashboardTiles,
+    setVisibleDashboardTiles,
+    toggleDashboardTile,
+    toggleAllDashboardTiles,
     
     // Die ursprüngliche getContextFilteredStudents-Funktion
     getContextFilteredStudents: () => {

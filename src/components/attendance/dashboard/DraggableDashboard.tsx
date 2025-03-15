@@ -92,10 +92,10 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
         // Default-Layout für alle vier Kacheln
         const defaultFull = {
           lg: [
-            { i: '0', x: 0, y: 0, w: 12, h: 6 },  // Top (Zeitlicher Verlauf)
+            { i: '0', x: 0, y: 18, w: 12, h: 6 },  // Top (Zeitlicher Verlauf)
             { i: '1', x: 0, y: 6, w: 12, h: 6 },  // Second (Wochentagsanalyse)
             { i: '2', x: 0, y: 12, w: 12, h: 6 }, // Third (Gleitender Durchschnitt)
-            { i: '3', x: 0, y: 18, w: 12, h: 6 }, // Bottom (Regressionsanalyse)
+            { i: '3', x: 0, y: 0, w: 12, h: 6 }, // Bottom (Regressionsanalyse)
           ]
         };
 
@@ -178,7 +178,7 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
     >
       {visibleChildren.map((child, i) => (
         <div key={i.toString()} className={`${CARD_CLASSES} overflow-hidden border-0 w-full`}>
-          <div className="h-full w-full flex flex-col">
+          <div className="h-full w-full flex flex-col p-4"> {/* p-4 hinzugefügt */}
             {child}
           </div>
         </div>

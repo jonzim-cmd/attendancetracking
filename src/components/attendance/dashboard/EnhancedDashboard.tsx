@@ -496,82 +496,90 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         <DraggableDashboard>
           {/* Zeitlicher Verlauf */}
           <ChartContainer title="" subtitle="" isDraggable={true}>
-            <TrendCharts
-              weeklyTrends={weeklyTrends}
-              attendanceOverTime={attendanceOverTime}
-              dayOfWeekData={dayOfWeekData}
-              absenceTypes={absenceTypes}
-              groupingOption={groupingOption}
-              chartVisibility={trendChartVisibility}
-              setChartVisibility={setTrendChartVisibility}
-              weekdayChartVisibility={weekdayChartVisibility}
-              setWeekdayChartVisibility={setWeekdayChartVisibility}
-              selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
-              showStudentAverageComparison={showStudentAverageComparison}
-              setShowStudentAverageComparison={setShowStudentAverageComparison}
-              classAverageAvailability={classAverageAvailability}
-              hasSingleClassOnly={hasSingleClassOnly}
-              singleClassName={singleClassName}
-              weeklyDetailedData={weeklyDetailedData}
-              allStudentStats={studentStats}
-              chartMode="timeSeries"
-              schoolYearDetailedData={schoolYearStats}
-            />
+            <div className="w-full h-full"> {/* Wichtiger zusätzlicher Container */}
+              <TrendCharts
+                weeklyTrends={weeklyTrends}
+                attendanceOverTime={attendanceOverTime}
+                dayOfWeekData={dayOfWeekData}
+                absenceTypes={absenceTypes}
+                groupingOption={groupingOption}
+                chartVisibility={trendChartVisibility}
+                setChartVisibility={setTrendChartVisibility}
+                weekdayChartVisibility={weekdayChartVisibility}
+                setWeekdayChartVisibility={setWeekdayChartVisibility}
+                selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
+                showStudentAverageComparison={showStudentAverageComparison}
+                setShowStudentAverageComparison={setShowStudentAverageComparison}
+                classAverageAvailability={classAverageAvailability}
+                hasSingleClassOnly={hasSingleClassOnly}
+                singleClassName={singleClassName}
+                weeklyDetailedData={weeklyDetailedData}
+                allStudentStats={studentStats}
+                chartMode="timeSeries"
+                schoolYearDetailedData={schoolYearStats}
+              />
+            </div>
           </ChartContainer>
 
           {/* Wochentagsanalyse */}
           <ChartContainer title="" subtitle="" isDraggable={true}>
-            <TrendCharts
-              weeklyTrends={weeklyTrends}
-              attendanceOverTime={attendanceOverTime}
-              dayOfWeekData={dayOfWeekData}
-              absenceTypes={absenceTypes}
-              groupingOption={groupingOption}
-              chartVisibility={trendChartVisibility}
-              setChartVisibility={setTrendChartVisibility}
-              weekdayChartVisibility={weekdayChartVisibility}
-              setWeekdayChartVisibility={setWeekdayChartVisibility}
-              selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
-              showStudentAverageComparison={showStudentAverageComparison}
-              setShowStudentAverageComparison={setShowStudentAverageComparison}
-              classAverageAvailability={classAverageAvailability}
-              hasSingleClassOnly={hasSingleClassOnly}
-              singleClassName={singleClassName}
-              weeklyDetailedData={weeklyDetailedData}
-              allStudentStats={studentStats}
-              chartMode="weekday"
-              schoolYearDetailedData={schoolYearStats}
-            />
+            <div className="w-full h-full"> {/* Wichtiger zusätzlicher Container */}
+              <TrendCharts
+                weeklyTrends={weeklyTrends}
+                attendanceOverTime={attendanceOverTime}
+                dayOfWeekData={dayOfWeekData}
+                absenceTypes={absenceTypes}
+                groupingOption={groupingOption}
+                chartVisibility={trendChartVisibility}
+                setChartVisibility={setTrendChartVisibility}
+                weekdayChartVisibility={weekdayChartVisibility}
+                setWeekdayChartVisibility={setWeekdayChartVisibility}
+                selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
+                showStudentAverageComparison={showStudentAverageComparison}
+                setShowStudentAverageComparison={setShowStudentAverageComparison}
+                classAverageAvailability={classAverageAvailability}
+                hasSingleClassOnly={hasSingleClassOnly}
+                singleClassName={singleClassName}
+                weeklyDetailedData={weeklyDetailedData}
+                allStudentStats={studentStats}
+                chartMode="weekday"
+                schoolYearDetailedData={schoolYearStats}
+              />
+            </div>
           </ChartContainer>
 
           {/* Gleitender Durchschnitt */}
           <ChartContainer title="" subtitle="" isDraggable={true}>
-            <MovingAverageChart 
-              attendanceOverTime={attendanceOverTime} 
-              schoolYearDetailedData={schoolYearStats}
-              weeklyDetailedData={weeklyDetailedData}
-              allStudentStats={studentStats}
-              selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
-              selectedClass={selectedDashboardClasses.length === 1 ? 
-                            selectedDashboardClasses[0] : 
-                            (hasSingleClassOnly && selectedDashboardClasses.length === 0 ? singleClassName : undefined)}
-              className="w-full h-full"
-            />
+            <div className="w-full h-full"> {/* Wichtiger zusätzlicher Container */}
+              <MovingAverageChart 
+                attendanceOverTime={attendanceOverTime} 
+                schoolYearDetailedData={schoolYearStats}
+                weeklyDetailedData={weeklyDetailedData}
+                allStudentStats={studentStats}
+                selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
+                selectedClass={selectedDashboardClasses.length === 1 ? 
+                              selectedDashboardClasses[0] : 
+                              (hasSingleClassOnly && selectedDashboardClasses.length === 0 ? singleClassName : undefined)}
+                className="w-full h-full"
+              />
+            </div>
           </ChartContainer>
 
           {/* Regressionsanalyse */}
           <ChartContainer title="" subtitle="" isDraggable={true}>
-            <RegressionChart 
-              attendanceOverTime={attendanceOverTime} 
-              schoolYearDetailedData={schoolYearStats}
-              weeklyDetailedData={weeklyDetailedData}
-              allStudentStats={studentStats}
-              selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
-              selectedClass={selectedDashboardClasses.length === 1 ? 
-                            selectedDashboardClasses[0] : 
-                            (hasSingleClassOnly && selectedDashboardClasses.length === 0 ? singleClassName : undefined)}
-              className="w-full h-full"
-            />
+            <div className="w-full h-full"> {/* Wichtiger zusätzlicher Container */}
+              <RegressionChart 
+                attendanceOverTime={attendanceOverTime} 
+                schoolYearDetailedData={schoolYearStats}
+                weeklyDetailedData={weeklyDetailedData}
+                allStudentStats={studentStats}
+                selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
+                selectedClass={selectedDashboardClasses.length === 1 ? 
+                              selectedDashboardClasses[0] : 
+                              (hasSingleClassOnly && selectedDashboardClasses.length === 0 ? singleClassName : undefined)}
+                className="w-full h-full"
+              />
+            </div>
           </ChartContainer>
         </DraggableDashboard>
       ) : (

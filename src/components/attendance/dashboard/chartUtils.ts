@@ -16,3 +16,13 @@ export const getChartWidth = (dataLength: number, groupBy?: string): string => {
     // Berechne benötigte Breite
     return `${Math.max(dataLength * pointWidth, minWidth)}px`;
   };
+
+  /**
+ * Berechnet die effektive Höhe für Charts basierend auf verfügbarem Platz
+ * @param hasAdditionalContent Ob die Chart-Komponente zusätzliche Elemente hat
+ * @returns CSS-Höhenwert als String
+ */
+export const getEffectiveChartHeight = (hasAdditionalContent: boolean = false): string => {
+  // Wenn zusätzlicher Inhalt (wie Statistik-Boxen) vorhanden ist, reduziere die Chart-Höhe
+  return hasAdditionalContent ? "h-52" : "h-64";
+};

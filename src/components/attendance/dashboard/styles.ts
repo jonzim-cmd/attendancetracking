@@ -20,7 +20,7 @@ export const CHART_HEIGHT = "h-64";
 // Gemeinsame Tailwind-Klassen für Chart-Container
 export const CHART_CONTAINER_CLASSES = `${CHART_HEIGHT} w-full`;
 // Neue einheitliche Styling-Konstanten für Konsistenz
-export const CHART_CONTENT_HEIGHT = "h-64";  // Standard Chart-Höhe
+export const CHART_CONTENT_HEIGHT = "h-60";  // Vereinheitlicht auf einen mittleren Wert
 export const CHART_HEADER_MARGIN = "mb-4";   // Einheitlicher Abstand nach Headern
 export const CHART_HEADER_CLASSES = `flex justify-between items-center ${CHART_HEADER_MARGIN}`;
 export const CHART_WRAPPER_CLASSES = "w-full h-full";

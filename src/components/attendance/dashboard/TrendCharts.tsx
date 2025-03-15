@@ -1,6 +1,10 @@
 // src/components/attendance/dashboard/TrendCharts.tsx
 import React, { memo, useRef, useEffect, useState } from 'react';
-import { CARD_CLASSES } from './styles';
+import { 
+  CARD_CLASSES, 
+  CHART_CONTENT_HEIGHT, 
+  CHART_SCROLL_CONTAINER_CLASSES 
+} from './styles';
 import { 
   AttendanceLineChart, 
   AttendanceBarChart, 
@@ -13,7 +17,7 @@ import { TimeSeriesDataPointWithStudentAvg } from './studentAverages';
 import AnalyticsSection from './AnalyticsSection';
 import InfoButton from '@/components/ui/InfoButton';
 import { CHART_EXPLANATIONS } from './chartExplanations';
-import { getChartWidth } from './chartUtils';
+import { getChartWidth} from './chartUtils';
 
 // Extend the TimeSeriesDataPoint to include student average data
 type TimeSeriesDataPointWithAllAvg = TimeSeriesDataPointWithAvg & TimeSeriesDataPointWithStudentAvg;
@@ -453,13 +457,13 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
               className="ml-2"
             />
           </div>
-          <div className="flex flex-wrap gap-x-2 text-sm">
+          <div className="flex flex-wrap space-x-2 text-base">
             <label className="inline-flex items-center cursor-pointer" title="Verspätungen im Trend anzeigen">
               <input 
                 type="checkbox" 
                 checked={chartVisibility.verspaetungen} 
                 onChange={() => setChartVisibility(prev => ({...prev, verspaetungen: !prev.verspaetungen}))}
-                className="mr-1 w-3 h-3"
+                className="mr-1 w-4 h-4"
               />
               <span className="text-purple-600 dark:text-purple-400">Versp.</span>
             </label>
@@ -468,7 +472,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
                 type="checkbox" 
                 checked={chartVisibility.fehlzeitenEntsch} 
                 onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenEntsch: !prev.fehlzeitenEntsch}))}
-                className="mr-1 w-3 h-3"
+                className="mr-1 w-4 h-4"
               />
               <span className="text-green-600 dark:text-green-400">F (e.)</span>
             </label>
@@ -477,7 +481,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
                 type="checkbox" 
                 checked={chartVisibility.fehlzeitenUnentsch} 
                 onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenUnentsch: !prev.fehlzeitenUnentsch}))}
-                className="mr-1 w-3 h-3"
+                className="mr-1 w-4 h-4"
               />
               <span className="text-red-600 dark:text-red-400">F (u.)</span>
             </label>
@@ -486,7 +490,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
                 type="checkbox" 
                 checked={chartVisibility.fehlzeitenGesamt} 
                 onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenGesamt: !prev.fehlzeitenGesamt}))}
-                className="mr-1 w-3 h-3"
+                className="mr-1 w-4 h-4"
               />
               <span className="text-blue-600 dark:text-blue-400">F (gesamt)</span>
             </label>
@@ -506,7 +510,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
                   }
                 }}
                 disabled={!classAverageAvailability.isAvailable}
-                className="mr-1 w-3 h-3"
+                className="mr-1 w-4 h-4"
               />
               <span className="text-purple-600 dark:text-purple-400 text-opacity-70 dark:text-opacity-70">⌀ Klasse (V)</span>
             </label>
@@ -524,7 +528,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
                   }
                 }}
                 disabled={!classAverageAvailability.isAvailable}
-                className="mr-1 w-3 h-3"
+                className="mr-1 w-4 h-4"
               />
               <span className="text-blue-600 dark:text-blue-400 text-opacity-70 dark:text-opacity-70">⌀ Klasse (Fges.)</span>
             </label>
@@ -539,7 +543,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
                   }
                   setChartVisibility(prev => ({...prev, verspaetungenStudentAvg: !prev.verspaetungenStudentAvg}))
                 }}
-                className="mr-1 w-3 h-3"
+                className="mr-1 w-4 h-4"
               />
               <span className="text-purple-600 dark:text-purple-400 text-opacity-70 dark:text-opacity-70">⌀ Schüler (V)</span>
             </label>
@@ -554,15 +558,15 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
                   }
                   setChartVisibility(prev => ({...prev, fehlzeitenStudentAvg: !prev.fehlzeitenStudentAvg}))
                 }}
-                className="mr-1 w-3 h-3"
+                className="mr-1 w-4 h-4"
               />
               <span className="text-blue-600 dark:text-blue-400 text-opacity-70 dark:text-opacity-70">⌀ Schüler (Fges.)</span>
             </label>
           </div>
         </div>
         
-        <div className="flex-grow overflow-hidden">
-          <div className="overflow-x-auto h-full" ref={scrollContainerRef}>
+        <div className="overflow-hidden">
+          <div className={CHART_SCROLL_CONTAINER_CLASSES} ref={scrollContainerRef}>
             <div style={{ 
               width: getChartWidth(attendanceOverTime.length, groupingOption),
               minWidth: '100%',
@@ -606,13 +610,13 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
               className="ml-2"
             />
           </div>
-          <div className="flex flex-wrap gap-x-2 text-sm">
+          <div className="flex flex-wrap space-x-2 text-base">
             <label className="inline-flex items-center cursor-pointer" title="Verspätungen nach Wochentag anzeigen">
               <input 
                 type="checkbox" 
                 checked={weekdayChartVisibility.verspaetungen} 
                 onChange={() => setWeekdayChartVisibility(prev => ({...prev, verspaetungen: !prev.verspaetungen}))}
-                className="mr-1 w-3 h-3"
+                className="mr-1 w-4 h-4"
               />
               <span className="text-purple-600 dark:text-purple-400">Versp.</span>
             </label>
@@ -621,7 +625,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
                 type="checkbox" 
                 checked={weekdayChartVisibility.fehlzeitenEntsch} 
                 onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenEntsch: !prev.fehlzeitenEntsch}))}
-                className="mr-1 w-3 h-3"
+                className="mr-1 w-4 h-4"
               />
               <span className="text-green-600 dark:text-green-400">F (e.)</span>
             </label>
@@ -630,7 +634,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
                 type="checkbox" 
                 checked={weekdayChartVisibility.fehlzeitenUnentsch} 
                 onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenUnentsch: !prev.fehlzeitenUnentsch}))}
-                className="mr-1 w-3 h-3"
+                className="mr-1 w-4 h-4"
               />
               <span className="text-red-600 dark:text-red-400">F (u.)</span>
             </label>
@@ -639,15 +643,15 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
                 type="checkbox" 
                 checked={weekdayChartVisibility.fehlzeitenGesamt} 
                 onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenGesamt: !prev.fehlzeitenGesamt}))}
-                className="mr-1 w-3 h-3"
+                className="mr-1 w-4 h-4"
               />
               <span className="text-blue-600 dark:text-blue-400">F (gesamt)</span>
             </label>
           </div>
         </div>
         
-        <div className="flex-grow overflow-hidden">
-          <div className="overflow-x-auto h-full">
+        <div className="overflow-hidden">
+          <div className={CHART_SCROLL_CONTAINER_CLASSES} ref={scrollContainerRef}>
             <div style={{ 
               width: '100%',
               height: '100%' 

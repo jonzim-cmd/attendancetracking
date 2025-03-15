@@ -86,20 +86,27 @@ export const parseTimeToMinutes = (timeStr: string): number => {
   return hours * 60 + minutes;
 };
 
-// Angepasste Funktion zur Erkennung von Verspätung ausschließlich basierend auf Abwesenheitsgrund und Endzeit
+// Verbesserte Funktion zur Erkennung von Verspätung mit präziserer Logik
 export const isVerspaetungFunc = (row: any): boolean => {
-  // Nutze ausschließlich Abwesenheitsgrund zur Klassifizierung
+  // 1. Wenn Abwesenheitsgrund explizit "Verspätung" ist -> Verspätung
   const absenceReason = row.Abwesenheitsgrund ? row.Abwesenheitsgrund.trim() : '';
-  const isTardyByReason = absenceReason === 'Verspätung';
+  if (absenceReason === 'Verspätung') return true;
   
-  // Falls kein Abwesenheitsgrund vorliegt, dann prüfe die Endzeit
-  const expectedMinutes = parseTimeToMinutes('16:50');
-  const isTardyByEndzeit =
-    (!absenceReason || absenceReason === '') &&
-    row.Endzeit &&
-    parseTimeToMinutes(row.Endzeit) < expectedMinutes;
+  // 2. Wenn irgendein anderer Abwesenheitsgrund angegeben ist -> kein Verspätung (= Fehltag)
+  if (absenceReason !== '') return false;
   
-  return isTardyByReason || isTardyByEndzeit;
+  // 3. Wenn KEIN Abwesenheitsgrund vorliegt, dann nach Endzeit entscheiden
+  if (row.Endzeit) {
+    // Die kritischen Zeitpunkte, die standardmäßig Fehltage sind (Unterrichtsende)
+    const stdEndTimes = ['14:05', '15:20', '16:05', '16:50'];
+    if (stdEndTimes.includes(row.Endzeit)) return false; // Diese Zeiten deuten auf Fehltage hin
+    
+    // Alle anderen Zeiten -> eher Verspätung 
+    return true;
+  }
+  
+  // Fallback: Wenn keine Zeit angegeben ist -> als Fehltag behandeln
+  return false;
 };
 
 export const processData = (
@@ -125,9 +132,19 @@ export const processData = (
     if (!row.Beginndatum || !row.Langname || !row.Vorname) return;
     if (row['Text/Grund']?.toLowerCase().includes('fehleintrag')) return;
 
-    const [day, month, year] = row.Beginndatum.split('.');
-    const date = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T12:00:00`);
+    const [startDay, startMonth, startYear] = row.Beginndatum.split('.');
+    const startDate = new Date(`${startYear}-${startMonth.padStart(2, '0')}-${startDay.padStart(2, '0')}T12:00:00`);
     const studentName = `${row.Langname}, ${row.Vorname}`;
+
+    // Prüfe auf mehrtägigen Eintrag
+    let endDate = startDate;
+    let isMultiDayEntry = false;
+    
+    if (row.Enddatum && row.Beginndatum !== row.Enddatum) {
+      const [endDay, endMonth, endYear] = row.Enddatum.split('.');
+      endDate = new Date(`${endYear}-${endMonth.padStart(2, '0')}-${endDay.padStart(2, '0')}T12:00:00`);
+      isMultiDayEntry = true;
+    }
 
     if (!studentStats[studentName]) {
       studentStats[studentName] = {
@@ -176,80 +193,143 @@ export const processData = (
     }
 
     const effectiveStatus = row.Status ? row.Status.trim() : '';
-    const isVerspaetung = isVerspaetungFunc(row);
+    const isVerspaetung = !isMultiDayEntry && isVerspaetungFunc(row); // Mehrtägige Einträge sind nie Verspätungen
     const isAttest = effectiveStatus === 'Attest' || effectiveStatus === 'Attest Amtsarzt';
     const isEntschuldigt = effectiveStatus === 'entsch.' || isAttest;
     const isUnentschuldigt = effectiveStatus === 'nicht entsch.' || effectiveStatus === 'nicht akzep.';
-    const deadlineDate = new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const isOverDeadline = today > deadlineDate;
-    const isOffen = !effectiveStatus && !isOverDeadline;
-
-    const entry: AbsenceEntry = {
-      datum: date,
-      art: isVerspaetung ? 'Verspätung' : (row.Abwesenheitsgrund || 'Fehltag'),
-      beginnZeit: row.Beginnzeit,
-      endZeit: row.Endzeit,
-      grund: row['Text/Grund'],
-      status: effectiveStatus,
-    };
-
-    if (date >= startDateTime && date <= endDateTime) {
-      if (isVerspaetung) {
+    
+    // Bei mehrtägigen Einträgen jeden Tag einzeln verarbeiten
+    if (isMultiDayEntry) {
+      // Menge der Tage durchgehen von Beginn- bis Enddatum
+      const currentDate = new Date(startDate);
+      while (currentDate <= endDate) {
+        // Deadline für den aktuellen Tag berechnen
+        const dayDeadlineDate = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const isDayOverDeadline = today > dayDeadlineDate;
+        const isDayOffen = !effectiveStatus && !isDayOverDeadline;
+        
+        // Eintrag für den aktuellen Tag
+        const dailyEntry: AbsenceEntry = {
+          datum: new Date(currentDate), // Kopie des aktuellen Datums
+          art: row.Abwesenheitsgrund || 'Fehltag', // Mehrtätige Einträge sind immer Fehltage
+          beginnZeit: row.Beginnzeit,
+          endZeit: row.Endzeit,
+          grund: row['Text/Grund'],
+          status: effectiveStatus,
+        };
+        
+        // Verarbeitung für den Datumsfilter
+        if (currentDate >= startDateTime && currentDate <= endDateTime) {
+          // Bei mehrtägigen Einträgen - immer als Fehltag behandeln
+          if (isEntschuldigt) {
+            studentStats[studentName].fehlzeiten_entsch++;
+            detailedStats[studentName].fehlzeiten_entsch.push(dailyEntry);
+          } else if (isUnentschuldigt || (!effectiveStatus && isDayOverDeadline)) {
+            studentStats[studentName].fehlzeiten_unentsch++;
+            detailedStats[studentName].fehlzeiten_unentsch.push(dailyEntry);
+          } else if (isDayOffen) {
+            studentStats[studentName].fehlzeiten_offen++;
+            detailedStats[studentName].fehlzeiten_offen.push(dailyEntry);
+          }
+        }
+        
+        // Verarbeitung für Schuljahresstatistiken
+        if (currentDate >= sjStartDate && currentDate <= sjEndDate) {
+          // Für Fehltage: immer in fehlzeiten_gesamt aufnehmen
+          schoolYearDetails[studentName].fehlzeiten_gesamt.push(dailyEntry);
+          if (isUnentschuldigt || (!effectiveStatus && isDayOverDeadline)) {
+            schoolYearDetails[studentName].fehlzeiten_unentsch.push(dailyEntry);
+          }
+          if (isEntschuldigt) {
+            schoolYearDetails[studentName].fehlzeiten_entsch.push(dailyEntry);
+          }
+        }
+        
+        // Verarbeitung für wöchentliche Statistiken
         if (isEntschuldigt) {
-          studentStats[studentName].verspaetungen_entsch++;
-          detailedStats[studentName].verspaetungen_entsch.push(entry);
-        } else if (isUnentschuldigt || (!effectiveStatus && isOverDeadline)) {
-          studentStats[studentName].verspaetungen_unentsch++;
-          detailedStats[studentName].verspaetungen_unentsch.push(entry);
-        } else if (isOffen) {
-          studentStats[studentName].verspaetungen_offen++;
-          detailedStats[studentName].verspaetungen_offen.push(entry);
+          weeklyDetails[studentName].fehlzeiten_entsch.push(dailyEntry);
+        } else if (isUnentschuldigt || (!effectiveStatus && isDayOverDeadline)) {
+          weeklyDetails[studentName].fehlzeiten_unentsch.push(dailyEntry);
+        } else if (isDayOffen) {
+          weeklyDetails[studentName].fehlzeiten_offen.push(dailyEntry);
         }
-      } else {
-        if (isEntschuldigt) {
-          studentStats[studentName].fehlzeiten_entsch++;
-          detailedStats[studentName].fehlzeiten_entsch.push(entry);
-        } else if (isUnentschuldigt || (!effectiveStatus && isOverDeadline)) {
-          studentStats[studentName].fehlzeiten_unentsch++;
-          detailedStats[studentName].fehlzeiten_unentsch.push(entry);
-        } else if (isOffen) {
-          studentStats[studentName].fehlzeiten_offen++;
-          detailedStats[studentName].fehlzeiten_offen.push(entry);
-        }
-      }
-    }
-
-    if (date >= sjStartDate && date <= sjEndDate) {
-      if (isVerspaetung) {
-        // Für die Details: alle Verspätungen (entschuldigt, unentschuldigt, offen) sollen in den Detaildaten erscheinen.
-        schoolYearDetails[studentName].verspaetungen_unentsch.push(entry);
-      } else {
-        // Für Fehlzeiten: immer in fehlzeiten_gesamt aufnehmen
-        schoolYearDetails[studentName].fehlzeiten_gesamt.push(entry);
-        if (isUnentschuldigt || (!effectiveStatus && isOverDeadline)) {
-          schoolYearDetails[studentName].fehlzeiten_unentsch.push(entry);
-        }
-        if (isEntschuldigt) {
-          schoolYearDetails[studentName].fehlzeiten_entsch.push(entry);
-        }
-      }
-    }
-
-    if (isVerspaetung) {
-      if (isEntschuldigt) {
-        weeklyDetails[studentName].verspaetungen_entsch.push(entry);
-      } else if (isUnentschuldigt || (!effectiveStatus && isOverDeadline)) {
-        weeklyDetails[studentName].verspaetungen_unentsch.push(entry);
-      } else if (isOffen) {
-        weeklyDetails[studentName].verspaetungen_offen.push(entry);
+        
+        // Zum nächsten Tag gehen
+        currentDate.setDate(currentDate.getDate() + 1);
       }
     } else {
-      if (isEntschuldigt) {
-        weeklyDetails[studentName].fehlzeiten_entsch.push(entry);
-      } else if (isUnentschuldigt || (!effectiveStatus && isOverDeadline)) {
-        weeklyDetails[studentName].fehlzeiten_unentsch.push(entry);
-      } else if (isOffen) {
-        weeklyDetails[studentName].fehlzeiten_offen.push(entry);
+      // Für eintägige Einträge: ursprüngliche Logik beibehalten
+      const deadlineDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const isOverDeadline = today > deadlineDate;
+      const isOffen = !effectiveStatus && !isOverDeadline;
+
+      const entry: AbsenceEntry = {
+        datum: startDate,
+        art: isVerspaetung ? 'Verspätung' : (row.Abwesenheitsgrund || 'Fehltag'),
+        beginnZeit: row.Beginnzeit,
+        endZeit: row.Endzeit,
+        grund: row['Text/Grund'],
+        status: effectiveStatus,
+      };
+
+      if (startDate >= startDateTime && startDate <= endDateTime) {
+        if (isVerspaetung) {
+          if (isEntschuldigt) {
+            studentStats[studentName].verspaetungen_entsch++;
+            detailedStats[studentName].verspaetungen_entsch.push(entry);
+          } else if (isUnentschuldigt || (!effectiveStatus && isOverDeadline)) {
+            studentStats[studentName].verspaetungen_unentsch++;
+            detailedStats[studentName].verspaetungen_unentsch.push(entry);
+          } else if (isOffen) {
+            studentStats[studentName].verspaetungen_offen++;
+            detailedStats[studentName].verspaetungen_offen.push(entry);
+          }
+        } else {
+          if (isEntschuldigt) {
+            studentStats[studentName].fehlzeiten_entsch++;
+            detailedStats[studentName].fehlzeiten_entsch.push(entry);
+          } else if (isUnentschuldigt || (!effectiveStatus && isOverDeadline)) {
+            studentStats[studentName].fehlzeiten_unentsch++;
+            detailedStats[studentName].fehlzeiten_unentsch.push(entry);
+          } else if (isOffen) {
+            studentStats[studentName].fehlzeiten_offen++;
+            detailedStats[studentName].fehlzeiten_offen.push(entry);
+          }
+        }
+      }
+
+      if (startDate >= sjStartDate && startDate <= sjEndDate) {
+        if (isVerspaetung) {
+          // Für die Details: alle Verspätungen (entschuldigt, unentschuldigt, offen) sollen in den Detaildaten erscheinen.
+          schoolYearDetails[studentName].verspaetungen_unentsch.push(entry);
+        } else {
+          // Für Fehlzeiten: immer in fehlzeiten_gesamt aufnehmen
+          schoolYearDetails[studentName].fehlzeiten_gesamt.push(entry);
+          if (isUnentschuldigt || (!effectiveStatus && isOverDeadline)) {
+            schoolYearDetails[studentName].fehlzeiten_unentsch.push(entry);
+          }
+          if (isEntschuldigt) {
+            schoolYearDetails[studentName].fehlzeiten_entsch.push(entry);
+          }
+        }
+      }
+
+      if (isVerspaetung) {
+        if (isEntschuldigt) {
+          weeklyDetails[studentName].verspaetungen_entsch.push(entry);
+        } else if (isUnentschuldigt || (!effectiveStatus && isOverDeadline)) {
+          weeklyDetails[studentName].verspaetungen_unentsch.push(entry);
+        } else if (isOffen) {
+          weeklyDetails[studentName].verspaetungen_offen.push(entry);
+        }
+      } else {
+        if (isEntschuldigt) {
+          weeklyDetails[studentName].fehlzeiten_entsch.push(entry);
+        } else if (isUnentschuldigt || (!effectiveStatus && isOverDeadline)) {
+          weeklyDetails[studentName].fehlzeiten_unentsch.push(entry);
+        } else if (isOffen) {
+          weeklyDetails[studentName].fehlzeiten_offen.push(entry);
+        }
       }
     }
   });
@@ -269,9 +349,19 @@ export const calculateSchoolYearStats = (data: any[]): Record<string, any> => {
     if (!row.Beginndatum || !row.Langname || !row.Vorname) return;
     if (row['Text/Grund']?.toLowerCase().includes('fehleintrag')) return;
 
-    const [day, month, year] = row.Beginndatum.split('.');
-    const date = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T12:00:00`);
+    const [startDay, startMonth, startYear] = row.Beginndatum.split('.');
+    const startDate = new Date(`${startYear}-${startMonth.padStart(2, '0')}-${startDay.padStart(2, '0')}T12:00:00`);
     const studentName = `${row.Langname}, ${row.Vorname}`;
+
+    // Prüfe auf mehrtägigen Eintrag
+    let endDate = startDate;
+    let isMultiDayEntry = false;
+    
+    if (row.Enddatum && row.Beginndatum !== row.Enddatum) {
+      const [endDay, endMonth, endYear] = row.Enddatum.split('.');
+      endDate = new Date(`${endYear}-${endMonth.padStart(2, '0')}-${endDay.padStart(2, '0')}T12:00:00`);
+      isMultiDayEntry = true;
+    }
 
     if (!stats[studentName]) {
       stats[studentName] = {
@@ -282,22 +372,47 @@ export const calculateSchoolYearStats = (data: any[]): Record<string, any> => {
     }
 
     const effectiveStatus = row.Status ? row.Status.trim() : '';
-    const isVerspaetung = isVerspaetungFunc(row);
+    const isVerspaetung = !isMultiDayEntry && isVerspaetungFunc(row); // Mehrtägige Einträge sind nie Verspätungen
 
-    if (date >= sjStartDate && date <= sjEndDate) {
-      if (!isVerspaetung) {
-        // Fehlzeiten: immer zur Gesamtzahl hinzufügen
-        stats[studentName].fehlzeiten_gesamt++;
-        const isUnentschuldigt = effectiveStatus === 'nicht entsch.' || effectiveStatus === 'nicht akzep.';
-        const deadlineDate = new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000);
-        if (isUnentschuldigt || (!effectiveStatus && today > deadlineDate)) {
-          stats[studentName].fehlzeiten_unentsch++;
+    // Bei mehrtägigen Einträgen jeden Tag einzeln verarbeiten
+    if (isMultiDayEntry) {
+      // Menge der Tage durchgehen von Beginn- bis Enddatum
+      const currentDate = new Date(startDate);
+      while (currentDate <= endDate) {
+        // Prüfen, ob der aktuelle Tag im Schuljahr liegt
+        if (currentDate >= sjStartDate && currentDate <= sjEndDate) {
+          // Mehrtägige Einträge sind immer Fehltage
+          stats[studentName].fehlzeiten_gesamt++;
+          
+          // Entscheidung, ob unentschuldigt
+          const isUnentschuldigt = effectiveStatus === 'nicht entsch.' || effectiveStatus === 'nicht akzep.';
+          const dayDeadlineDate = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+          
+          if (isUnentschuldigt || (!effectiveStatus && today > dayDeadlineDate)) {
+            stats[studentName].fehlzeiten_unentsch++;
+          }
         }
-      } else {
-        // Bei Verspätungen soll als Zahl nur unentschuldigt gezählt werden.
-        const isUnentschuldigt = effectiveStatus === 'nicht entsch.' || effectiveStatus === 'nicht akzep.' || (!effectiveStatus && today > new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000));
-        if (isUnentschuldigt) {
-          stats[studentName].verspaetungen_unentsch++;
+        
+        // Zum nächsten Tag gehen
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    } else {
+      // Ursprüngliche Logik für eintägige Einträge
+      if (startDate >= sjStartDate && startDate <= sjEndDate) {
+        if (!isVerspaetung) {
+          // Fehlzeiten: immer zur Gesamtzahl hinzufügen
+          stats[studentName].fehlzeiten_gesamt++;
+          const isUnentschuldigt = effectiveStatus === 'nicht entsch.' || effectiveStatus === 'nicht akzep.';
+          const deadlineDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+          if (isUnentschuldigt || (!effectiveStatus && today > deadlineDate)) {
+            stats[studentName].fehlzeiten_unentsch++;
+          }
+        } else {
+          // Bei Verspätungen soll als Zahl nur unentschuldigt gezählt werden.
+          const isUnentschuldigt = effectiveStatus === 'nicht entsch.' || effectiveStatus === 'nicht akzep.' || (!effectiveStatus && today > new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000));
+          if (isUnentschuldigt) {
+            stats[studentName].verspaetungen_unentsch++;
+          }
         }
       }
     }
@@ -314,42 +429,94 @@ export const calculateWeeklyStats = (data: any[], selectedWeeks: string): Record
     if (!row.Beginndatum || !row.Langname || !row.Vorname) return;
     if (row['Text/Grund']?.toLowerCase().includes('fehleintrag')) return;
 
-    const [day, month, year] = row.Beginndatum.split('.');
-    const date = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T12:00:00`);
+    const [startDay, startMonth, startYear] = row.Beginndatum.split('.');
+    const startDate = new Date(`${startYear}-${startMonth.padStart(2, '0')}-${startDay.padStart(2, '0')}T12:00:00`);
     const studentName = `${row.Langname}, ${row.Vorname}`;
 
-    const weekIndex = weeks.findIndex((w) => {
-      const startDate = w.startDate;
-      const endDate = w.endDate;
-      return date >= startDate && date <= endDate;
-    });
-
-    if (weekIndex === -1) return;
-
-    if (!stats[studentName]) {
-      stats[studentName] = {
-        verspaetungen: { total: 0, weekly: Array(weeks.length).fill(0) },
-        fehlzeiten: { total: 0, weekly: Array(weeks.length).fill(0) },
-      };
+    // Prüfen auf mehrtägigen Eintrag
+    let endDate = startDate;
+    let isMultiDayEntry = false;
+    
+    if (row.Enddatum && row.Beginndatum !== row.Enddatum) {
+      const [endDay, endMonth, endYear] = row.Enddatum.split('.');
+      endDate = new Date(`${endYear}-${endMonth.padStart(2, '0')}-${endDay.padStart(2, '0')}T12:00:00`);
+      isMultiDayEntry = true;
     }
+    
+    // Bei mehrtägigen Einträgen andere Verarbeitung
+    if (isMultiDayEntry) {
+      const currentDate = new Date(startDate);
+      while (currentDate <= endDate) {
+        // Für jeden Tag die Woche finden
+        const weekIndex = weeks.findIndex((w) => {
+          return currentDate >= w.startDate && currentDate <= w.endDate;
+        });
+        
+        // Wenn Tag nicht in einer der Wochen liegt, zum nächsten Tag
+        if (weekIndex === -1) {
+          currentDate.setDate(currentDate.getDate() + 1);
+          continue;
+        }
+        
+        // Sicherstellen, dass der Student im stats-Objekt existiert
+        if (!stats[studentName]) {
+          stats[studentName] = {
+            verspaetungen: { total: 0, weekly: Array(weeks.length).fill(0) },
+            fehlzeiten: { total: 0, weekly: Array(weeks.length).fill(0) },
+          };
+        }
+        
+        // Status überprüfen
+        const effectiveStatus = row.Status ? row.Status.trim() : '';
+        const today = new Date();
+        const deadline = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const isUnentschuldigt =
+          effectiveStatus === 'nicht entsch.' ||
+          effectiveStatus === 'nicht akzep.' ||
+          (!effectiveStatus && today > deadline);
+        
+        // Mehrtägige Einträge sind immer Fehltage (keine Verspätungen)
+        if (isUnentschuldigt) {
+          stats[studentName].fehlzeiten.weekly[weekIndex]++;
+          stats[studentName].fehlzeiten.total++;
+        }
+        
+        // Zum nächsten Tag
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    } else {
+      // Ursprüngliche Logik für eintägige Einträge
+      const weekIndex = weeks.findIndex((w) => {
+        return startDate >= w.startDate && startDate <= w.endDate;
+      });
 
-    const effectiveStatus = row.Status ? row.Status.trim() : '';
-    const isVerspaetung = isVerspaetungFunc(row);
+      if (weekIndex === -1) return;
 
-    const today = new Date();
-    const deadline = new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const isUnentschuldigt =
-      effectiveStatus === 'nicht entsch.' ||
-      effectiveStatus === 'nicht akzep.' ||
-      (!effectiveStatus && today > deadline);
+      if (!stats[studentName]) {
+        stats[studentName] = {
+          verspaetungen: { total: 0, weekly: Array(weeks.length).fill(0) },
+          fehlzeiten: { total: 0, weekly: Array(weeks.length).fill(0) },
+        };
+      }
 
-    if (isUnentschuldigt) {
-      if (isVerspaetung) {
-        stats[studentName].verspaetungen.weekly[weekIndex]++;
-        stats[studentName].verspaetungen.total++;
-      } else {
-        stats[studentName].fehlzeiten.weekly[weekIndex]++;
-        stats[studentName].fehlzeiten.total++;
+      const effectiveStatus = row.Status ? row.Status.trim() : '';
+      const isVerspaetung = isVerspaetungFunc(row);
+
+      const today = new Date();
+      const deadline = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const isUnentschuldigt =
+        effectiveStatus === 'nicht entsch.' ||
+        effectiveStatus === 'nicht akzep.' ||
+        (!effectiveStatus && today > deadline);
+
+      if (isUnentschuldigt) {
+        if (isVerspaetung) {
+          stats[studentName].verspaetungen.weekly[weekIndex]++;
+          stats[studentName].verspaetungen.total++;
+        } else {
+          stats[studentName].fehlzeiten.weekly[weekIndex]++;
+          stats[studentName].fehlzeiten.total++;
+        }
       }
     }
   });

@@ -970,18 +970,20 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
       </div>
     )}
       
-    {/* Neue Sektion für statistische Analysen */}
-    <AnalyticsSection 
-      attendanceOverTime={attendanceOverTime}
-      schoolYearDetailedData={schoolYearDetailedData}
-      weeklyDetailedData={weeklyDetailedData}
-      allStudentStats={allStudentStats}
-      className="mt-6"
-      hasSingleClassOnly={hasSingleClassOnly}
-      singleClassName={singleClassName}
-      chartMode={`${!visibleDashboardTiles.movingAverage && visibleDashboardTiles.regression ? 'regression' : 
-                    visibleDashboardTiles.movingAverage && !visibleDashboardTiles.regression ? 'movingAverage' : 'both'}`}
-    />
+    {/* Neue Sektion für statistische Analysen - nur anzeigen, wenn mindestens eine der Analysekacheln sichtbar sein soll */}
+    {(visibleDashboardTiles.movingAverage || visibleDashboardTiles.regression) && (
+      <AnalyticsSection 
+        attendanceOverTime={attendanceOverTime}
+        schoolYearDetailedData={schoolYearDetailedData}
+        weeklyDetailedData={weeklyDetailedData}
+        allStudentStats={allStudentStats}
+        className="mt-6"
+        hasSingleClassOnly={hasSingleClassOnly}
+        singleClassName={singleClassName}
+        chartMode={`${!visibleDashboardTiles.movingAverage && visibleDashboardTiles.regression ? 'regression' : 
+                      visibleDashboardTiles.movingAverage && !visibleDashboardTiles.regression ? 'movingAverage' : 'both'}`}
+      />
+    )}
     </>
   );
 });

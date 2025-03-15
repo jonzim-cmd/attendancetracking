@@ -20,10 +20,10 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
     // Default-Layout für alle vier Kacheln
     const defaultFull = {
       lg: [
-        { i: '0', x: 0, y: 0, w: 12, h: 6 },  // Top (Zeitlicher Verlauf)
-        { i: '1', x: 0, y: 6, w: 12, h: 6 },  // Second (Wochentagsanalyse)
-        { i: '2', x: 0, y: 12, w: 12, h: 6 }, // Third (Gleitender Durchschnitt)
-        { i: '3', x: 0, y: 18, w: 12, h: 6 }, // Bottom (Regressionsanalyse)
+        { i: '0', x: 0, y: 18, w: 12, h: 6 },  // (Zeitlicher Verlauf)
+        { i: '1', x: 0, y: 6, w: 12, h: 6 },  // (Wochentagsanalyse)
+        { i: '2', x: 0, y: 12, w: 12, h: 6 }, // (Gleitender Durchschnitt)
+        { i: '3', x: 0, y: 0, w: 12, h: 6 }, // (Regressionsanalyse)
       ]
     };
 

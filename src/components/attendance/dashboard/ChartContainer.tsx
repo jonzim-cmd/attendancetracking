@@ -49,7 +49,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
   
   return (
     <div className={`p-1 h-full flex flex-col ${className}`}>
-      <div className="chart-drag-handle cursor-move flex items-center justify-between mb-4">
+      <div className="chart-drag-handle cursor-move flex items-center justify-between mb-2">
         <div className="flex items-center">
           {title && (
             <>

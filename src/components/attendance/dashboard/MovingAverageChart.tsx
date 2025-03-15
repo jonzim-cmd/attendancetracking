@@ -499,11 +499,11 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
         </div>
       </div>
       
-      <div className="overflow-x-auto" ref={scrollContainerRef}>
+      <div className="overflow-x-auto h-64" ref={scrollContainerRef}>
         <div style={{ 
           width: getChartWidth(),
           minWidth: '100%', 
-          height: '280px' 
+          height: '100%' 
         }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart

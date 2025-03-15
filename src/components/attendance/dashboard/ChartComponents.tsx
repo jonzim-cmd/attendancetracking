@@ -186,7 +186,7 @@ export const AttendanceBarChart: React.FC<BarChartProps> = ({
   
   // Benutzerdefinierte Balkenkomponente
   const CustomBar = (props: any) => {
-    const { x, y, width, height, fill, dataKey, name } = props;
+    const { x, y, width, height, fill, dataKey, name, index } = props;
     
     // Prüfe, ob dieser Balken ein kritischer Tag ist
     const isCritical = isCriticalBar(name, dataKey);
@@ -206,8 +206,12 @@ export const AttendanceBarChart: React.FC<BarChartProps> = ({
       strokeOpacity: 1,
     } : {};
     
+    // Eindeutige key-ID für jedes Rechteck
+    const uniqueKey = `${name}-${dataKey}-${index}`;
+    
     return (
       <rect 
+        key={uniqueKey}
         x={x} 
         y={y} 
         width={width} 
@@ -245,7 +249,7 @@ export const AttendanceBarChart: React.FC<BarChartProps> = ({
               dataKey={bar.dataKey} 
               name={bar.name} 
               fill={bar.color}
-              shape={<CustomBar />}
+              shape={(props: any) => <CustomBar {...props} index={index} />}
             />
           ))}
           {average !== undefined && (

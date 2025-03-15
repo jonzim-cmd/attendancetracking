@@ -565,7 +565,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
             <div style={{ 
               width: attendanceOverTime.length > 8 ? `${Math.max(attendanceOverTime.length * 80, 800)}px` : '100%', 
               minWidth: '100%',
-              height: '300px' 
+              height: '100%' 
             }}>
               <AttendanceLineChart 
                 data={attendanceOverTime}
@@ -649,7 +649,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
           <div className="overflow-x-auto h-full">
             <div style={{ 
               width: '100%',
-              height: '300px' 
+              height: '100%' 
             }}>
               <AttendanceBarChart 
                 data={dayOfWeekData}
@@ -836,11 +836,11 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
             </>
           </div>
         </div>
-        <div className="overflow-x-auto" ref={scrollContainerRef}>
+        <div className="overflow-x-auto h-64" ref={scrollContainerRef}>
           <div style={{ 
             width: attendanceOverTime.length > 8 ? `${Math.max(attendanceOverTime.length * 80, 800)}px` : '100%', 
             minWidth: '100%',
-            height: '300px' 
+            height: '100%' 
           }}>
             <AttendanceLineChart 
               data={attendanceOverTime}
@@ -917,10 +917,10 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
             </label>
           </div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto h-64">
           <div style={{ 
             width: '100%',
-            height: '300px' 
+            height: '100%' 
           }}>
             <AttendanceBarChart 
               data={dayOfWeekData}
@@ -983,7 +983,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
         chartMode={`${!visibleDashboardTiles.movingAverage && visibleDashboardTiles.regression ? 'regression' : 
                       visibleDashboardTiles.movingAverage && !visibleDashboardTiles.regression ? 'movingAverage' : 'both'}`}
       />
-    )}
+    )}  
     </>
   );
 });

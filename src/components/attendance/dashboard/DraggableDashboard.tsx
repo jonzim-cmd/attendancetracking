@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -17,27 +17,51 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
   id = 'main' 
 }) => {
   const getDefaultLayout = () => {
-    return {
+    // Default-Layout für alle vier Kacheln
+    const defaultFull = {
       lg: [
-        { i: '0', x: 0, y: 18, w: 12, h: 6 },
-        { i: '1', x: 0, y: 6, w: 12, h: 6 },
-        { i: '2', x: 0, y: 12, w: 12, h: 6 },
-        { i: '3', x: 0, y: 0, w: 12, h: 6 },
+        { i: '0', x: 0, y: 0, w: 12, h: 6 },  // Top (Zeitlicher Verlauf)
+        { i: '1', x: 0, y: 6, w: 12, h: 6 },  // Second (Wochentagsanalyse)
+        { i: '2', x: 0, y: 12, w: 12, h: 6 }, // Third (Gleitender Durchschnitt)
+        { i: '3', x: 0, y: 18, w: 12, h: 6 }, // Bottom (Regressionsanalyse)
       ]
+    };
+
+    // Welche Kacheln sind sichtbar
+    const tileVisibility = [
+      visibleDashboardTiles.timeSeries,
+      visibleDashboardTiles.weekday,
+      visibleDashboardTiles.movingAverage,
+      visibleDashboardTiles.regression
+    ];
+    
+    const visibleIndexes = tileVisibility
+      .map((isVisible, index) => isVisible ? index : -1)
+      .filter(index => index !== -1);
+
+    // Wenn keine oder alle Kacheln sichtbar sind, gib das Standard-Layout zurück
+    if (visibleIndexes.length === 0 || visibleIndexes.length === 4) {
+      return defaultFull;
+    }
+    
+    // Erstelle ein neues Layout basierend auf den sichtbaren Kacheln
+    return {
+      lg: visibleIndexes.map((originalIndex, newIndex) => ({
+        i: originalIndex.toString(),  // Behalte die Original-ID
+        x: 0,                         // Immer volle Breite
+        y: newIndex * 6,              // Gestaffelte Positionierung (6 Einheiten Abstand)
+        w: 12,                        // Volle Breite
+        h: 6                          // Einheitliche Höhe
+      }))
     };
   };
 
-  const [layouts, setLayouts] = useState(() => {
-    try {
-      const savedLayouts = localStorage.getItem(`dashboardLayouts-${id}`);
-      return savedLayouts ? JSON.parse(savedLayouts) : getDefaultLayout();
-    } catch (e) {
-      console.error('Layout konnte nicht geladen werden', e);
-      return getDefaultLayout();
-    }
-  });
-
   const { visibleDashboardTiles } = useFilters();
+
+  // Speichere die vorherige Konfiguration der sichtbaren Kacheln
+  const previousTileConfig = useRef(JSON.stringify(visibleDashboardTiles));
+
+  const [layouts, setLayouts] = useState(getDefaultLayout);
 
   const visibleChildren = children.filter((_, index) => {
     switch (index) {
@@ -49,18 +73,79 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
     }
   });
 
-  // Move useEffect hooks to the top, before any early return
+  // Verfolge Änderungen in der Sichtbarkeit der Kacheln
   useEffect(() => {
-    if (layouts && layouts.lg && layouts.lg.length !== children.length) {
-      setLayouts(getDefaultLayout());
+    const currentTileConfig = JSON.stringify(visibleDashboardTiles);
+    
+    // Wenn sich die Sichtbarkeit geändert hat, setze das Layout zurück
+    if (currentTileConfig !== previousTileConfig.current) {
+      // Lösche das gespeicherte Layout
+      try {
+        localStorage.removeItem(`dashboardLayouts-${id}`);
+      } catch (e) {
+        console.error('Layout konnte nicht gelöscht werden', e);
+      }
+      
+      // Statt getDefaultLayout zu verwenden, definieren wir die Logik hier direkt im Effect
+      // um Abhängigkeitsprobleme zu vermeiden
+      const createNewLayout = () => {
+        // Default-Layout für alle vier Kacheln
+        const defaultFull = {
+          lg: [
+            { i: '0', x: 0, y: 0, w: 12, h: 6 },  // Top (Zeitlicher Verlauf)
+            { i: '1', x: 0, y: 6, w: 12, h: 6 },  // Second (Wochentagsanalyse)
+            { i: '2', x: 0, y: 12, w: 12, h: 6 }, // Third (Gleitender Durchschnitt)
+            { i: '3', x: 0, y: 18, w: 12, h: 6 }, // Bottom (Regressionsanalyse)
+          ]
+        };
+
+        // Welche Kacheln sind sichtbar
+        const tileVisibility = [
+          visibleDashboardTiles.timeSeries,
+          visibleDashboardTiles.weekday,
+          visibleDashboardTiles.movingAverage,
+          visibleDashboardTiles.regression
+        ];
+        
+        const visibleIndexes = tileVisibility
+          .map((isVisible, index) => isVisible ? index : -1)
+          .filter(index => index !== -1);
+
+        // Wenn keine oder alle Kacheln sichtbar sind, gib das Standard-Layout zurück
+        if (visibleIndexes.length === 0 || visibleIndexes.length === 4) {
+          return defaultFull;
+        }
+        
+        // Erstelle ein neues Layout basierend auf den sichtbaren Kacheln
+        return {
+          lg: visibleIndexes.map((originalIndex, newIndex) => ({
+            i: originalIndex.toString(),  // Behalte die Original-ID
+            x: 0,                         // Immer volle Breite
+            y: newIndex * 6,              // Gestaffelte Positionierung (6 Einheiten Abstand)
+            w: 12,                        // Volle Breite
+            h: 6                          // Einheitliche Höhe
+          }))
+        };
+      };
+      
+      // Neues Layout basierend auf sichtbaren Kacheln setzen
+      setLayouts(createNewLayout());
+      
+      // Aktualisiere die vorherige Konfiguration
+      previousTileConfig.current = currentTileConfig;
     }
-  }, [children.length, layouts]);
+  }, [visibleDashboardTiles, id]);
 
   useEffect(() => {
-    if (layouts) {
-      localStorage.setItem(`dashboardLayouts-${id}`, JSON.stringify(layouts));
+    // Nur speichern, wenn einige Kacheln sichtbar sind
+    if (layouts && visibleChildren.length > 0) {
+      try {
+        localStorage.setItem(`dashboardLayouts-${id}`, JSON.stringify(layouts));
+      } catch (e) {
+        console.error('Layout konnte nicht gespeichert werden', e);
+      }
     }
-  }, [layouts, id]);
+  }, [layouts, id, visibleChildren.length]);
 
   // Early return after all hooks are called
   if (visibleChildren.length === 0) {
@@ -83,7 +168,7 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
       layouts={layouts}
       breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
       cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
-      rowHeight={92}
+      rowHeight={75}
       onLayoutChange={onLayoutChange}
       draggableHandle=".chart-drag-handle"
       isDraggable={true}
@@ -93,7 +178,7 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
     >
       {visibleChildren.map((child, i) => (
         <div key={i.toString()} className={`${CARD_CLASSES} p-0 overflow-hidden border-0 w-full`}>
-          <div className="pt-0 px-1 pb-1 h-full w-full">
+          <div className="pt-0 px-1 pb-0 h-full w-full flex flex-col">
             {child}
           </div>
         </div>

@@ -70,8 +70,6 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
     return new Date(Date.UTC(year, month, secondMonday));
   };
   
-  // Die originalen Quick-Select-Optionen behalten wir für Kompatibilität
-  
   // Format date for display
   const formatDate = (dateStr: string): string => {
     if (!dateStr) return '';
@@ -87,17 +85,19 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
     }
   };
   
-  // Handle click outside to close dropdown
+  // Handle click outside to close dropdown - mit höherer Priorität
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDateDropdownOpen(false);
+        setIsInputFocused(false); // Sicherstellen, dass der Fokus-Status zurückgesetzt wird
       }
     };
     
-    document.addEventListener('mousedown', handleClickOutside);
+    // Capture-Phase für höhere Priorität verwenden
+    document.addEventListener('mousedown', handleClickOutside, { capture: true });
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside, { capture: true });
     };
   }, []);
   
@@ -177,9 +177,7 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
     });
   };
   
-  // Funktion, um direkt einen einzelnen Monat zu applizieren
-  
-  // Korrigierte toggleAllMonths-Funktion in DateRangeButton.tsx
+  // Korrigierte toggleAllMonths-Funktion
   const toggleAllMonths = () => {
     // Hole das aktuelle Schuljahr
     const schoolYear = getCurrentSchoolYear();
@@ -219,13 +217,13 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
     }
   };
   
-  // Original quick select handler - behalten wir für Kompatibilität
-  
-  // Timer für verzögertes Schließen bei Hover
+  // Timer für verzögertes Schließen bei Hover - mit stärkerer Persistenz
   const dropdownHoverTimer = useRef<NodeJS.Timeout | null>(null);
+  const isMouseOverDropdown = useRef<boolean>(false);
 
-  // Hilfsfunktionen für Hover-Effekt
+  // Verbesserte Hilfsfunktionen für Hover-Effekt
   const handleMouseEnter = () => {
+    isMouseOverDropdown.current = true;
     if (dropdownHoverTimer.current) {
       clearTimeout(dropdownHoverTimer.current);
       dropdownHoverTimer.current = null;
@@ -234,21 +232,55 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
   };
 
   const handleMouseLeave = () => {
+    isMouseOverDropdown.current = false;
     if (!isInputFocused) {
-      dropdownHoverTimer.current = setTimeout(() => {  // Timer startet, um Dropdown nach Verzögerung zu schließen
-        setIsDateDropdownOpen(false);                  // Dropdown wird geschlossen
-      }, 300);
+      if (dropdownHoverTimer.current) {
+        clearTimeout(dropdownHoverTimer.current);
+      }
+      dropdownHoverTimer.current = setTimeout(() => {
+        // Nur schließen, wenn die Maus nicht wieder über dem Element ist
+        if (!isMouseOverDropdown.current && !isInputFocused) {
+          setIsDateDropdownOpen(false);
+        }
+      }, 400); // Leicht erhöhte Verzögerung für bessere Zuverlässigkeit
     }
   };
   
   // Neu: Handler für Fokus und Verlassen der Eingabefelder
   const handleInputFocus = () => {
-    setIsInputFocused(true);                        // Eingabefeld ist fokussiert
+    setIsInputFocused(true);
+    // Bei Fokus eventuelle Timer löschen
+    if (dropdownHoverTimer.current) {
+      clearTimeout(dropdownHoverTimer.current);
+      dropdownHoverTimer.current = null;
+    }
   };
 
   const handleInputBlur = () => {
-    setIsInputFocused(false);                       // Eingabefeld verliert Fokus
+    setIsInputFocused(false);
+    // Wenn man das Eingabefeld verlässt und nicht über dem Dropdown ist, beginne zu schließen
+    if (!isMouseOverDropdown.current) {
+      dropdownHoverTimer.current = setTimeout(() => {
+        setIsDateDropdownOpen(false);
+      }, 300);
+    }
   };
+
+  // Sicherheitsmechanismus, um sicherzustellen, dass das Dropdown immer geschlossen wird
+  useEffect(() => {
+    const cleanupDropdown = () => {
+      if (!isMouseOverDropdown.current && !isInputFocused) {
+        setIsDateDropdownOpen(false);
+      }
+    };
+    
+    // Nach 500ms prüfen, ob das Dropdown geschlossen werden sollte
+    const safetyTimer = setTimeout(cleanupDropdown, 500);
+    
+    return () => {
+      clearTimeout(safetyTimer);
+    };
+  }, [isInputFocused]);
 
   return (
     <div 
@@ -277,8 +309,8 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
           className="absolute top-full left-0 mt-1 z-50 bg-header-btn-dropdown dark:bg-header-btn-dropdown-dark border border-gray-200 dark:border-gray-600 rounded-md shadow-lg w-72 max-w-[300px]"
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
-          onMouseEnter={handleMouseEnter}              // Neu: Hält Dropdown offen, wenn Maus ins Dropdown geht
-          onMouseLeave={handleMouseLeave}              // Neu: Startet Timer zum Schließen, wenn Maus Dropdown verlässt
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           <div className="p-3 space-y-3">
             {/* Schuljahr-Monate */}
@@ -350,8 +382,8 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
                     type="date"
                     value={dashboardStartDate}
                     onChange={(e) => onDashboardStartDateChange(e.target.value)}
-                    onFocus={handleInputFocus}              // Hinzufügen: Setzt isInputFocused auf true
-                    onBlur={handleInputBlur} // Hinzufügen: Setzt isInputFocused auf false
+                    onFocus={handleInputFocus}
+                    onBlur={handleInputBlur}
                     className="w-full px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs"
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
@@ -363,8 +395,8 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
                     type="date"
                     value={dashboardEndDate}
                     onChange={(e) => onDashboardEndDateChange(e.target.value)}
-                    onFocus={handleInputFocus}              // Hinzufügen: Setzt isInputFocused auf true
-                    onBlur={handleInputBlur}                // Hinzufügen: Setzt isInputFocused auf false
+                    onFocus={handleInputFocus}
+                    onBlur={handleInputBlur}
                     className="w-full px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs"
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}

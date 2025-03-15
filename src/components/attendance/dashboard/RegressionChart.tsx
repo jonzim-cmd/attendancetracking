@@ -5,10 +5,15 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, ReferenceDot, ReferenceLine
 } from 'recharts';
-import { CARD_CLASSES } from './styles';
+import { 
+  CARD_CLASSES, 
+  CHART_WRAPPER_CLASSES, 
+  CHART_HEADER_CLASSES,
+  CHART_SCROLL_CONTAINER_CLASSES 
+} from './styles';
 import InfoButton from '@/components/ui/InfoButton';
 import { CHART_EXPLANATIONS } from './chartExplanations';
-
+import { getChartWidth } from './chartUtils';
 
 /**
  * Props für die Regressionsanalyse-Komponente
@@ -321,26 +326,9 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
   
   const hasPrediction = sortedChartData.some(item => item.isPrediction);
   
-  // Berechne die geeignete Breite für das Chart basierend auf den Datenpunkten
-  const getChartWidth = () => {
-    if (!sortedChartData || sortedChartData.length === 0) return '100%';
-    
-    // Für viele Datenpunkte, scrollbar machen
-    const minWidth = 800; // Minimale Breite in Pixeln
-    const pointWidth = 60; // Breite pro Datenpunkt in Pixeln
-    
-    // Immer scrollbar machen, wenn wir genug Datenpunkte haben
-    if (sortedChartData.length > 8) {
-      return `${Math.max(sortedChartData.length * pointWidth, minWidth)}px`;
-    }
-    
-    // Für wenige Datenpunkte, an Container anpassen
-    return '100%';
-  };
-  
   return (
-    <div className={`${className} w-full h-full`}>
-      <div className="flex justify-between items-center mb-3 w-full relative z-10 bg-inherit">
+    <div className={`${className} ${CHART_WRAPPER_CLASSES}`}>
+      <div className={`${CHART_HEADER_CLASSES} w-full relative z-10 bg-inherit`}>
         <div className="flex items-center">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
             Regressionsanalyse
@@ -402,7 +390,7 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
       </div>
       
       {/* Regressionsergebnisse */}
-      <div className="mb-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+      <div className="mb-2 grid grid-cols-1 md:grid-cols-3 gap-2">
         <div className="bg-gray-100 dark:bg-transparent border border-gray-200 dark:border-gray-700 rounded rounded p-2 text-center">
           <p className="text-xs text-gray-600 dark:text-gray-400">Trend</p>
           <p className={`text-sm font-medium ${getTrendColor(regressionResult.slope, dataType === 'verspaetungen')}`}>
@@ -425,9 +413,9 @@ const RegressionChart: React.FC<RegressionChartProps> = ({
         </div>
       </div>
       
-      <div className="h-72 w-full overflow-x-auto" ref={scrollContainerRef}>
+      <div className={CHART_SCROLL_CONTAINER_CLASSES} ref={scrollContainerRef}>
         <div style={{ 
-          width: getChartWidth(),
+          width: getChartWidth(sortedChartData.length),
           minWidth: '100%', 
           height: '100%' 
         }}>

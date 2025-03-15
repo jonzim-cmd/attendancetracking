@@ -19,6 +19,12 @@ export const CHART_HEIGHT = "h-64";
 
 // Gemeinsame Tailwind-Klassen für Chart-Container
 export const CHART_CONTAINER_CLASSES = `${CHART_HEIGHT} w-full`;
+// Neue einheitliche Styling-Konstanten für Konsistenz
+export const CHART_CONTENT_HEIGHT = "h-64";  // Standard Chart-Höhe
+export const CHART_HEADER_MARGIN = "mb-4";   // Einheitlicher Abstand nach Headern
+export const CHART_HEADER_CLASSES = `flex justify-between items-center ${CHART_HEADER_MARGIN}`;
+export const CHART_WRAPPER_CLASSES = "w-full h-full";
+export const CHART_SCROLL_CONTAINER_CLASSES = `overflow-x-auto ${CHART_CONTENT_HEIGHT}`;
 
 // Gemeinsame Tailwind-Klassen für Tabellenheader
 export const TABLE_HEADER_CLASSES = "px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-200 uppercase tracking-wider";

@@ -13,6 +13,7 @@ import { TimeSeriesDataPointWithStudentAvg } from './studentAverages';
 import AnalyticsSection from './AnalyticsSection';
 import InfoButton from '@/components/ui/InfoButton';
 import { CHART_EXPLANATIONS } from './chartExplanations';
+import { getChartWidth } from './chartUtils';
 
 // Extend the TimeSeriesDataPoint to include student average data
 type TimeSeriesDataPointWithAllAvg = TimeSeriesDataPointWithAvg & TimeSeriesDataPointWithStudentAvg;
@@ -563,7 +564,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
         <div className="flex-grow overflow-hidden">
           <div className="overflow-x-auto h-full" ref={scrollContainerRef}>
             <div style={{ 
-              width: attendanceOverTime.length > 8 ? `${Math.max(attendanceOverTime.length * 80, 800)}px` : '100%', 
+              width: getChartWidth(attendanceOverTime.length, groupingOption),
               minWidth: '100%',
               height: '100%' 
             }}>

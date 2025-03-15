@@ -177,8 +177,8 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
       margin={[8, 8]}
     >
       {visibleChildren.map((child, i) => (
-        <div key={i.toString()} className={`${CARD_CLASSES} p-0 overflow-hidden border-0 w-full`}>
-          <div className="pt-0 px-1 pb-0 h-full w-full flex flex-col">
+        <div key={i.toString()} className={`${CARD_CLASSES} overflow-hidden border-0 w-full`}>
+          <div className="h-full w-full flex flex-col">
             {child}
           </div>
         </div>

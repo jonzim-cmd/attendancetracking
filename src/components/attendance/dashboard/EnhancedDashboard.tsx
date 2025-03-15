@@ -495,7 +495,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       {useDraggableDashboard ? (
         <DraggableDashboard>
           {/* Zeitlicher Verlauf */}
-          <ChartContainer title="" subtitle="">
+          <ChartContainer title="" subtitle="" isDraggable={true}>
             <TrendCharts
               weeklyTrends={weeklyTrends}
               attendanceOverTime={attendanceOverTime}
@@ -520,7 +520,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
           </ChartContainer>
 
           {/* Wochentagsanalyse */}
-          <ChartContainer title="" subtitle="">
+          <ChartContainer title="" subtitle="" isDraggable={true}>
             <TrendCharts
               weeklyTrends={weeklyTrends}
               attendanceOverTime={attendanceOverTime}
@@ -545,7 +545,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
           </ChartContainer>
 
           {/* Gleitender Durchschnitt */}
-          <ChartContainer title="" subtitle="">
+          <ChartContainer title="" subtitle="" isDraggable={true}>
             <MovingAverageChart 
               attendanceOverTime={attendanceOverTime} 
               schoolYearDetailedData={schoolYearStats}
@@ -560,7 +560,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
           </ChartContainer>
 
           {/* Regressionsanalyse */}
-          <ChartContainer title="" subtitle="">
+          <ChartContainer title="" subtitle="" isDraggable={true}>
             <RegressionChart 
               attendanceOverTime={attendanceOverTime} 
               schoolYearDetailedData={schoolYearStats}

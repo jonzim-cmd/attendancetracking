@@ -1,6 +1,7 @@
 import React from 'react';
 import InfoButton from '@/components/ui/InfoButton';
 import { CHART_EXPLANATIONS } from './chartExplanations';
+import { CHART_HEADER_CLASSES, CHART_HEADER_MARGIN } from './styles';
 
 // Define the type for chart explanations
 interface ChartExplanation {
@@ -25,6 +26,8 @@ interface ChartContainerProps {
   children: React.ReactNode;
   className?: string;
   explanation?: string;
+  isDraggable?: boolean;
+  dragHandleClass?: string; 
 }
 
 const ChartContainer: React.FC<ChartContainerProps> = ({ 
@@ -32,7 +35,9 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
   subtitle,
   children,
   className = "",
-  explanation
+  explanation,
+  isDraggable = false,
+  dragHandleClass = "chart-drag-handle"
 }) => {
   const getExplanationKey = (): keyof ChartExplanations => {
     if (explanation) return explanation as keyof ChartExplanations;
@@ -48,8 +53,8 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
   const explanationKey = getExplanationKey();
   
   return (
-    <div className={`p-1 h-full flex flex-col ${className}`}>
-      <div className="chart-drag-handle cursor-move flex items-center justify-between mb-2">
+    <div className={`h-full flex flex-col ${className}`}>
+      <div className={`${CHART_HEADER_CLASSES} ${isDraggable ? dragHandleClass : ''} cursor-${isDraggable ? 'move' : 'default'}`}>
         <div className="flex items-center">
           {title && (
             <>

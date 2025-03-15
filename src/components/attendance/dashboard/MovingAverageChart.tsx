@@ -5,9 +5,15 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, ReferenceDot
 } from 'recharts';
-import { CARD_CLASSES } from './styles';
+import { 
+  CARD_CLASSES, 
+  CHART_WRAPPER_CLASSES, 
+  CHART_HEADER_CLASSES,
+  CHART_SCROLL_CONTAINER_CLASSES 
+} from './styles';
 import InfoButton from '@/components/ui/InfoButton';
 import { CHART_EXPLANATIONS } from './chartExplanations';
+import { getChartWidth } from './chartUtils';
 
 /**
  * Props for the Moving Average Chart component
@@ -298,8 +304,8 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
   // No data available - render early if no data
   if (noDataAvailable || !optimizedChartData || optimizedChartData.length === 0) {
     return (
-      <div className={`${className} w-full h-full`}>
-        <div className="flex justify-between items-center mb-4">
+      <div className={`${className} ${CHART_WRAPPER_CLASSES}`}>
+       <div className={CHART_HEADER_CLASSES}>
           <div className="flex items-center">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
               Gleitender Durchschnitt
@@ -431,27 +437,9 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
     return 'Gleitender Durchschnitt';
   };
   
-  // Calculate the appropriate width for the chart based on data points
-  const getChartWidth = () => {
-    if (!optimizedChartData || optimizedChartData.length === 0) return '100%';
-    
-    // For many data points, make it scrollable
-    const minWidth = 800; // Minimum width in pixels
-    // Allocate more width per point for monthly grouping
-    const pointWidth = groupBy === 'monthly' ? 100 : 60; // Width per data point in pixels
-    
-    // Always make scrollable if we have enough data points
-    if (optimizedChartData.length > 8) {
-      return `${Math.max(optimizedChartData.length * pointWidth, minWidth)}px`;
-    }
-    
-    // For few data points, stretch to container
-    return '100%';
-  };
-  
   return (
-    <div className={`${className} w-full h-full`}>
-     <div className="flex justify-between items-center mb-4">
+    <div className={`${className} ${CHART_WRAPPER_CLASSES}`}>
+     <div className={CHART_HEADER_CLASSES}>
       <div className="flex items-center">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
           {getTitleText()}
@@ -499,9 +487,9 @@ const MovingAverageChart: React.FC<MovingAverageChartProps> = ({
         </div>
       </div>
       
-      <div className="overflow-x-auto h-64" ref={scrollContainerRef}>
+      <div className={CHART_SCROLL_CONTAINER_CLASSES} ref={scrollContainerRef}>
         <div style={{ 
-          width: getChartWidth(),
+          width: getChartWidth(optimizedChartData.length, groupBy),
           minWidth: '100%', 
           height: '100%' 
         }}>

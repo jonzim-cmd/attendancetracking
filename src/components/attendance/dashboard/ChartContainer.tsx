@@ -54,7 +54,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
   
   return (
     <div className={`h-full flex flex-col ${className}`}>
-      <div className={`${CHART_HEADER_CLASSES} ${isDraggable ? dragHandleClass : ''} cursor-${isDraggable ? 'move' : 'default'}`}>
+      <div className={`${CHART_HEADER_CLASSES} ${isDraggable ? dragHandleClass : ''} cursor-${isDraggable ? 'move' : 'default'} py-1`}>
         <div className="flex items-center">
           {title && (
             <>

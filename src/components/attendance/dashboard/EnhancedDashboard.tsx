@@ -26,6 +26,7 @@ import { getClassAverageAvailability, setTotalClassCount } from './classAverageU
 import AnalyticsSection from './AnalyticsSection';
 import MovingAverageChart from './MovingAverageChart';
 import RegressionChart from './RegressionChart';
+import { getEffectiveChartHeight } from './chartUtils';
 
 interface EnhancedDashboardProps {
   getFilteredStudents: () => [string, StudentStats][];
@@ -495,8 +496,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       {useDraggableDashboard ? (
         <DraggableDashboard>
           {/* Zeitlicher Verlauf */}
-          <ChartContainer title="" subtitle="" isDraggable={true}>
-            <div className="w-full h-full"> {/* Wichtiger zusätzlicher Container */}
+          <ChartContainer title="" subtitle="" isDraggable={true} className="px-2 py-1">
+            <div className={getEffectiveChartHeight('timeSeries')}>
               <TrendCharts
                 weeklyTrends={weeklyTrends}
                 attendanceOverTime={attendanceOverTime}
@@ -522,8 +523,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
           </ChartContainer>
 
           {/* Wochentagsanalyse */}
-          <ChartContainer title="" subtitle="" isDraggable={true}>
-            <div className="w-full h-full"> {/* Wichtiger zusätzlicher Container */}
+          <ChartContainer title="" subtitle="" isDraggable={true} className="px-2 py-1">
+            <div className={getEffectiveChartHeight('timeSeries')}>
               <TrendCharts
                 weeklyTrends={weeklyTrends}
                 attendanceOverTime={attendanceOverTime}
@@ -549,8 +550,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
           </ChartContainer>
 
           {/* Gleitender Durchschnitt */}
-          <ChartContainer title="" subtitle="" isDraggable={true}>
-            <div className="w-full h-full"> {/* Wichtiger zusätzlicher Container */}
+          <ChartContainer title="" subtitle="" isDraggable={true} className="px-2 py-1">
+            <div className={getEffectiveChartHeight('timeSeries')}>
               <MovingAverageChart 
                 attendanceOverTime={attendanceOverTime} 
                 schoolYearDetailedData={schoolYearStats}
@@ -566,8 +567,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
           </ChartContainer>
 
           {/* Regressionsanalyse */}
-          <ChartContainer title="" subtitle="" isDraggable={true}>
-            <div className="w-full h-full"> {/* Wichtiger zusätzlicher Container */}
+          <ChartContainer title="" subtitle="" isDraggable={true} className="px-2 py-1">
+            <div className={getEffectiveChartHeight('timeSeries')}>
               <RegressionChart 
                 attendanceOverTime={attendanceOverTime} 
                 schoolYearDetailedData={schoolYearStats}

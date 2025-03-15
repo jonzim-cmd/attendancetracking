@@ -168,7 +168,7 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
       layouts={layouts}
       breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
       cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
-      rowHeight={75}
+      rowHeight={90}
       onLayoutChange={onLayoutChange}
       draggableHandle=".chart-drag-handle"
       isDraggable={true}
@@ -178,7 +178,7 @@ const DraggableDashboard: React.FC<DraggableDashboardProps> = ({
     >
       {visibleChildren.map((child, i) => (
         <div key={i.toString()} className={`${CARD_CLASSES} overflow-hidden border-0 w-full`}>
-          <div className="h-full w-full flex flex-col p-4"> {/* p-4 hinzugefügt */}
+          <div className="h-full w-full flex flex-col"> {/* p-4 entfernt für mehr Platz */}
             {child}
           </div>
         </div>

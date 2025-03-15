@@ -443,7 +443,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   if (chartMode === 'timeSeries') {
     return (
       <div className="h-full flex flex-col w-full">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-2">
           <div className="flex items-center">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
               Zeitlicher Verlauf
@@ -565,7 +565,7 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
           </div>
         </div>
         
-        <div className="overflow-hidden">
+        <div className="overflow-hidden flex-1">
           <div className={CHART_SCROLL_CONTAINER_CLASSES} ref={scrollContainerRef}>
             <div style={{ 
               width: getChartWidth(attendanceOverTime.length, groupingOption),
@@ -593,10 +593,11 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   }
   
   // Einzelner Wochentagsanalyse-Chart
+  // Einzelner Wochentagsanalyse-Chart
   if (chartMode === 'weekday') {
     return (
       <div className="h-full flex flex-col w-full">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-2">
           <div className="flex items-center">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
               Wochentagsanalyse
@@ -650,29 +651,24 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
           </div>
         </div>
         
-        <div className="overflow-hidden">
-          <div className={CHART_SCROLL_CONTAINER_CLASSES} ref={scrollContainerRef}>
-            <div style={{ 
-              width: '100%',
-              height: '100%' 
-            }}>
-              <AttendanceBarChart 
-                data={dayOfWeekData}
-                bars={dayOfWeekBars}
-                criticalDays={{
-                  verspaetungen: maxVerspaetungenTag?.name,
-                  fehlzeitenUnentsch: maxFehlzeitenUnentschTag?.name,
-                  fehlzeitenGesamt: dayOfWeekData.reduce((max, day) => 
-                    day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
-                    dayOfWeekData[0])?.name
-                }}
-              />
-            </div>
+        <div className="overflow-hidden h-48"> {/* Kleinere Höhe für Diagramm, um Platz für Infokacheln zu lassen */}
+          <div className="w-full h-full">
+            <AttendanceBarChart 
+              data={dayOfWeekData}
+              bars={dayOfWeekBars}
+              criticalDays={{
+                verspaetungen: maxVerspaetungenTag?.name,
+                fehlzeitenUnentsch: maxFehlzeitenUnentschTag?.name,
+                fehlzeitenGesamt: dayOfWeekData.reduce((max, day) => 
+                  day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
+                  dayOfWeekData[0])?.name
+              }}
+            />
           </div>
         </div>
         
         {dayOfWeekData.length > 0 && (
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
             {maxVerspaetungenTag && (
               <InfoTile 
                 title="Kritischer Tag (Verspätungen)" 

@@ -22,7 +22,18 @@ export const getChartWidth = (dataLength: number, groupBy?: string): string => {
  * @param hasAdditionalContent Ob die Chart-Komponente zusätzliche Elemente hat
  * @returns CSS-Höhenwert als String
  */
-export const getEffectiveChartHeight = (hasAdditionalContent: boolean = false): string => {
-  // Wenn zusätzlicher Inhalt (wie Statistik-Boxen) vorhanden ist, reduziere die Chart-Höhe
-  return hasAdditionalContent ? "h-52" : "h-64";
-};
+  export const getEffectiveChartHeight = (chartType: 'timeSeries' | 'weekday' | 'movingAverage' | 'regression' | string = ''): string => {
+    // Spezifische Höhen je nach Chart-Typ
+    switch(chartType) {
+      case 'weekday':
+        return "h-72"; // Mehr Platz für Wochentagsanalyse (hat zusätzliche Infokacheln)
+      case 'regression':
+        return "h-72"; // Mehr Platz für Regression (hat zusätzliche Statistiken)
+      case 'movingAverage':
+        return "h-64"; // Standardhöhe
+      case 'timeSeries':
+        return "h-64"; // Standardhöhe
+      default:
+        return "h-64"; // Standardhöhe für alle anderen
+    }
+  };

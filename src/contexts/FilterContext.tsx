@@ -2,6 +2,17 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { StudentStats } from '@/types';
 
+// NEU: Definiere den DashboardTileType
+export type DashboardTileType = 'regression' | 'timeSeries' | 'weekday' | 'movingAverage';
+
+// NEU: Standardreihenfolge der Dashboard-Kacheln
+const DEFAULT_DASHBOARD_TILES_ORDER: DashboardTileType[] = [
+  'regression',
+  'weekday',
+  'timeSeries',
+  'movingAverage'
+];
+
 // Context-Typ definieren
 interface FilterContextType {
   // Dashboard-spezifische Filter
@@ -44,6 +55,11 @@ interface FilterContextType {
   setVisibleDashboardTiles: (tiles: Record<string, boolean>) => void;
   toggleDashboardTile: (tileId: string) => void;
   toggleAllDashboardTiles: (visible: boolean) => void;
+  
+  // NEU: Dashboard-Kachel-Reihenfolge
+  dashboardTilesOrder: DashboardTileType[];
+  setDashboardTileOrder: (tileType: DashboardTileType, newPosition: number) => void;
+  resetDashboardTilesOrder: () => void;
 }
 
 // Context erstellen
@@ -107,6 +123,39 @@ export const FilterProvider: React.FC<{
     movingAverage: true,
     regression: true
   });
+  
+  // NEU: State für die Reihenfolge der Dashboard-Kacheln
+  const [dashboardTilesOrder, setDashboardTilesOrderState] = useState<DashboardTileType[]>(DEFAULT_DASHBOARD_TILES_ORDER);
+  
+  // NEU: Funktion zum Ändern der Reihenfolge einer Kachel
+  const setDashboardTileOrder = useCallback((tileType: DashboardTileType, newPosition: number) => {
+    setDashboardTilesOrderState(prevOrder => {
+      // Erzeuge eine Kopie der aktuellen Reihenfolge
+      const newOrder = [...prevOrder];
+      
+      // Finde die aktuelle Position des Elements
+      const currentIndex = newOrder.indexOf(tileType);
+      
+      // Wenn das Element nicht gefunden wird, keine Änderung
+      if (currentIndex === -1) return prevOrder;
+      
+      // Entferne das Element aus der aktuellen Position
+      newOrder.splice(currentIndex, 1);
+      
+      // Stelle sicher, dass die neue Position gültig ist
+      const safeNewPosition = Math.max(0, Math.min(newPosition, newOrder.length));
+      
+      // Füge das Element an der neuen Position ein
+      newOrder.splice(safeNewPosition, 0, tileType);
+      
+      return newOrder;
+    });
+  }, []);
+  
+  // NEU: Funktion zum Zurücksetzen auf die Standardreihenfolge
+  const resetDashboardTilesOrder = useCallback(() => {
+    setDashboardTilesOrderState(DEFAULT_DASHBOARD_TILES_ORDER);
+  }, []);
   
   // NEU: Funktion zum Umschalten der Sichtbarkeit einer einzelnen Kachel
   const toggleDashboardTile = useCallback((tileId: string) => {
@@ -207,8 +256,10 @@ export const FilterProvider: React.FC<{
       setGroupingOption('monthly');
       // NEU: Alle Kacheln wieder sichtbar machen
       toggleAllDashboardTiles(true);
+      // NEU: Reihenfolge zurücksetzen
+      resetDashboardTilesOrder();
     }
-  }, [resetTriggerId, toggleAllDashboardTiles]);
+  }, [resetTriggerId, toggleAllDashboardTiles, resetDashboardTilesOrder]);
   
   // NEU: Laden der gespeicherten Kachel-Sichtbarkeit aus dem localStorage, wenn die Komponente geladen wird
   useEffect(() => {
@@ -217,8 +268,19 @@ export const FilterProvider: React.FC<{
       if (savedVisibility) {
         setVisibleDashboardTiles(JSON.parse(savedVisibility));
       }
+      
+      // NEU: Laden der gespeicherten Kachel-Reihenfolge
+      const savedOrder = localStorage.getItem('dashboardTilesOrder');
+      if (savedOrder) {
+        const parsedOrder = JSON.parse(savedOrder);
+        // Prüfen, ob es sich um ein gültiges Array mit korrekten Werten handelt
+        if (Array.isArray(parsedOrder) && parsedOrder.length === 4 &&
+            parsedOrder.every(tile => ['regression', 'timeSeries', 'weekday', 'movingAverage'].includes(tile))) {
+          setDashboardTilesOrderState(parsedOrder as DashboardTileType[]);
+        }
+      }
     } catch (error) {
-      console.error('Fehler beim Laden der Kachel-Sichtbarkeit:', error);
+      console.error('Fehler beim Laden der Dashboard-Kachel-Einstellungen:', error);
     }
   }, []);
   
@@ -230,6 +292,15 @@ export const FilterProvider: React.FC<{
       console.error('Fehler beim Speichern der Kachel-Sichtbarkeit:', error);
     }
   }, [visibleDashboardTiles]);
+  
+  // NEU: Speichern der Kachel-Reihenfolge im localStorage, wenn sie sich ändert
+  useEffect(() => {
+    try {
+      localStorage.setItem('dashboardTilesOrder', JSON.stringify(dashboardTilesOrder));
+    } catch (error) {
+      console.error('Fehler beim Speichern der Kachel-Reihenfolge:', error);
+    }
+  }, [dashboardTilesOrder]);
   
   const contextValue = {
     selectedDashboardClasses,
@@ -255,6 +326,11 @@ export const FilterProvider: React.FC<{
     setVisibleDashboardTiles,
     toggleDashboardTile,
     toggleAllDashboardTiles,
+    
+    // NEU: Dashboard Tile Order
+    dashboardTilesOrder,
+    setDashboardTileOrder,
+    resetDashboardTilesOrder,
     
     // Die ursprüngliche getContextFilteredStudents-Funktion
     getContextFilteredStudents: () => {

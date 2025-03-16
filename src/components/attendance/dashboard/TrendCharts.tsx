@@ -18,9 +18,27 @@ import AnalyticsSection from './AnalyticsSection';
 import InfoButton from '@/components/ui/InfoButton';
 import { CHART_EXPLANATIONS } from './chartExplanations';
 import { getChartWidth} from './chartUtils';
+import type { DashboardTileType } from '@/contexts/FilterContext';
 
 // Extend the TimeSeriesDataPoint to include student average data
 type TimeSeriesDataPointWithAllAvg = TimeSeriesDataPointWithAvg & TimeSeriesDataPointWithStudentAvg;
+
+// NEU: TypeScript-Interfaces für Chart-Linien und -Balken
+interface ChartLine {
+  dataKey: string;
+  name: string;
+  color: string;
+  activeDot?: boolean;
+  strokeDasharray?: string;
+  strokeWidth?: number;
+  opacity?: number;
+}
+
+interface ChartBar {
+  dataKey: string;
+  name: string;
+  color: string;
+}
 
 interface TrendChartsProps {
   weeklyTrends: any[];
@@ -104,8 +122,11 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   weeklyDetailedData = {},
   allStudentStats = {}
 }) => {
-  // NEU: Zugriff auf den visibleDashboardTiles-State
-  const { visibleDashboardTiles } = useFilters();
+  // NEU: Zugriff auf den visibleDashboardTiles-State und dashboardTilesOrder
+  const { 
+    visibleDashboardTiles,
+    dashboardTilesOrder
+  } = useFilters();
   
   // Zugriff auf den FilterContext
   const {
@@ -194,7 +215,8 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   };
   
   // Prepare visible lines for the chart based on user preferences
-  const visibleLines = [];
+  // FIX: Explizite Typisierung
+  const visibleLines: ChartLine[] = [];
   
   // Primary data series
   if (chartVisibility.verspaetungen) {
@@ -292,7 +314,8 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
   }
   
   // Prepare bars for weekday analysis
-  const dayOfWeekBars = [];
+  // FIX: Explizite Typisierung
+  const dayOfWeekBars: ChartBar[] = [];
   
   if (weekdayChartVisibility.verspaetungen) {
     dayOfWeekBars.push({ 
@@ -432,561 +455,342 @@ const TrendCharts: React.FC<TrendChartsProps> = memo(({
     
     return null;
   };
+
+  // NEU: Komponenten für die einzelnen Chart-Typen extrahieren
+  // Diese Funktionen werden als Renderer für jeden Chart-Typ verwendet
   
-  // Diese Funktion bestimmt, welcher Chart-Typ angezeigt werden soll
-  const shouldRenderChart = (chartType: string) => {
-    if (!chartMode || chartMode === 'all') return true;
-    return chartMode === chartType;
+  // Regressionsanalyse-Komponente
+  const renderRegressionChart = () => (
+    <AnalyticsSection 
+      attendanceOverTime={attendanceOverTime}
+      schoolYearDetailedData={schoolYearDetailedData}
+      weeklyDetailedData={weeklyDetailedData}
+      allStudentStats={allStudentStats}
+      className="mb-4"
+      hasSingleClassOnly={hasSingleClassOnly}
+      singleClassName={singleClassName}
+      chartMode="regression"
+    />
+  );
+
+  // Zeitlicher Verlauf-Komponente
+  const renderTimeSeriesChart = () => (
+    <div className={CARD_CLASSES}>
+      <div className="flex justify-between items-center mb-4 w-full pr-2">
+        <div className="flex items-center">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+            Zeitlicher Verlauf
+            <span className="text-base font-normal ml-2 text-gray-500 dark:text-gray-400">
+              ({groupingTitle})
+            </span>
+          </h3>
+          <InfoButton 
+            title={CHART_EXPLANATIONS.timeSeriesChart.title} 
+            content={CHART_EXPLANATIONS.timeSeriesChart.content} 
+            className="ml-2"
+          />
+        </div>
+        <div className="flex flex-wrap space-x-2 text-base">
+          <label className="inline-flex items-center cursor-pointer" title="Verspätungen im Trend anzeigen">
+            <input 
+              type="checkbox" 
+              checked={chartVisibility.verspaetungen} 
+              onChange={() => setChartVisibility(prev => ({...prev, verspaetungen: !prev.verspaetungen}))}
+              className="mr-1 w-4 h-4"
+            />
+            <span className="text-purple-600 dark:text-purple-400">Versp.</span>
+          </label>
+          <label className="inline-flex items-center cursor-pointer" title="Entschuldigte Fehltage im Trend anzeigen">
+            <input 
+              type="checkbox" 
+              checked={chartVisibility.fehlzeitenEntsch} 
+              onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenEntsch: !prev.fehlzeitenEntsch}))}
+              className="mr-1 w-4 h-4"
+            />
+            <span className="text-green-600 dark:text-green-400">F (e.)</span>
+          </label>
+          <label className="inline-flex items-center cursor-pointer" title="Unentschuldigte Fehltage im Trend anzeigen">
+            <input 
+              type="checkbox" 
+              checked={chartVisibility.fehlzeitenUnentsch} 
+              onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenUnentsch: !prev.fehlzeitenUnentsch}))}
+              className="mr-1 w-4 h-4"
+            />
+            <span className="text-red-600 dark:text-red-400">F (u.)</span>
+          </label>
+          <label className="inline-flex items-center cursor-pointer" title="Gesamte Fehltage im Trend anzeigen">
+            <input 
+              type="checkbox" 
+              checked={chartVisibility.fehlzeitenGesamt} 
+              onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenGesamt: !prev.fehlzeitenGesamt}))}
+              className="mr-1 w-4 h-4"
+            />
+            <span className="text-blue-600 dark:text-blue-400">F (gesamt)</span>
+          </label>
+          
+          <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-2 ml-4"></div>
+          <label 
+            className={`inline-flex items-center ${classAverageAvailability.isAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`} 
+            title={classAverageAvailability.tooltip}
+          >
+            <input 
+              type="checkbox" 
+              checked={classAverageAvailability.isAvailable && chartVisibility.verspaetungenAvg}
+              onChange={() => {
+                if (classAverageAvailability.isAvailable) {
+                  setChartVisibility(prev => ({...prev, verspaetungenAvg: !prev.verspaetungenAvg}));
+                }
+              }}
+              disabled={!classAverageAvailability.isAvailable}
+              className="mr-1 w-4 h-4"
+            />
+            <span className="text-purple-600 dark:text-purple-400 text-opacity-70 dark:text-opacity-70">⌀ Klasse (V)</span>
+          </label>
+          
+          <label 
+            className={`inline-flex items-center ${classAverageAvailability.isAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`} 
+            title={classAverageAvailability.tooltip}
+          >
+            <input 
+              type="checkbox" 
+              checked={classAverageAvailability.isAvailable && chartVisibility.fehlzeitenAvg}
+              onChange={() => {
+                if (classAverageAvailability.isAvailable) {
+                  setChartVisibility(prev => ({...prev, fehlzeitenAvg: !prev.fehlzeitenAvg}));
+                }
+              }}
+              disabled={!classAverageAvailability.isAvailable}
+              className="mr-1 w-4 h-4"
+            />
+            <span className="text-blue-600 dark:text-blue-400 text-opacity-70 dark:text-opacity-70">⌀ Klasse (Fges.)</span>
+          </label>
+          
+          <label className="inline-flex items-center cursor-pointer ml-2" title="Durchschnittliche Verspätungen pro Schüler">
+            <input 
+              type="checkbox" 
+              checked={showStudentAverageComparison && chartVisibility.verspaetungenStudentAvg}
+              onChange={() => {
+                if (!showStudentAverageComparison) {
+                  setShowStudentAverageComparison(true);
+                }
+                setChartVisibility(prev => ({...prev, verspaetungenStudentAvg: !prev.verspaetungenStudentAvg}))
+              }}
+              className="mr-1 w-4 h-4"
+            />
+            <span className="text-purple-600 dark:text-purple-400 text-opacity-70 dark:text-opacity-70">⌀ Schüler (V)</span>
+          </label>
+          
+          <label className="inline-flex items-center cursor-pointer" title="Durchschnittliche Fehltage pro Schüler">
+            <input 
+              type="checkbox" 
+              checked={showStudentAverageComparison && chartVisibility.fehlzeitenStudentAvg}
+              onChange={() => {
+                if (!showStudentAverageComparison) {
+                  setShowStudentAverageComparison(true);
+                }
+                setChartVisibility(prev => ({...prev, fehlzeitenStudentAvg: !prev.fehlzeitenStudentAvg}))
+              }}
+              className="mr-1 w-4 h-4"
+            />
+            <span className="text-blue-600 dark:text-blue-400 text-opacity-70 dark:text-opacity-70">⌀ Schüler (Fges.)</span>
+          </label>
+        </div>
+      </div>
+      <div className="overflow-x-auto h-64" ref={scrollContainerRef}>
+        <div style={{ 
+          width: attendanceOverTime.length > 8 ? `${Math.max(attendanceOverTime.length * 80, 800)}px` : '100%', 
+          minWidth: '100%',
+          height: '100%' 
+        }}>
+          <AttendanceLineChart 
+            data={attendanceOverTime}
+            lines={visibleLines}
+            formatXAxis={formatDate}
+            yAxisMax={maxAttendanceValue > 0 ? undefined : 10}
+            customTooltip={CustomTooltip}
+          />
+        </div>
+      </div>
+      {attendanceOverTime.length === 0 && (
+        <div className="text-center text-gray-500 dark:text-gray-400 mt-4 text-base">
+          Keine Daten für den ausgewählten Zeitraum verfügbar.
+        </div>
+      )}
+    </div>
+  );
+
+  // Wochentagsanalyse-Komponente
+  const renderWeekdayChart = () => (
+    <div className={CARD_CLASSES}>
+      <div className="flex justify-between items-center mb-4 w-full pr-2">
+        <div className="flex items-center">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+            Wochentagsanalyse
+            <span className="text-base font-normal ml-2 text-gray-500 dark:text-gray-400">
+              (Unabhängig von Zeitraumsauswahl)
+            </span>
+          </h3>
+          <InfoButton 
+            title={CHART_EXPLANATIONS.weekdayAnalysis.title} 
+            content={CHART_EXPLANATIONS.weekdayAnalysis.content} 
+            className="ml-2"
+          />
+        </div>
+        <div className="flex flex-wrap space-x-2 text-base">
+          <label className="inline-flex items-center cursor-pointer" title="Verspätungen nach Wochentag anzeigen">
+            <input 
+              type="checkbox" 
+              checked={weekdayChartVisibility.verspaetungen} 
+              onChange={() => setWeekdayChartVisibility(prev => ({...prev, verspaetungen: !prev.verspaetungen}))}
+              className="mr-1 w-4 h-4"
+            />
+            <span className="text-purple-600 dark:text-purple-400">Versp.</span>
+          </label>
+          <label className="inline-flex items-center cursor-pointer" title="Entschuldigte Fehltage nach Wochentag anzeigen">
+            <input 
+              type="checkbox" 
+              checked={weekdayChartVisibility.fehlzeitenEntsch} 
+              onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenEntsch: !prev.fehlzeitenEntsch}))}
+              className="mr-1 w-4 h-4"
+            />
+            <span className="text-green-600 dark:text-green-400">F (e.)</span>
+          </label>
+          <label className="inline-flex items-center cursor-pointer" title="Unentschuldigte Fehltage nach Wochentag anzeigen">
+            <input 
+              type="checkbox" 
+              checked={weekdayChartVisibility.fehlzeitenUnentsch} 
+              onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenUnentsch: !prev.fehlzeitenUnentsch}))}
+              className="mr-1 w-4 h-4"
+            />
+            <span className="text-red-600 dark:text-red-400">F (u.)</span>
+          </label>
+          <label className="inline-flex items-center cursor-pointer" title="Gesamte Fehltage nach Wochentag anzeigen">
+            <input 
+              type="checkbox" 
+              checked={weekdayChartVisibility.fehlzeitenGesamt} 
+              onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenGesamt: !prev.fehlzeitenGesamt}))}
+              className="mr-1 w-4 h-4"
+            />
+            <span className="text-blue-600 dark:text-blue-400">F (gesamt)</span>
+          </label>
+        </div>
+      </div>
+      <div className="overflow-x-auto h-64">
+        <div style={{ 
+          width: '100%',
+          height: '100%' 
+        }}>
+          <AttendanceBarChart 
+            data={dayOfWeekData}
+            bars={dayOfWeekBars}
+            criticalDays={{
+              verspaetungen: maxVerspaetungenTag?.name,
+              fehlzeitenUnentsch: maxFehlzeitenUnentschTag?.name,
+              fehlzeitenGesamt: dayOfWeekData.reduce((max, day) => 
+                day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
+                dayOfWeekData[0])?.name
+            }}
+          />
+        </div>
+      </div>
+      {dayOfWeekData.length > 0 && (
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {maxVerspaetungenTag && (
+            <InfoTile 
+              title="Kritischer Tag (Verspätungen)" 
+              value={`${maxVerspaetungenTag.name} (${maxVerspaetungenTag.verspaetungen})`}
+              className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
+              valueClassName="text-purple-600 dark:text-purple-400 text-base"
+            />
+          )}
+          {maxFehlzeitenUnentschTag && (
+            <InfoTile 
+              title="Kritischer Tag (unentsch. Fehltage)" 
+              value={`${maxFehlzeitenUnentschTag.name} (${maxFehlzeitenUnentschTag.fehlzeitenUnentsch})`}
+              className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
+              valueClassName="text-red-600 dark:text-red-400 text-base"
+            />
+          )}
+          {dayOfWeekData.length > 0 && (
+            <InfoTile 
+              title="Kritischer Tag (Fehltage gesamt)" 
+              value={`${dayOfWeekData.reduce((max, day) => 
+                day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
+                dayOfWeekData[0]).name} (${dayOfWeekData.reduce((max, day) => 
+                  day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
+                  dayOfWeekData[0]).fehlzeitenGesamt})`}
+              className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
+              valueClassName="text-blue-600 dark:text-blue-400 text-base"
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  // Gleitender Durchschnitt-Komponente
+  const renderMovingAverageChart = () => (
+    <AnalyticsSection 
+      attendanceOverTime={attendanceOverTime}
+      schoolYearDetailedData={schoolYearDetailedData}
+      weeklyDetailedData={weeklyDetailedData}
+      allStudentStats={allStudentStats}
+      className="mt-4"
+      hasSingleClassOnly={hasSingleClassOnly}
+      singleClassName={singleClassName}
+      chartMode="movingAverage"
+    />
+  );
+
+  // FIX: Verwende React.ReactElement statt JSX.Element
+  // Mapping von Chart-Typen zu ihren Render-Funktionen
+  const chartRenderers: Record<DashboardTileType, () => React.ReactElement> = {
+    regression: renderRegressionChart,
+    timeSeries: renderTimeSeriesChart,
+    weekday: renderWeekdayChart,
+    movingAverage: renderMovingAverageChart
   };
 
   // Im Einzel-Chart-Modus nur den angeforderten Chart-Typ rendern
   if (chartMode === 'timeSeries') {
     return (
       <div className="h-full flex flex-col w-full">
-        <div className="flex justify-between items-center mb-2">
-          <div className="flex items-center">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-              Zeitlicher Verlauf
-              <span className="text-base font-normal ml-2 text-gray-500 dark:text-gray-400">
-                ({groupingTitle})
-              </span>
-            </h3>
-            <InfoButton 
-              title={CHART_EXPLANATIONS.timeSeriesChart.title} 
-              content={CHART_EXPLANATIONS.timeSeriesChart.content} 
-              className="ml-2"
-            />
-          </div>
-          <div className="flex flex-wrap space-x-2 text-base">
-            <label className="inline-flex items-center cursor-pointer" title="Verspätungen im Trend anzeigen">
-              <input 
-                type="checkbox" 
-                checked={chartVisibility.verspaetungen} 
-                onChange={() => setChartVisibility(prev => ({...prev, verspaetungen: !prev.verspaetungen}))}
-                className="mr-1 w-4 h-4"
-              />
-              <span className="text-purple-600 dark:text-purple-400">Versp.</span>
-            </label>
-            <label className="inline-flex items-center cursor-pointer" title="Entschuldigte Fehltage im Trend anzeigen">
-              <input 
-                type="checkbox" 
-                checked={chartVisibility.fehlzeitenEntsch} 
-                onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenEntsch: !prev.fehlzeitenEntsch}))}
-                className="mr-1 w-4 h-4"
-              />
-              <span className="text-green-600 dark:text-green-400">F (e.)</span>
-            </label>
-            <label className="inline-flex items-center cursor-pointer" title="Unentschuldigte Fehltage im Trend anzeigen">
-              <input 
-                type="checkbox" 
-                checked={chartVisibility.fehlzeitenUnentsch} 
-                onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenUnentsch: !prev.fehlzeitenUnentsch}))}
-                className="mr-1 w-4 h-4"
-              />
-              <span className="text-red-600 dark:text-red-400">F (u.)</span>
-            </label>
-            <label className="inline-flex items-center cursor-pointer" title="Gesamte Fehltage im Trend anzeigen">
-              <input 
-                type="checkbox" 
-                checked={chartVisibility.fehlzeitenGesamt} 
-                onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenGesamt: !prev.fehlzeitenGesamt}))}
-                className="mr-1 w-4 h-4"
-              />
-              <span className="text-blue-600 dark:text-blue-400">F (gesamt)</span>
-            </label>
-            
-            <div className="border-l border-gray-300 dark:border-gray-600 pl-2 ml-1"></div>
-            
-            <label 
-              className={`inline-flex items-center ${classAverageAvailability.isAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`} 
-              title={classAverageAvailability.tooltip}
-            >
-              <input 
-                type="checkbox" 
-                checked={classAverageAvailability.isAvailable && chartVisibility.verspaetungenAvg}
-                onChange={() => {
-                  if (classAverageAvailability.isAvailable) {
-                    setChartVisibility(prev => ({...prev, verspaetungenAvg: !prev.verspaetungenAvg}));
-                  }
-                }}
-                disabled={!classAverageAvailability.isAvailable}
-                className="mr-1 w-4 h-4"
-              />
-              <span className="text-purple-600 dark:text-purple-400 text-opacity-70 dark:text-opacity-70">⌀ Klasse (V)</span>
-            </label>
-            
-            <label 
-              className={`inline-flex items-center ${classAverageAvailability.isAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`} 
-              title={classAverageAvailability.tooltip}
-            >
-              <input 
-                type="checkbox" 
-                checked={classAverageAvailability.isAvailable && chartVisibility.fehlzeitenAvg}
-                onChange={() => {
-                  if (classAverageAvailability.isAvailable) {
-                    setChartVisibility(prev => ({...prev, fehlzeitenAvg: !prev.fehlzeitenAvg}));
-                  }
-                }}
-                disabled={!classAverageAvailability.isAvailable}
-                className="mr-1 w-4 h-4"
-              />
-              <span className="text-blue-600 dark:text-blue-400 text-opacity-70 dark:text-opacity-70">⌀ Klasse (Fges.)</span>
-            </label>
-            
-            <label className="inline-flex items-center cursor-pointer" title="Durchschnittliche Verspätungen pro Schüler">
-              <input 
-                type="checkbox" 
-                checked={showStudentAverageComparison && chartVisibility.verspaetungenStudentAvg}
-                onChange={() => {
-                  if (!showStudentAverageComparison) {
-                    setShowStudentAverageComparison(true);
-                  }
-                  setChartVisibility(prev => ({...prev, verspaetungenStudentAvg: !prev.verspaetungenStudentAvg}))
-                }}
-                className="mr-1 w-4 h-4"
-              />
-              <span className="text-purple-600 dark:text-purple-400 text-opacity-70 dark:text-opacity-70">⌀ Schüler (V)</span>
-            </label>
-            
-            <label className="inline-flex items-center cursor-pointer" title="Durchschnittliche Fehltage pro Schüler">
-              <input 
-                type="checkbox" 
-                checked={showStudentAverageComparison && chartVisibility.fehlzeitenStudentAvg}
-                onChange={() => {
-                  if (!showStudentAverageComparison) {
-                    setShowStudentAverageComparison(true);
-                  }
-                  setChartVisibility(prev => ({...prev, fehlzeitenStudentAvg: !prev.fehlzeitenStudentAvg}))
-                }}
-                className="mr-1 w-4 h-4"
-              />
-              <span className="text-blue-600 dark:text-blue-400 text-opacity-70 dark:text-opacity-70">⌀ Schüler (Fges.)</span>
-            </label>
-          </div>
-        </div>
-        
-        <div className="overflow-hidden flex-1">
-          <div className={CHART_SCROLL_CONTAINER_CLASSES} ref={scrollContainerRef}>
-            <div style={{ 
-              width: getChartWidth(attendanceOverTime.length, groupingOption),
-              minWidth: '100%',
-              height: '100%' 
-            }}>
-              <AttendanceLineChart 
-                data={attendanceOverTime}
-                lines={visibleLines}
-                formatXAxis={formatDate}
-                yAxisMax={maxAttendanceValue > 0 ? undefined : 10}
-                customTooltip={CustomTooltip}
-              />
-            </div>
-          </div>
-        </div>
-        
-        {attendanceOverTime.length === 0 && (
-          <div className="text-center text-gray-500 dark:text-gray-400 mt-4 text-base">
-            Keine Daten für den ausgewählten Zeitraum verfügbar.
-          </div>
-        )}
+        {renderTimeSeriesChart()}
       </div>
     );
   }
   
-  // Einzelner Wochentagsanalyse-Chart
   // Einzelner Wochentagsanalyse-Chart
   if (chartMode === 'weekday') {
     return (
       <div className="h-full flex flex-col w-full">
-        <div className="flex justify-between items-center mb-2">
-          <div className="flex items-center">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-              Wochentagsanalyse
-              <span className="text-base font-normal ml-2 text-gray-500 dark:text-gray-400">
-                (Unabhängig von Zeitraumsauswahl)
-              </span>
-            </h3>
-            <InfoButton 
-              title={CHART_EXPLANATIONS.weekdayAnalysis.title} 
-              content={CHART_EXPLANATIONS.weekdayAnalysis.content} 
-              className="ml-2"
-            />
-          </div>
-          <div className="flex flex-wrap space-x-2 text-base">
-            <label className="inline-flex items-center cursor-pointer" title="Verspätungen nach Wochentag anzeigen">
-              <input 
-                type="checkbox" 
-                checked={weekdayChartVisibility.verspaetungen} 
-                onChange={() => setWeekdayChartVisibility(prev => ({...prev, verspaetungen: !prev.verspaetungen}))}
-                className="mr-1 w-4 h-4"
-              />
-              <span className="text-purple-600 dark:text-purple-400">Versp.</span>
-            </label>
-            <label className="inline-flex items-center cursor-pointer" title="Entschuldigte Fehltage nach Wochentag anzeigen">
-              <input 
-                type="checkbox" 
-                checked={weekdayChartVisibility.fehlzeitenEntsch} 
-                onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenEntsch: !prev.fehlzeitenEntsch}))}
-                className="mr-1 w-4 h-4"
-              />
-              <span className="text-green-600 dark:text-green-400">F (e.)</span>
-            </label>
-            <label className="inline-flex items-center cursor-pointer" title="Unentschuldigte Fehltage nach Wochentag anzeigen">
-              <input 
-                type="checkbox" 
-                checked={weekdayChartVisibility.fehlzeitenUnentsch} 
-                onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenUnentsch: !prev.fehlzeitenUnentsch}))}
-                className="mr-1 w-4 h-4"
-              />
-              <span className="text-red-600 dark:text-red-400">F (u.)</span>
-            </label>
-            <label className="inline-flex items-center cursor-pointer" title="Gesamte Fehltage nach Wochentag anzeigen">
-              <input 
-                type="checkbox" 
-                checked={weekdayChartVisibility.fehlzeitenGesamt} 
-                onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenGesamt: !prev.fehlzeitenGesamt}))}
-                className="mr-1 w-4 h-4"
-              />
-              <span className="text-blue-600 dark:text-blue-400">F (gesamt)</span>
-            </label>
-          </div>
-        </div>
-        
-        <div className="overflow-hidden h-48"> {/* Kleinere Höhe für Diagramm, um Platz für Infokacheln zu lassen */}
-          <div className="w-full h-full">
-            <AttendanceBarChart 
-              data={dayOfWeekData}
-              bars={dayOfWeekBars}
-              criticalDays={{
-                verspaetungen: maxVerspaetungenTag?.name,
-                fehlzeitenUnentsch: maxFehlzeitenUnentschTag?.name,
-                fehlzeitenGesamt: dayOfWeekData.reduce((max, day) => 
-                  day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
-                  dayOfWeekData[0])?.name
-              }}
-            />
-          </div>
-        </div>
-        
-        {dayOfWeekData.length > 0 && (
-          <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {maxVerspaetungenTag && (
-              <InfoTile 
-                title="Kritischer Tag (Verspätungen)" 
-                value={`${maxVerspaetungenTag.name} (${maxVerspaetungenTag.verspaetungen})`}
-                className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
-                valueClassName="text-purple-600 dark:text-purple-400 text-base"
-              />
-            )}
-            {maxFehlzeitenUnentschTag && (
-              <InfoTile 
-                title="Kritischer Tag (unentsch. Fehltage)" 
-                value={`${maxFehlzeitenUnentschTag.name} (${maxFehlzeitenUnentschTag.fehlzeitenUnentsch})`}
-                className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
-                valueClassName="text-red-600 dark:text-red-400 text-base"
-              />
-            )}
-            {dayOfWeekData.length > 0 && (
-              <InfoTile 
-                title="Kritischer Tag (Fehltage gesamt)" 
-                value={`${dayOfWeekData.reduce((max, day) => 
-                  day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
-                  dayOfWeekData[0]).name} (${dayOfWeekData.reduce((max, day) => 
-                    day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
-                    dayOfWeekData[0]).fehlzeitenGesamt})`}
-                className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
-                valueClassName="text-blue-600 dark:text-blue-400 text-base"
-              />
-            )}
-          </div>
-        )}
+        {renderWeekdayChart()}
       </div>
     );
   }
   
+  // NEU: Refaktorierte Render-Logik für alle Charts:
+  // Statt hardcoded Reihenfolge verwenden wir dashboardTilesOrder
   return (
     <>
-      {/* 1. REGRESSION an erster Stelle */}
-      {visibleDashboardTiles.regression && (
-        <AnalyticsSection 
-          attendanceOverTime={attendanceOverTime}
-          schoolYearDetailedData={schoolYearDetailedData}
-          weeklyDetailedData={weeklyDetailedData}
-          allStudentStats={allStudentStats}
-          className="mb-4"
-          hasSingleClassOnly={hasSingleClassOnly}
-          singleClassName={singleClassName}
-          chartMode="regression"
-        />
-      )}
-  
-      {/* 2. ZEITLICHER VERLAUF an dritter Stelle */}
-      {visibleDashboardTiles.timeSeries && (
-        <div className={CARD_CLASSES}>
-          <div className="flex justify-between items-center mb-4 w-full pr-2">
-            <div className="flex items-center">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                Zeitlicher Verlauf
-                <span className="text-base font-normal ml-2 text-gray-500 dark:text-gray-400">
-                  ({groupingTitle})
-                </span>
-              </h3>
-              <InfoButton 
-                title={CHART_EXPLANATIONS.timeSeriesChart.title} 
-                content={CHART_EXPLANATIONS.timeSeriesChart.content} 
-                className="ml-2"
-              />
-            </div>
-            <div className="flex flex-wrap space-x-2 text-base">
-              <label className="inline-flex items-center cursor-pointer" title="Verspätungen im Trend anzeigen">
-                <input 
-                  type="checkbox" 
-                  checked={chartVisibility.verspaetungen} 
-                  onChange={() => setChartVisibility(prev => ({...prev, verspaetungen: !prev.verspaetungen}))}
-                  className="mr-1 w-4 h-4"
-                />
-                <span className="text-purple-600 dark:text-purple-400">Versp.</span>
-              </label>
-              <label className="inline-flex items-center cursor-pointer" title="Entschuldigte Fehltage im Trend anzeigen">
-                <input 
-                  type="checkbox" 
-                  checked={chartVisibility.fehlzeitenEntsch} 
-                  onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenEntsch: !prev.fehlzeitenEntsch}))}
-                  className="mr-1 w-4 h-4"
-                />
-                <span className="text-green-600 dark:text-green-400">F (e.)</span>
-              </label>
-              <label className="inline-flex items-center cursor-pointer" title="Unentschuldigte Fehltage im Trend anzeigen">
-                <input 
-                  type="checkbox" 
-                  checked={chartVisibility.fehlzeitenUnentsch} 
-                  onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenUnentsch: !prev.fehlzeitenUnentsch}))}
-                  className="mr-1 w-4 h-4"
-                />
-                <span className="text-red-600 dark:text-red-400">F (u.)</span>
-              </label>
-              <label className="inline-flex items-center cursor-pointer" title="Gesamte Fehltage im Trend anzeigen">
-                <input 
-                  type="checkbox" 
-                  checked={chartVisibility.fehlzeitenGesamt} 
-                  onChange={() => setChartVisibility(prev => ({...prev, fehlzeitenGesamt: !prev.fehlzeitenGesamt}))}
-                  className="mr-1 w-4 h-4"
-                />
-                <span className="text-blue-600 dark:text-blue-400">F (gesamt)</span>
-              </label>
-              
-              <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-2 ml-4"></div>
-              <label 
-                className={`inline-flex items-center ${classAverageAvailability.isAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`} 
-                title={classAverageAvailability.tooltip}
-              >
-                <input 
-                  type="checkbox" 
-                  checked={classAverageAvailability.isAvailable && chartVisibility.verspaetungenAvg}
-                  onChange={() => {
-                    if (classAverageAvailability.isAvailable) {
-                      setChartVisibility(prev => ({...prev, verspaetungenAvg: !prev.verspaetungenAvg}));
-                    }
-                  }}
-                  disabled={!classAverageAvailability.isAvailable}
-                  className="mr-1 w-4 h-4"
-                />
-                <span className="text-purple-600 dark:text-purple-400 text-opacity-70 dark:text-opacity-70">⌀ Klasse (V)</span>
-              </label>
-              
-              <label 
-                className={`inline-flex items-center ${classAverageAvailability.isAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`} 
-                title={classAverageAvailability.tooltip}
-              >
-                <input 
-                  type="checkbox" 
-                  checked={classAverageAvailability.isAvailable && chartVisibility.fehlzeitenAvg}
-                  onChange={() => {
-                    if (classAverageAvailability.isAvailable) {
-                      setChartVisibility(prev => ({...prev, fehlzeitenAvg: !prev.fehlzeitenAvg}));
-                    }
-                  }}
-                  disabled={!classAverageAvailability.isAvailable}
-                  className="mr-1 w-4 h-4"
-                />
-                <span className="text-blue-600 dark:text-blue-400 text-opacity-70 dark:text-opacity-70">⌀ Klasse (Fges.)</span>
-              </label>
-              
-              <label className="inline-flex items-center cursor-pointer ml-2" title="Durchschnittliche Verspätungen pro Schüler">
-                <input 
-                  type="checkbox" 
-                  checked={showStudentAverageComparison && chartVisibility.verspaetungenStudentAvg}
-                  onChange={() => {
-                    if (!showStudentAverageComparison) {
-                      setShowStudentAverageComparison(true);
-                    }
-                    setChartVisibility(prev => ({...prev, verspaetungenStudentAvg: !prev.verspaetungenStudentAvg}))
-                  }}
-                  className="mr-1 w-4 h-4"
-                />
-                <span className="text-purple-600 dark:text-purple-400 text-opacity-70 dark:text-opacity-70">⌀ Schüler (V)</span>
-              </label>
-              
-              <label className="inline-flex items-center cursor-pointer" title="Durchschnittliche Fehltage pro Schüler">
-                <input 
-                  type="checkbox" 
-                  checked={showStudentAverageComparison && chartVisibility.fehlzeitenStudentAvg}
-                  onChange={() => {
-                    if (!showStudentAverageComparison) {
-                      setShowStudentAverageComparison(true);
-                    }
-                    setChartVisibility(prev => ({...prev, fehlzeitenStudentAvg: !prev.fehlzeitenStudentAvg}))
-                  }}
-                  className="mr-1 w-4 h-4"
-                />
-                <span className="text-blue-600 dark:text-blue-400 text-opacity-70 dark:text-opacity-70">⌀ Schüler (Fges.)</span>
-              </label>
-            </div>
-          </div>
-          <div className="overflow-x-auto h-64" ref={scrollContainerRef}>
-            <div style={{ 
-              width: attendanceOverTime.length > 8 ? `${Math.max(attendanceOverTime.length * 80, 800)}px` : '100%', 
-              minWidth: '100%',
-              height: '100%' 
-            }}>
-              <AttendanceLineChart 
-                data={attendanceOverTime}
-                lines={visibleLines}
-                formatXAxis={formatDate}
-                yAxisMax={maxAttendanceValue > 0 ? undefined : 10}
-                customTooltip={CustomTooltip}
-              />
-            </div>
-          </div>
-          {attendanceOverTime.length === 0 && (
-            <div className="text-center text-gray-500 dark:text-gray-400 mt-4 text-base">
-              Keine Daten für den ausgewählten Zeitraum verfügbar.
-            </div>
-          )}
-        </div>
-      )}
-      
-      {/* 3. WOCHENTAGSANALYSE an zweiter Stelle */}
-      {visibleDashboardTiles.weekday && (
-        <div className={CARD_CLASSES}>
-          <div className="flex justify-between items-center mb-4 w-full pr-2">
-            <div className="flex items-center">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                Wochentagsanalyse
-                <span className="text-base font-normal ml-2 text-gray-500 dark:text-gray-400">
-                  (Unabhängig von Zeitraumsauswahl)
-                </span>
-              </h3>
-              <InfoButton 
-                title={CHART_EXPLANATIONS.weekdayAnalysis.title} 
-                content={CHART_EXPLANATIONS.weekdayAnalysis.content} 
-                className="ml-2"
-              />
-            </div>
-            <div className="flex flex-wrap space-x-2 text-base">
-              <label className="inline-flex items-center cursor-pointer" title="Verspätungen nach Wochentag anzeigen">
-                <input 
-                  type="checkbox" 
-                  checked={weekdayChartVisibility.verspaetungen} 
-                  onChange={() => setWeekdayChartVisibility(prev => ({...prev, verspaetungen: !prev.verspaetungen}))}
-                  className="mr-1 w-4 h-4"
-                />
-                <span className="text-purple-600 dark:text-purple-400">Versp.</span>
-              </label>
-              <label className="inline-flex items-center cursor-pointer" title="Entschuldigte Fehltage nach Wochentag anzeigen">
-                <input 
-                  type="checkbox" 
-                  checked={weekdayChartVisibility.fehlzeitenEntsch} 
-                  onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenEntsch: !prev.fehlzeitenEntsch}))}
-                  className="mr-1 w-4 h-4"
-                />
-                <span className="text-green-600 dark:text-green-400">F (e.)</span>
-              </label>
-              <label className="inline-flex items-center cursor-pointer" title="Unentschuldigte Fehltage nach Wochentag anzeigen">
-                <input 
-                  type="checkbox" 
-                  checked={weekdayChartVisibility.fehlzeitenUnentsch} 
-                  onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenUnentsch: !prev.fehlzeitenUnentsch}))}
-                  className="mr-1 w-4 h-4"
-                />
-                <span className="text-red-600 dark:text-red-400">F (u.)</span>
-              </label>
-              <label className="inline-flex items-center cursor-pointer" title="Gesamte Fehltage nach Wochentag anzeigen">
-                <input 
-                  type="checkbox" 
-                  checked={weekdayChartVisibility.fehlzeitenGesamt} 
-                  onChange={() => setWeekdayChartVisibility(prev => ({...prev, fehlzeitenGesamt: !prev.fehlzeitenGesamt}))}
-                  className="mr-1 w-4 h-4"
-                />
-                <span className="text-blue-600 dark:text-blue-400">F (gesamt)</span>
-              </label>
-            </div>
-          </div>
-          <div className="overflow-x-auto h-64">
-            <div style={{ 
-              width: '100%',
-              height: '100%' 
-            }}>
-              <AttendanceBarChart 
-                data={dayOfWeekData}
-                bars={dayOfWeekBars}
-                criticalDays={{
-                  verspaetungen: maxVerspaetungenTag?.name,
-                  fehlzeitenUnentsch: maxFehlzeitenUnentschTag?.name,
-                  fehlzeitenGesamt: dayOfWeekData.reduce((max, day) => 
-                    day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
-                    dayOfWeekData[0])?.name
-                }}
-              />
-            </div>
-          </div>
-          {dayOfWeekData.length > 0 && (
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {maxVerspaetungenTag && (
-                <InfoTile 
-                  title="Kritischer Tag (Verspätungen)" 
-                  value={`${maxVerspaetungenTag.name} (${maxVerspaetungenTag.verspaetungen})`}
-                  className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
-                  valueClassName="text-purple-600 dark:text-purple-400 text-base"
-                />
-              )}
-              {maxFehlzeitenUnentschTag && (
-                <InfoTile 
-                  title="Kritischer Tag (unentsch. Fehltage)" 
-                  value={`${maxFehlzeitenUnentschTag.name} (${maxFehlzeitenUnentschTag.fehlzeitenUnentsch})`}
-                  className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
-                  valueClassName="text-red-600 dark:text-red-400 text-base"
-                />
-              )}
-              {dayOfWeekData.length > 0 && (
-                <InfoTile 
-                  title="Kritischer Tag (Fehltage gesamt)" 
-                  value={`${dayOfWeekData.reduce((max, day) => 
-                    day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
-                    dayOfWeekData[0]).name} (${dayOfWeekData.reduce((max, day) => 
-                      day.fehlzeitenGesamt > max.fehlzeitenGesamt ? day : max, 
-                      dayOfWeekData[0]).fehlzeitenGesamt})`}
-                  className="bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600"
-                  valueClassName="text-blue-600 dark:text-blue-400 text-base"
-                />
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      {dashboardTilesOrder.map((tileType, index) => {
+        // Nur rendern, wenn der Chart sichtbar ist
+        if (!visibleDashboardTiles[tileType]) return null;
         
-      {/* 4. GLEITENDER DURCHSCHNITT an vierter Stelle */}
-      {visibleDashboardTiles.movingAverage && (
-        <AnalyticsSection 
-          attendanceOverTime={attendanceOverTime}
-          schoolYearDetailedData={schoolYearDetailedData}
-          weeklyDetailedData={weeklyDetailedData}
-          allStudentStats={allStudentStats}
-          className="mt-4"
-          hasSingleClassOnly={hasSingleClassOnly}
-          singleClassName={singleClassName}
-          chartMode="movingAverage"
-        />
-      )}
+        // Render-Funktion für diesen Chart-Typ abrufen und aufrufen
+        const renderFunction = chartRenderers[tileType];
+        if (!renderFunction) return null;
+        
+        // Margin anwenden zwischen den Charts
+        const marginClass = index < dashboardTilesOrder.length - 1 ? "mb-4" : "";
+        
+        // Chart mit Margin-Container umgeben
+        return (
+          <div key={tileType} className={marginClass}>
+            {renderFunction()}
+          </div>
+        );
+      })}
     </>
   );
 });

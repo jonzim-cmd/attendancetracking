@@ -213,7 +213,7 @@ const DateRangeButton: React.FC<DateRangeButtonProps> = ({
       onDashboardEndDateChange(endFormatted);
       
       // Dropdown schließen
-      setIsDateDropdownOpen(false);
+      // setIsDateDropdownOpen(false); // Auskommentiert, damit Dropdown geöffnet bleibt
     }
   };
   

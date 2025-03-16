@@ -515,6 +515,17 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
               mode="dashboard"
             />
             
+            {/* NEU: Verwenden der verbesserten DateRangeButton-Komponente */}
+            <DateRangeButton
+              dashboardStartDate={dashboardStartDate}
+              dashboardEndDate={dashboardEndDate}
+              onDashboardStartDateChange={onDashboardStartDateChange}
+              onDashboardEndDateChange={onDashboardEndDateChange}
+              handleQuickSelect={handleQuickSelect}
+              quickSelectValue={quickSelectValue}
+              className="ml-3"
+            />
+
             {/* 🔴 NEU: Gruppierungsoption für Dashboard mit Hover (ersetzt das alte <select>) */}
             <div
               className="relative min-w-[120px]"
@@ -553,17 +564,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                 </div>
               )}
             </div>
-            
-            {/* NEU: Verwenden der verbesserten DateRangeButton-Komponente */}
-            <DateRangeButton
-              dashboardStartDate={dashboardStartDate}
-              dashboardEndDate={dashboardEndDate}
-              onDashboardStartDateChange={onDashboardStartDateChange}
-              onDashboardEndDateChange={onDashboardEndDateChange}
-              handleQuickSelect={handleQuickSelect}
-              quickSelectValue={quickSelectValue}
-              className="ml-3"
-            />
+
           </>
         )}
         

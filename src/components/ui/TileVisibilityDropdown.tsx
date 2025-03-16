@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Layers, RotateCcw, MoveVertical, GripVertical } from 'lucide-react';
+import { ChevronDown, Layers, RotateCcw, GripVertical } from 'lucide-react';
 import { useFilters } from '@/contexts/FilterContext';
 import type { DashboardTileType } from '@/contexts/FilterContext';
 
@@ -19,7 +19,6 @@ const TileVisibilityDropdown: React.FC<TileVisibilityDropdownProps> = ({
   className = ''
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isOrderMode, setIsOrderMode] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownTimer = useRef<NodeJS.Timeout | null>(null);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
@@ -32,7 +31,6 @@ const TileVisibilityDropdown: React.FC<TileVisibilityDropdownProps> = ({
     visibleDashboardTiles,
     toggleDashboardTile,
     toggleAllDashboardTiles,
-    // Neue Properties aus dem erweiterten Context
     dashboardTilesOrder,
     setDashboardTileOrder,
     resetDashboardTilesOrder
@@ -43,8 +41,6 @@ const TileVisibilityDropdown: React.FC<TileVisibilityDropdownProps> = ({
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
-        // Verlasse den Reihenfolge-Modus beim Schließen
-        setIsOrderMode(false);
       }
     };
     
@@ -99,8 +95,6 @@ const TileVisibilityDropdown: React.FC<TileVisibilityDropdownProps> = ({
   const handleMouseLeave = () => {
     dropdownTimer.current = setTimeout(() => {
       setIsDropdownOpen(false);
-      // Verlasse den Reihenfolge-Modus beim Schließen
-      setIsOrderMode(false);
     }, 300);
   };
 
@@ -159,11 +153,6 @@ const TileVisibilityDropdown: React.FC<TileVisibilityDropdownProps> = ({
     setDraggedTile(null);
   };
 
-  // Wechsel zwischen Sichtbarkeits- und Reihenfolgemodus
-  const toggleOrderMode = () => {
-    setIsOrderMode(!isOrderMode);
-  };
-
   return (
     <div 
       className={`relative ${className}`}
@@ -186,114 +175,75 @@ const TileVisibilityDropdown: React.FC<TileVisibilityDropdownProps> = ({
           style={dropdownStyle}
         >
           <div className="p-2 space-y-1">
-            {/* Header mit Moduswechsel-Button */}
+            {/* Header mit Reset-Button */}
             <div className="flex justify-between items-center mb-1 pb-1 border-b border-gray-200 dark:border-gray-600">
               <span className="text-sm font-medium text-chatGray-textLight dark:text-chatGray-textDark whitespace-nowrap">
-                {isOrderMode ? 'Reihenfolge anpassen' : 'Sichtbarkeit ändern'}
+                Dashboard-Kacheln
               </span>
-              <div className="flex gap-2">
-                {isOrderMode && (
-                  <button
-                    onClick={resetDashboardTilesOrder}
-                    className="p-1 rounded hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark"
-                    title="Standardreihenfolge wiederherstellen"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5 text-chatGray-textLight dark:text-chatGray-textDark" />
-                  </button>
-                )}
-                <button
-                  onClick={toggleOrderMode}
-                  className="p-1 rounded hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark"
-                  title={isOrderMode ? "Zur Sichtbarkeit wechseln" : "Zur Reihenfolge wechseln"}
-                >
-                  {isOrderMode ? (
-                    <Layers className="w-3.5 h-3.5 text-chatGray-textLight dark:text-chatGray-textDark" />
-                  ) : (
-                    <MoveVertical className="w-3.5 h-3.5 text-chatGray-textLight dark:text-chatGray-textDark" />
-                  )}
-                </button>
-              </div>
+              <button
+                onClick={resetDashboardTilesOrder}
+                className="p-1 rounded hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark"
+                title="Standardreihenfolge wiederherstellen"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-chatGray-textLight dark:text-chatGray-textDark" />
+              </button>
             </div>
 
-            {/* Alle ein-/ausblenden - nur im Sichtbarkeitsmodus */}
-            {!isOrderMode && (
-              <>
-                <div 
-                  className="flex items-center px-2 py-1 hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark rounded cursor-pointer"
-                  onClick={() => toggleAllDashboardTiles(!allTilesVisible)}
-                >
-                  <input
-                    type="checkbox"
-                    checked={allTilesVisible}
-                    onChange={() => {}}
-                    className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
-                  />
-                  <label className="text-sm cursor-pointer whitespace-nowrap text-chatGray-textLight dark:text-chatGray-textDark">
-                    Alle Kacheln {allTilesVisible ? 'ausblenden' : 'einblenden'}
-                  </label>
-                </div>
-                
-                <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-              </>
-            )}
+            {/* Alle ein-/ausblenden */}
+            <div 
+              className="flex items-center px-2 py-1 hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark rounded cursor-pointer"
+              onClick={() => toggleAllDashboardTiles(!allTilesVisible)}
+            >
+              <input
+                type="checkbox"
+                checked={allTilesVisible}
+                onChange={() => {}}
+                className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark"
+              />
+              <label className="text-sm cursor-pointer whitespace-nowrap text-chatGray-textLight dark:text-chatGray-textDark">
+                Alle Kacheln {allTilesVisible ? 'ausblenden' : 'einblenden'}
+              </label>
+            </div>
             
-            {/* Hilfstext für Drag & Drop im Reihenfolgemodus */}
-            {isOrderMode && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 px-2">
-                Zum Sortieren ziehen
-              </div>
-            )}
+            <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+            
+            {/* Hilfstext für Drag & Drop */}
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 px-2">
+              Zum Sortieren ziehen
+            </div>
             
             {/* Kacheln - sortiert in der durch dashboardTilesOrder definierten Reihenfolge */}
-            {dashboardTilesOrder.map((tileType, index) => (
+            {dashboardTilesOrder.map((tileType) => (
               <div 
                 key={tileType}
-                className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer ${
-                  isOrderMode ? 'hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark' : ''
-                } ${
+                className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer hover:bg-header-btn-dropdown-hover dark:hover:bg-header-btn-dropdown-hover-dark ${
                   dragOverTile === tileType ? 'bg-gray-200 dark:bg-gray-700' : ''
                 } ${
                   draggedTile === tileType ? 'opacity-50' : ''
                 }`}
-                draggable={isOrderMode}
-                onDragStart={isOrderMode ? (e) => handleDragStart(e, tileType) : undefined}
-                onDragOver={isOrderMode ? (e) => handleDragOver(e, tileType) : undefined}
-                onDragLeave={isOrderMode ? handleDragLeave : undefined}
-                onDrop={isOrderMode ? (e) => handleDrop(e, tileType) : undefined}
+                draggable
+                onDragStart={(e) => handleDragStart(e, tileType)}
+                onDragOver={(e) => handleDragOver(e, tileType)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, tileType)}
               >
-                {/* Im Reihenfolgemodus: Position anzeigen */}
-                {isOrderMode ? (
-                  <div className="flex items-center w-full">
-                    <GripVertical className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500 cursor-grab flex-shrink-0" />
-                    <span className="min-w-[16px] h-4 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded text-xs font-medium mr-2 flex-shrink-0">
-                      {index + 1}
-                    </span>
-                    <span className="text-sm text-chatGray-textLight dark:text-chatGray-textDark truncate">
-                      {TILE_DISPLAY_NAMES[tileType]}
-                    </span>
-                  </div>
-                ) : (
-                  // Im Sichtbarkeitsmodus: Checkbox anzeigen
-                  <div 
-                    className="flex items-center w-full"
-                    onClick={() => toggleDashboardTile(tileType)}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={visibleDashboardTiles[tileType]}
-                      onChange={() => {}}
-                      className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark flex-shrink-0"
-                    />
-                    <label className="text-sm cursor-pointer text-chatGray-textLight dark:text-chatGray-textDark truncate">
-                      {TILE_DISPLAY_NAMES[tileType]}
-                    </label>
-                  </div>
-                )}
+                <div className="flex items-center w-full">
+                  <GripVertical className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500 cursor-grab flex-shrink-0" />
+                  <input
+                    type="checkbox"
+                    checked={visibleDashboardTiles[tileType]}
+                    onChange={() => toggleDashboardTile(tileType)}
+                    className="mr-2 text-chatGray-textLight dark:text-chatGray-textDark flex-shrink-0"
+                  />
+                  <span className="text-sm text-chatGray-textLight dark:text-chatGray-textDark truncate">
+                    {TILE_DISPLAY_NAMES[tileType]}
+                  </span>
+                </div>
               </div>
             ))}
             
             {/* Warnung, wenn keine Kachel sichtbar ist */}
-            {!isOrderMode && noTilesVisible && (
+            {noTilesVisible && (
               <div className="text-orange-500 dark:text-orange-400 text-xs px-2 py-1 mt-1 border-t border-gray-200 dark:border-gray-600">
                 Mindestens eine Kachel sollte sichtbar sein
               </div>

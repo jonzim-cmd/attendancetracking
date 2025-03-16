@@ -26,8 +26,6 @@ interface ChartContainerProps {
   children: React.ReactNode;
   className?: string;
   explanation?: string;
-  isDraggable?: boolean;
-  dragHandleClass?: string; 
 }
 
 const ChartContainer: React.FC<ChartContainerProps> = ({ 
@@ -35,9 +33,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
   subtitle,
   children,
   className = "",
-  explanation,
-  isDraggable = false,
-  dragHandleClass = "chart-drag-handle"
+  explanation
 }) => {
   const getExplanationKey = (): keyof ChartExplanations => {
     if (explanation) return explanation as keyof ChartExplanations;
@@ -54,7 +50,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
   
   return (
     <div className={`h-full flex flex-col ${className}`}>
-      <div className={`${CHART_HEADER_CLASSES} ${isDraggable ? dragHandleClass : ''} cursor-${isDraggable ? 'move' : 'default'} py-1`}>
+      <div className={`${CHART_HEADER_CLASSES} cursor-default py-1`}>
         <div className="flex items-center">
           {title && (
             <>

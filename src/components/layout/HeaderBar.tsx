@@ -1,7 +1,4 @@
 // src/components/layout/HeaderBar.tsx
-// Hier ist der vollständige Code, wie er in HeaderBar.tsx aussehen sollte,
-// um die DateRangeButton-Komponente korrekt zu integrieren
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Sun, Moon, ChevronDown } from 'lucide-react';
 import ResetButton from '@/components/attendance/ResetButton';
@@ -114,12 +111,6 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   const groupingDropdownRef = useRef<HTMLDivElement>(null);
   
   const groupingDropdownTimer = useRef<NodeJS.Timeout | null>(null);
-  
-  const [isDraggableDashboard, setIsDraggableDashboard] = useState(() => {
-    return typeof window !== 'undefined' && localStorage.getItem('useDraggableDashboard') === 'true';
-  });
-
-  // Quick select options
 
   // Click-Outside Handler für die Dropdowns
   useEffect(() => {
@@ -211,11 +202,6 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       setIsDashboardClassDropdownOpen(false);
     }, 300);
   };
-  
-  // NEU: Hilfsfunktionen für Datumsfilter Dropdown
-  
-
-  // Format date for display
 
   // Handler für Klassen-Auswahl
   const handleClassToggle = (className: string) => {
@@ -335,6 +321,14 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                 </div>
               )}
             </div>
+
+            {/* NEU: StudentSearchSelect anstelle des einfachen Suchfelds */}
+            <StudentSearchSelect
+              placeholder="Nach Name suchen"
+              className="w-56"
+              getAvailableStudents={getAvailableStudents}
+              mode="table"
+            />
             
             {/* Verspätungen und Fehltage Filter-Buttons */}
             <div className="flex gap-1">
@@ -385,14 +379,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                 title="Mindestanzahl an unentschuldigten Fehltagen für die Anzeige eingeben"
               />
             </div>
-            
-            {/* NEU: StudentSearchSelect anstelle des einfachen Suchfelds */}
-            <StudentSearchSelect
-              placeholder="Nach Name suchen"
-              className="w-56"
-              getAvailableStudents={getAvailableStudents}
-              mode="table"
-            />
+        
 
             {/* Verbessertes Dropdown für Spaltenauswahl mit Hover-Effekt */}
             <div 
@@ -612,45 +599,6 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
         {/* NEU: Kachel-Visibility Dropdown - nur im Dashboard-Modus anzeigen */}
         {viewMode === 'dashboard' && (
           <TileVisibilityDropdown className="mr-1" />
-        )}
-        
-        {/* Layout toggle button - correctly implementing state and events */}
-        {viewMode === 'dashboard' && (
-          <button
-            onClick={() => {
-              // Toggle the dashboard layout
-              const newValue = !isDraggableDashboard;
-              setIsDraggableDashboard(newValue);
-              
-              // Update localStorage
-              if (typeof window !== 'undefined') {
-                localStorage.setItem('useDraggableDashboard', String(newValue));
-              }
-              
-              // Dispatch event for components listening
-              const event = new CustomEvent('toggleDraggableDashboard', { 
-                detail: { value: newValue } 
-              });
-              window.dispatchEvent(event);
-            }}
-            className="p-1.5 rounded-full bg-header-btn dark:bg-header-btn-dark hover:bg-header-btn-hover dark:hover:bg-header-btn-hover-dark text-chatGray-textLight dark:text-chatGray-textDark transition-colors"
-            title={isDraggableDashboard 
-              ? 'Derzeit: Anpassbares Layout (zum festen Layout wechseln)' 
-              : 'Derzeit: Festes Layout (zum anpassbaren Layout wechseln)'}
-          >
-            {/* Icons that represent static vs. draggable layout */}
-            {isDraggableDashboard ? (
-              // Icon for draggable layout - a "move/drag" icon
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-              </svg>
-            ) : (
-              // Icon for static layout - a "grid/fixed" icon
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-              </svg>
-            )}
-          </button>
         )}
 
         <button

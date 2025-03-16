@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useFilters } from '@/contexts/FilterContext';
 import TrendCharts from './TrendCharts';
-import DraggableDashboard from './DraggableDashboard';
-import ChartContainer from './ChartContainer';
 import { 
   prepareWeeklyTrends, 
   prepareAbsenceTypes, 
@@ -104,16 +102,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   // NEW: Check if there's only one class in the dataset
   const [hasSingleClassOnly, setHasSingleClassOnly] = useState<boolean>(false);
   const [singleClassName, setSingleClassName] = useState<string | undefined>(undefined);
-  
-  // NEW: State für draggable Dashboard
-  const [useDraggableDashboard, setUseDraggableDashboard] = useState(() => {
-    try {
-      const saved = localStorage.getItem('useDraggableDashboard');
-      return saved === 'true';
-    } catch (e) {
-      return false;
-    }
-  });
   
   // Convert filtered students to a dictionary for easier access
   useEffect(() => {
@@ -359,26 +347,6 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
     };
   }, []);
 
-  // Event-Listener für den Toggle-Button in der HeaderBar
-  useEffect(() => {
-    const handleToggleDraggableDashboard = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail && customEvent.detail.value !== undefined) {
-        setUseDraggableDashboard(customEvent.detail.value);
-      } else {
-        // Fallback-Toggle-Logik
-        const newValue = !useDraggableDashboard;
-        setUseDraggableDashboard(newValue);
-      }
-    };
-
-    window.addEventListener('toggleDraggableDashboard', handleToggleDraggableDashboard);
-    
-    return () => {
-      window.removeEventListener('toggleDraggableDashboard', handleToggleDraggableDashboard);
-    };
-  }, [useDraggableDashboard, setUseDraggableDashboard]);
-  
   // Effect to prepare all data when filters change
   useEffect(() => {
     if (!rawData || !startDate || !endDate) return;
@@ -490,121 +458,27 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   const classAverageAvailability = getClassAverageAvailability();
 
   return (
-    <div className="space-y-4"> 
-      {/* Toggle-Button wurde in die HeaderBar verschoben */}
-
-      {useDraggableDashboard ? (
-        <DraggableDashboard>
-          {/* Zeitlicher Verlauf */}
-          <ChartContainer title="" subtitle="" isDraggable={true} className="px-2 py-1">
-            <div className={getEffectiveChartHeight('timeSeries')}>
-              <TrendCharts
-                weeklyTrends={weeklyTrends}
-                attendanceOverTime={attendanceOverTime}
-                dayOfWeekData={dayOfWeekData}
-                absenceTypes={absenceTypes}
-                groupingOption={groupingOption}
-                chartVisibility={trendChartVisibility}
-                setChartVisibility={setTrendChartVisibility}
-                weekdayChartVisibility={weekdayChartVisibility}
-                setWeekdayChartVisibility={setWeekdayChartVisibility}
-                selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
-                showStudentAverageComparison={showStudentAverageComparison}
-                setShowStudentAverageComparison={setShowStudentAverageComparison}
-                classAverageAvailability={classAverageAvailability}
-                hasSingleClassOnly={hasSingleClassOnly}
-                singleClassName={singleClassName}
-                weeklyDetailedData={weeklyDetailedData}
-                allStudentStats={studentStats}
-                chartMode="timeSeries"
-                schoolYearDetailedData={schoolYearStats}
-              />
-            </div>
-          </ChartContainer>
-
-          {/* Wochentagsanalyse */}
-          <ChartContainer title="" subtitle="" isDraggable={true} className="px-2 py-1">
-            <div className={getEffectiveChartHeight('timeSeries')}>
-              <TrendCharts
-                weeklyTrends={weeklyTrends}
-                attendanceOverTime={attendanceOverTime}
-                dayOfWeekData={dayOfWeekData}
-                absenceTypes={absenceTypes}
-                groupingOption={groupingOption}
-                chartVisibility={trendChartVisibility}
-                setChartVisibility={setTrendChartVisibility}
-                weekdayChartVisibility={weekdayChartVisibility}
-                setWeekdayChartVisibility={setWeekdayChartVisibility}
-                selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
-                showStudentAverageComparison={showStudentAverageComparison}
-                setShowStudentAverageComparison={setShowStudentAverageComparison}
-                classAverageAvailability={classAverageAvailability}
-                hasSingleClassOnly={hasSingleClassOnly}
-                singleClassName={singleClassName}
-                weeklyDetailedData={weeklyDetailedData}
-                allStudentStats={studentStats}
-                chartMode="weekday"
-                schoolYearDetailedData={schoolYearStats}
-              />
-            </div>
-          </ChartContainer>
-
-          {/* Gleitender Durchschnitt */}
-          <ChartContainer title="" subtitle="" isDraggable={true} className="px-2 py-1">
-            <div className={getEffectiveChartHeight('timeSeries')}>
-              <MovingAverageChart 
-                attendanceOverTime={attendanceOverTime} 
-                schoolYearDetailedData={schoolYearStats}
-                weeklyDetailedData={weeklyDetailedData}
-                allStudentStats={studentStats}
-                selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
-                selectedClass={selectedDashboardClasses.length === 1 ? 
-                              selectedDashboardClasses[0] : 
-                              (hasSingleClassOnly && selectedDashboardClasses.length === 0 ? singleClassName : undefined)}
-                className="w-full h-full"
-              />
-            </div>
-          </ChartContainer>
-
-          {/* Regressionsanalyse */}
-          <ChartContainer title="" subtitle="" isDraggable={true} className="px-2 py-1">
-            <div className={getEffectiveChartHeight('timeSeries')}>
-              <RegressionChart 
-                attendanceOverTime={attendanceOverTime} 
-                schoolYearDetailedData={schoolYearStats}
-                weeklyDetailedData={weeklyDetailedData}
-                allStudentStats={studentStats}
-                selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
-                selectedClass={selectedDashboardClasses.length === 1 ? 
-                              selectedDashboardClasses[0] : 
-                              (hasSingleClassOnly && selectedDashboardClasses.length === 0 ? singleClassName : undefined)}
-                className="w-full h-full"
-              />
-            </div>
-          </ChartContainer>
-        </DraggableDashboard>
-      ) : (
-        <TrendCharts 
-          weeklyTrends={weeklyTrends}
-          attendanceOverTime={attendanceOverTime}
-          dayOfWeekData={dayOfWeekData}
-          absenceTypes={absenceTypes}
-          groupingOption={groupingOption}
-          chartVisibility={trendChartVisibility}
-          setChartVisibility={setTrendChartVisibility}
-          weekdayChartVisibility={weekdayChartVisibility}
-          setWeekdayChartVisibility={setWeekdayChartVisibility}
-          selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
-          showStudentAverageComparison={showStudentAverageComparison}
-          setShowStudentAverageComparison={setShowStudentAverageComparison}
-          classAverageAvailability={classAverageAvailability}
-          hasSingleClassOnly={hasSingleClassOnly}
-          singleClassName={singleClassName}
-          weeklyDetailedData={weeklyDetailedData}
-          allStudentStats={studentStats}
-          schoolYearDetailedData={schoolYearStats}
-        />
-      )}
+    <div className="space-y-4">
+      <TrendCharts 
+        weeklyTrends={weeklyTrends}
+        attendanceOverTime={attendanceOverTime}
+        dayOfWeekData={dayOfWeekData}
+        absenceTypes={absenceTypes}
+        groupingOption={groupingOption}
+        chartVisibility={trendChartVisibility}
+        setChartVisibility={setTrendChartVisibility}
+        weekdayChartVisibility={weekdayChartVisibility}
+        setWeekdayChartVisibility={setWeekdayChartVisibility}
+        selectedStudent={selectedStudents.length === 1 ? selectedStudents[0] : undefined}
+        showStudentAverageComparison={showStudentAverageComparison}
+        setShowStudentAverageComparison={setShowStudentAverageComparison}
+        classAverageAvailability={classAverageAvailability}
+        hasSingleClassOnly={hasSingleClassOnly}
+        singleClassName={singleClassName}
+        weeklyDetailedData={weeklyDetailedData}
+        allStudentStats={studentStats}
+        schoolYearDetailedData={schoolYearStats}
+      />
     </div>
   );
 };
